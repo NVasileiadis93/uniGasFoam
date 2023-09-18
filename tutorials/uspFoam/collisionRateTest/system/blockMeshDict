@@ -1,0 +1,113 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+
+    root            "";
+    case            "";
+    instance        "";
+    local           "";
+
+    class           dictionary;
+    object          blockMeshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.02700777;
+
+
+vertices
+(
+    (0 0 0)
+    (1.0 0 0)
+    (1.0 1.0 0)
+    (0 1.0 0)
+    (0 0 1.0)
+    (1.0 0 1.0)
+    (1.0 1.0 1.0)
+    (0 1.0 1.0)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) uspZone (1 1 1) simpleGrading (1 1 1)
+);
+
+boundary
+(
+    cyclicX_half0
+    {
+        type cyclic;
+        neighbourPatch cyclicX_half1;
+        faces
+        (
+            (7 3 0 4)
+        );
+    }
+
+    cyclicX_half1
+    {
+        type cyclic;
+        neighbourPatch cyclicX_half0;
+        faces
+        (
+            (6 2 1 5)
+        );
+    }
+
+    cyclicY_half0
+    {
+        type cyclic;
+        neighbourPatch cyclicY_half1;
+        faces
+        (
+            (7 6 2 3)
+        );
+    }
+
+    cyclicY_half1
+    {
+        type cyclic;
+        neighbourPatch cyclicY_half0;
+        faces
+        (
+            (4 5 1 0)
+        );
+    }
+
+    cyclicZ_half0
+    {
+        type cyclic;
+        neighbourPatch cyclicZ_half1;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+
+    cyclicZ_half1
+    {
+        type cyclic;
+        neighbourPatch cyclicZ_half0;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+)
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

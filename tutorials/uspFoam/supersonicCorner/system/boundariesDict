@@ -1,0 +1,89 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.3                                   |
+|   \\  /    A nd           | Web:      http://www.openfoam.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      boundariesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+uspPatchBoundaries
+(
+
+     boundary
+     {
+         patchBoundaryProperties
+         {
+             patch      walls;
+         }
+ 
+         boundaryModel   uspDiffuseWallPatch;
+ 
+         uspDiffuseWallPatchProperties
+         {
+            temperature         1000;
+            velocity            (0 0 0);
+         }
+     }
+
+
+    boundary
+    {
+        patchBoundaryProperties
+        {
+            patch       flow;
+        }
+
+        boundaryModel   uspDeletionPatch;
+
+        uspDeletionPatchProperties
+        {
+            allSpecies      true;
+        }
+    }
+
+);
+
+uspCyclicBoundaries
+(
+
+);
+
+uspGeneralBoundaries
+(
+    boundary
+    {
+        generalBoundaryProperties
+        {
+            patch       flow;
+        }
+
+        boundaryModel   uspFreeStreamInflowPatch;
+
+        uspFreeStreamInflowPatchProperties
+        {
+            translationalTemperature    300;
+            rotationalTemperature       300;
+            vibrationalTemperature      300;
+            electronicTemperature       0;
+            velocity                    (1936 0 0);
+            typeIds                     (Ar);
+            numberDensities
+            {
+                Ar      1e20;
+            }
+        }
+    }
+
+);
+
+
+// ************************************************************************* //

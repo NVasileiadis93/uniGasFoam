@@ -1,0 +1,5 @@
+This case will run a single cell, periodic box, filled with oxygen and nitrogen at a temperature of 30000 K.
+
+As the simulation begins, chemical reactions take place, leading to the production of NO, O, N, O2+, N2+, NO+, O+, N+, and E- species.
+
+The chemical reactions are defined in system/chemReactDict are are representative of a reaction set that could be used for re-entry flows.

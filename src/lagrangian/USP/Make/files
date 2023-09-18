@@ -1,0 +1,173 @@
+/* PARCEL */
+parcels/uspParcel.C
+parcels/uspParcelIO.C
+
+/* CLOUD */
+clouds/uspCloud.C
+
+
+/* INITIALISE USP */
+initaliseUspParcels/basic/uspConfiguration/uspConfiguration.C
+initaliseUspParcels/basic/uspAllConfigurations/uspAllConfigurations.C
+initaliseUspParcels/derived/uspMeshFill/uspMeshFill.C
+initaliseUspParcels/derived/uspZoneFill/uspZoneFill.C
+initaliseUspParcels/derived/uspMeshFieldFill/uspMeshFieldFill.C
+
+
+/* REACTIONS */
+reactions/basic/uspReactions/uspReactions.C
+reactions/basic/uspReaction/uspReaction.C
+reactions/derived/moleculeAtomDissociationIonisation/moleculeAtomDissociationIonisation.C
+reactions/derived/moleculeElectronDissociationIonisation/moleculeElectronDissociationIonisation.C
+reactions/derived/atomElectronIonisation/atomElectronIonisation.C
+reactions/derived/atomAtomIonisationSameSpecies/atomAtomIonisationSameSpecies.C
+reactions/derived/atomAtomIonisationDissimilarSpecies/atomAtomIonisationDissimilarSpecies.C
+reactions/derived/atomIonIonisation/atomIonIonisation.C
+reactions/derived/moleculeIonDissociationIonisation/moleculeIonDissociationIonisation.C
+reactions/derived/forwardAssociativeIonisation/forwardAssociativeIonisation.C
+reactions/derived/forwardAssociativeIonisationDissimilarSpecies/forwardAssociativeIonisationDissimilarSpecies.C
+reactions/derived/reverseAssociativeIonisation/reverseAssociativeIonisation.C
+reactions/derived/chargeExchange/chargeExchange.C
+reactions/derived/dissociationIonisationTypeISameSpecies/dissociationIonisationTypeISameSpecies.C
+reactions/derived/dissociationIonisationTypeIDissimilarSpecies/dissociationIonisationTypeIDissimilarSpecies.C
+reactions/derived/dissociationIonisationExchange/dissociationIonisationExchange.C
+
+
+/* DECOMPOSER */
+hybridDecomposer/uspHybridDecomposer.C
+
+
+/* RELAXATIONS */
+relaxations/basic/relaxationModel/relaxationModel.C
+relaxations/derived/BGK/BGKRelaxation.C
+relaxations/derived/EllipsoidalStatistical/EllipsoidalStatisticalRelaxation.C
+relaxations/derived/ChapmanEnskog/ChapmanEnskogRelaxation.C
+
+
+/* BINARY COLLISIONS */
+collisions/basic/BinaryCollisionModel/BinaryCollisionModel.C
+collisions/derived/NoBinaryCollision/NoBinaryCollision.C
+collisions/derived/VariableHardSphere/VariableHardSphere.C
+collisions/derived/VariableSoftSphere/VariableSoftSphere.C
+collisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
+collisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
+
+
+/* COLLISION PARTNER SELECTION ROUTINES */
+collisionPartnerSelection/basic/collisionPartnerSelection.C
+collisionPartnerSelection/derived/noTimeCounter/noTimeCounter.C
+collisionPartnerSelection/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
+collisionPartnerSelection/derived/simplifiedBernoulliTrials/simplifiedBernoulliTrials.C
+collisionPartnerSelection/derived/majorantCollisionFrequency/majorantCollisionFrequency.C
+
+/* FIELD MEASUREMENTS */
+macroscopicProperties/basic/uspFieldProperties/uspFieldProperties.C
+macroscopicProperties/basic/uspField/uspField.C
+faceTracker/uspFaceTracker.C
+boundaryMeasurements/boundaryMeasurements.C
+cellMeasurements/cellMeasurements.C
+
+/* BOUNDARIES */
+boundaries/basic/uspBoundaries/uspBoundaries.C
+
+boundaries/basic/uspBoundaryBase/uspBoundaryBase.C
+boundaries/basic/uspCyclicBoundary/uspCyclicBoundary.C
+boundaries/basic/uspGeneralBoundary/uspGeneralBoundary.C
+boundaries/basic/uspPatchBoundary/uspPatchBoundary.C
+
+/* PATCH BOUNDARY MODELS */
+boundaries/derived/patchBoundaries/uspDeletionPatch/uspDeletionPatch.C
+boundaries/derived/patchBoundaries/uspSpecularWallPatch/uspSpecularWallPatch.C
+boundaries/derived/patchBoundaries/uspDiffuseWallPatch/uspDiffuseWallPatch.C
+boundaries/derived/patchBoundaries/uspDiffuseWallFieldPatch/uspDiffuseWallFieldPatch.C
+boundaries/derived/patchBoundaries/uspMixedDiffuseSpecularWallPatch/uspMixedDiffuseSpecularWallPatch.C
+boundaries/derived/patchBoundaries/uspMixedDiffuseSpecularWallFieldPatch/uspMixedDiffuseSpecularWallFieldPatch.C
+boundaries/derived/patchBoundaries/uspCLLWallPatch/uspCLLWallPatch.C
+boundaries/derived/patchBoundaries/uspCLLWallFieldPatch/uspCLLWallFieldPatch.C
+
+/* GENERAL BOUNDARY MODELS */
+boundaries/derived/generalBoundaries/uspFreeStreamInflowPatch/uspFreeStreamInflowPatch.C
+boundaries/derived/generalBoundaries/uspChapmanEnskogFreeStreamInflowPatch/uspChapmanEnskogFreeStreamInflowPatch.C
+boundaries/derived/generalBoundaries/uspFreeStreamInflowFieldPatch/uspFreeStreamInflowFieldPatch.C
+boundaries/derived/generalBoundaries/uspChapmanEnskogFreeStreamInflowFieldPatch/uspChapmanEnskogFreeStreamInflowFieldPatch.C
+boundaries/derived/generalBoundaries/uspLiouFangPressureInlet/uspLiouFangPressureInlet.C
+boundaries/derived/generalBoundaries/uspLiouFangTotalPressureInlet/uspLiouFangTotalPressureInlet.C
+boundaries/derived/generalBoundaries/uspLiouFangPressureOutlet/uspLiouFangPressureOutlet.C
+boundaries/derived/generalBoundaries/uspWangPressureInlet/uspWangPressureInlet.C
+boundaries/derived/generalBoundaries/uspMassFlowRateInlet/uspMassFlowRateInlet.C
+
+/* CYCLIC BOUNDARY MODELS */
+boundaries/derived/cyclicBoundaries/uspReflectiveParticleMembranePatch/uspReflectiveParticleMembranePatch.C
+
+/* COMBINED */
+
+macroscopicProperties/derived/combined/uspBinsMethod/uspBinsMethod.C
+macroscopicProperties/derived/combined/uspZone/uspZone.C
+macroscopicProperties/derived/combined/uspVolFields/uspVolFields.C
+
+
+/*    DENSITY */
+
+/*    TEMPERATURE */
+
+/*    VELOCITY */
+macroscopicProperties/derived/velocity/uspVelocityDistributionZone/uspVelocityDistributionZone.C
+macroscopicProperties/derived/velocity/uspSpeedDistributionZone/uspSpeedDistributionZone.C
+
+/* OTHER FIELDS */
+
+/* PRESSURE */
+
+/* MASS FLUX */
+macroscopicProperties/derived/massFlux/uspMassFluxSurface/uspMassFluxSurface.C
+
+
+/* CONTROLLERS*/
+controllers/basic/uspControllers/uspControllers.C
+controllers/basic/uspControllerBase/uspControllerBase.C
+controllers/basic/uspStateController/uspStateController.C
+controllers/basic/uspFluxController/uspFluxController.C
+
+/* DENSITY*/
+controllers/derived/density/densityController/densityController.C
+
+/* TEMPERATURE*/
+controllers/derived/temperature/temperatureController/temperatureController.C
+
+/*OTHERS*/
+controllers/derived/others/gravitationalAccelerationController/gravitationalAccelerationController.C
+
+
+/* LOAD BALANCING */
+dynamicLoadBalancing/uspDynamicLoadBalancing.C
+
+
+
+
+
+/* SUB MODELS */
+submodels/cloudFunctionObjects/uspCloudFunctionObjects.C
+submodels/faceTracker/uspFaceTrackerFO.C
+
+
+/* LEGACY */
+LEGACY/timeDataMeas/timeDataMeas.C
+LEGACY/timeInterval/timeInterval.C
+LEGACY/writeTimeData/writeTimeData.C
+LEGACY/timeData/timeData.C
+LEGACY/binModel/binModel.C
+LEGACY/distribution/distribution.C
+LEGACY/distribution/distributionIO.C
+
+LEGACY/binModel/derived/cylinderBin/cylinderBin.C
+LEGACY/binModel/derived/sphericalBins/sphericalBins.C
+LEGACY/binModel/derived/cuboidBinII/cuboidBinII.C
+LEGACY/binModel/derived/simpleBins/simpleBins.C
+LEGACY/binModel/derived/cuboidBin/cuboidBin.C
+LEGACY/binModel/derived/radialBinsNormalised/radialBinsNormalised.C
+LEGACY/binModel/derived/angularBins/angularBins.C
+LEGACY/binModel/derived/radialBins/radialBins.C
+LEGACY/binModel/derived/multiZoneBins/multiZoneBins.C
+LEGACY/binModel/derived/uniformBins/uniformBins.C
+
+LIB = $(FOAM_USER_LIBBIN)/libUSP

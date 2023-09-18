@@ -1,0 +1,121 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale 1.0;
+
+halfAngle       2.5;
+radHalfAngle    #calc "degToRad($halfAngle)";
+
+radius1         0.01;
+radius2         0.03;
+
+z1               #calc "$radius1*sin($radHalfAngle)";
+minZ1            #calc "-1.0*$z1";
+
+z2               #calc "$radius2*sin($radHalfAngle)";
+minZ2            #calc "-1.0*$z2";
+
+vertices
+(
+    (-0.02 0 0)
+    (0 0 0)
+    (0  $radius1 $minZ1)
+    (-0.02 $radius1 $minZ1)
+    (0  $radius1 $z1)
+    (-0.02 $radius1 $z1)
+
+    (0 $radius2 $minZ2)
+    (-0.02 $radius2 $minZ2)
+    (0 $radius2 $z2)
+    (-0.02 $radius2 $z2)
+
+    (0.02 $radius1 $minZ1)
+    (0.02 $radius2 $minZ2)
+    (0.02 $radius1 $z1)
+    (0.02 $radius2 $z2)
+);
+
+blocks
+(
+    hex (0 1 2 3 0 1 4 5) (40 20 1) simpleGrading (1 1 1)
+    hex (3 2 6 7 5 4 8 9) (40 40 1) simpleGrading (1 1 1)
+    hex (2 10 11 6 4 12 13 8) (40 40 1) simpleGrading (1 1 1)
+);
+
+boundary
+(
+    flow
+    {
+        type patch;
+        faces
+        (
+            (0 3 5 0)
+			(3 7 9 5)
+            (7 6 8 9)
+            (6 11 13 8)
+            (10 11 13 12)
+        );
+    }
+
+    cylinder
+    {
+        type wall;
+        faces
+        (
+            (1 2 4 1)
+            (2 10 12 4)
+        );
+    }
+
+    wedgeFront
+    {
+        type wall;
+        faces
+        (
+            (0 1 2 3)
+            (3 2 6 7)
+            (2 10 11 6)
+        );
+    }
+
+    wedgeBack
+    {
+        type wall;
+        faces
+        (
+            (0 1 4 5)
+            (5 4 8 9)
+            (4 12 13 8)
+        );
+    }
+
+    symmetryPlane
+    {
+        type symmetryPlane;
+        faces
+        (
+            (0 1 1 0)
+        );
+    }
+)
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

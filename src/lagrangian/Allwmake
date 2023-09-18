@@ -1,0 +1,20 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+nProcs=1
+if [ $# -ne 0 ]
+then 
+
+   nProcs=$1;
+   
+   maxProcs=$(nproc) 
+   if [ $nProcs -gt $maxProcs ]
+   then 
+     nProcs=$maxProcs
+   fi
+   
+fi
+
+wmake -j $nProcs CloudWithModels
+wmake -j $nProcs USP
+

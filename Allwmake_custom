@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -e
+
+userName=`whoami`
+
+currentDir=`pwd`
+sendingDir="$WM_PROJECT_USER_DIR"
+
+nProcs=1
+if [ $# -ne 0 ]
+then 
+
+   nProcs=$1;
+   
+   maxProcs=$(nproc) 
+   if [ $nProcs -gt $maxProcs ]
+   then 
+     nProcs=$maxProcs
+   fi
+   
+fi
+
+mkdir -p $sendingDir
+
+# copy new files --------------------------------------------------------------
+foldersSrc="lagrangian hybrid"
+foldersApp="solvers utilities"
+
+for folder in $foldersSrc
+do
+  mkdir -p $sendingDir/src/$folder
+  cp -r $currentDir/src/$folder $sendingDir/src/`dirname $folder`
+done
+
+for folder in $foldersApp
+do
+  mkdir -p $sendingDir/applications/$folder
+  cp -r $currentDir/applications/$folder $sendingDir/applications/`dirname $folder`
+done
+
+mkdir -p $sendingDir/run
+cp -r $currentDir/tutorials/uspFoam $sendingDir/run/MNF-2206-tutorials
+
+# compile libraries
+cd $sendingDir/src/lagrangian/
+wclean all
+./Allwmake $nProcs
+
+# compile new executables
+#---- solvers ----
+cd $sendingDir/applications/solvers/discreteMethods/uspFoam
+wclean
+wmake
+
+#---- utilities ----
+cd $sendingDir/applications/utilities/preProcessing/USP/calcUspDecompWeight
+wclean
+wmake
+

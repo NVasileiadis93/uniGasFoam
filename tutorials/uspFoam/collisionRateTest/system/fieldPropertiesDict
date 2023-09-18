@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fieldPropertiesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+uspFields
+(	 
+    field
+    {
+        fieldModel          	uspZone;
+
+        timeProperties
+        {
+            timeOption          write;
+            resetAtOutput		off;
+        }
+
+        uspZoneProperties
+        {
+             zone				uspZone;
+             field               O2;
+             typeIds                 (O2);
+             measureCollisionRateOnly   true;
+        }
+    }  
+);
+
+// ************************************************************************* //
