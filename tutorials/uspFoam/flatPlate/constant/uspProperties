@@ -1,0 +1,108 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      uspProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solution
+{
+    active          yes;
+    coupled         yes;
+    cellValueSourceCorrection no;
+    calcFrequency   1;
+    maxTrackTime    1e9;
+    sourceTerms
+    {
+        resetOnStartup  no;
+        schemes
+        {}
+    }
+}
+
+// General Properties
+// ~~~~~~~~~~~~~~~~~~
+
+nEquivalentParticles            1.3E+7;
+chemicalReactions		        false;
+chargedParticles                false;
+adsorption                      false;
+
+// Axisymmetric Properties
+// ~~~~~~~~~~~~~~~~~~
+
+cellWeightedSimulation      true;
+particlesPerCell            50;
+
+axisymmetricSimulation      false;
+
+
+// Collision Model
+// ~~~~~~~~~~~~~~~~~~~~~~
+collisions
+{
+
+    collisionModelType               	hybridCollision; //binaryCollision, relaxationCollision, hybridCollision
+    relaxationModel                     EllipsoidalStatisticalRelaxation;
+    collisionPartnerSelectionModel  	noTimeCounter;
+    BinaryCollisionModel                VariableHardSphere;
+
+    collisionCoeffs
+    {
+        Tref                            273;
+    }
+
+    hybridProperties
+    {
+        decomposeInterval       500;
+        bMax                    0.2;
+    }
+
+}
+
+// chemical reaction Model
+//~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//ChemicalReactionModel          QuantumKineticModel;
+
+// Molecular species
+// ~~~~~~~~~~~~~~~~~
+
+typeIdList                      (Ar);
+
+moleculeProperties
+{
+  	Ar
+    {
+        mass                            		66.3e-27;
+        diameter                        		3.63E-10;
+        rotationalDegreesOfFreedom        		0;
+		vibrationalModes        				0;
+        omega                           		0.5;
+        alpha                                   1.0;
+        Tref                                    273;
+		characteristicVibrationalTemperature	();
+        dissociationTemperature            		();
+        ionisationTemperature            		0;
+		charDissQuantumLevel					();
+		Zref 									();
+		referenceTempForZref                    ();
+        charge                                  0;
+        numberOfElectronicLevels                1;
+        electronicEnergyList                    (0);
+        degeneracyList                          (1);
+    }
+}
+
+
+// ************************************************************************* //
