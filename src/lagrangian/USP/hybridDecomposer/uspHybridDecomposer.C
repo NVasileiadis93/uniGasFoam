@@ -45,6 +45,8 @@ uspHybridDecomposer::uspHybridDecomposer
     nAvTimeSteps_(0),
     decomposeInterval_(dict.subDict("hybridProperties").get<label>("decomposeInterval")),
     bMax_(dict.subDict("hybridProperties").get<scalar>("bMax")),
+    smoothingPasses_(dict.subDict("hybridProperties").get<scalar>("smoothingPasses")),
+    refinementPasses_(dict.subDict("hybridProperties").get<scalar>("refinementPasses")),
     Tref_(dict.subDict("collisionCoeffs").get<scalar>("Tref")),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -90,7 +92,8 @@ uspHybridDecomposer::uspHybridDecomposer
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     rhoN_
     (
@@ -694,7 +697,30 @@ void uspHybridDecomposer::update()
 
         }
 
-        // update domain decomposition
+        // smooth breakdown parameter
+        volScalarField breakdownParameter
+        (
+            IOobject
+            (
+                "breakdownParameter",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimless, Zero),
+            zeroGradientFvPatchScalarField::typeName
+        );
+
+        for (label pass=1; pass<=smoothingPasses_; pass++)
+        {
+            breakdownParameter = breakdownParameter_;
+            breakdownParameter_ = fvc::average(fvc::interpolate(breakdownParameter));
+            breakdownParameter_.correctBoundaryConditions();
+        }
+
+        // determine cell collision model
         forAll(mesh_.cells(), cell)
         {
             if (breakdownParameter_[cell] > bMax_)
@@ -704,6 +730,55 @@ void uspHybridDecomposer::update()
             else
             {
                 cloud_.cellCollModel()[cell] = cloud_.relCollModel();
+            }
+        }
+
+        //Remove isolated or single face connected cells
+        for (label pass=1; pass<=100; pass++)
+        {
+            forAll(mesh_.cells(), cellI)
+            {
+
+                if (cloud_.cellCollModel()[cellI] == cloud_.binCollModel())
+                {
+
+                    label adjacentBinCollCells=0;
+                    
+                    forAll(mesh_.cellCells()[cellI], cellJ)
+                    {
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
+                        {
+                            adjacentBinCollCells++;
+                        }
+                    }
+                    
+                    if (adjacentBinCollCells <= 1)
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();   
+                    }
+
+                }
+
+                if (cloud_.cellCollModel()[cellI] == cloud_.relCollModel())
+                {
+
+                    label adjacentRelCollCells=0;
+                    
+                    forAll(mesh_.cellCells()[cellI], cellJ)
+                    {
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.relCollModel())
+                        {
+                            adjacentRelCollCells++;
+                        }
+                    }
+                    
+                    if (adjacentRelCollCells <= 1)
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();   
+                    }
+
+                }
+
             }
         }
 

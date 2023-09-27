@@ -70,11 +70,19 @@ class uspHybridDecomposer
         Random& rndGen_;
 
         label timeSteps_;
+
         label nAvTimeSteps_;
 
         label decomposeInterval_;
+
         scalar bMax_;
+
+        label smoothingPasses_;
+
+        label refinementPasses_;
+
         scalar Tref_;
+
         labelList typeIds_;        
 
         // cell measurements
