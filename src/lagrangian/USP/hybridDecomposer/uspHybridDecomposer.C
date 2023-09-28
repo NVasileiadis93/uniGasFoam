@@ -665,7 +665,7 @@ void uspHybridDecomposer::update()
             }
             massMean /= rhoNMean_[cell];
 
-            scalar u0(
+            scalar mostProbSpeed(
                 cloud_.maxwellianMostProbableSpeed
                 (
                     translationalT_[cell],
@@ -673,27 +673,7 @@ void uspHybridDecomposer::update()
                 )
             );
 
-            scalar maxHeatFlux = VSMALL;
-            forAll(heatFluxVector_[cell], i) 
-            {
-                if (maxHeatFlux < fabs(heatFluxVector_[cell][i])) 
-                {
-                    maxHeatFlux = fabs(heatFluxVector_[cell][i]);
-                }
-            }
-            maxHeatFlux = 2.0*maxHeatFlux/(p_[cell]*u0);
-
-            scalar maxShearStress = VSMALL;
-            forAll(shearStressTensor_[cell],i) 
-            {
-                if (maxShearStress < fabs(shearStressTensor_[cell][i])) 
-                {
-                    maxShearStress = fabs(shearStressTensor_[cell][i]);
-                }
-            }
-            maxShearStress = maxShearStress/p_[cell];
-
-            breakdownParameter_[cell] = max(maxHeatFlux,maxShearStress);
+            breakdownParameter_[cell] = max(mag(heatFluxVector_[cell]),mag(shearStressTensor_[cell])/mostProbSpeed)/p_[cell];
 
         }
 
