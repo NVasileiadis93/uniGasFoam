@@ -673,7 +673,7 @@ void uspHybridDecomposer::update()
                 )
             );
 
-            breakdownParameter_[cell] = max(mag(heatFluxVector_[cell]),mag(shearStressTensor_[cell])/mostProbSpeed)/p_[cell];
+            breakdownParameter_[cell] = max(mag(heatFluxVector_[cell])/mostProbSpeed,mag(shearStressTensor_[cell]))/p_[cell];
 
         }
 
