@@ -238,7 +238,7 @@ void Foam::uspCLLWallPatch::controlParticle
             );
     }
 
-    if (rotationalDof == 3) // polyatomic case, see Bird's USP2.FOR code
+    if (rotationalDof == 3) // polyatomic case, see Bird's DSMC2.FOR code
     {
         scalar X = 0.0;
         scalar A = 0.0;

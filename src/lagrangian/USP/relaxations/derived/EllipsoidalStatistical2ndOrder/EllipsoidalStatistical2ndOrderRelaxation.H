@@ -8,10 +8,10 @@
 License
     This file is part of OpenFOAM.
 
-    OpenFOAM is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    OpenFOAM is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version.
 
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,32 +19,29 @@ License
     for more details.
 
     You should have received a copy of the GNU General Public License
-    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+    along with OpenFOAM; if not, write to the Free Software Foundation,
+    Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    Foam::uspHybridDecomposer
+    EllipsoidalStatistical2ndOrderRelaxation
 
 Description
-    Basic/abstract class of a controller
+    Relaxes particles to local Chapman-Enskog distributions
 
 SourceFiles
-    uspHybridDecomposer.C
+    EllipsoidalStatistical2ndOrderRelaxation.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uspHybridDecomposer_H
-#define uspHybridDecomposer_H
+#ifndef EllipsoidalStatistical2ndOrderRelaxation_H
+#define EllipsoidalStatistical2ndOrderRelaxation_H
 
-#include "IOdictionary.H"
-#include "autoPtr.H"
-#include "fvMesh.H"
+#include "relaxationModel.H"
+#include "vector.H"
 #include "polyMesh.H"
-#include "fvc.H"
-#include "volFields.H"
-#include "vectorField.H"
-#include "tensorField.H"
-#include "Random.H"
-#include "uspParcel.H"
+#include "uspCloud.H"
+#include "interpolationCellPoint.H"
+#include "interpolationCellPointFace.H"
 #include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -53,39 +50,19 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class uspHybridDecomposer Declaration
+                        class EllipsoidalStatistical2ndOrderRelaxation Declaration
 \*---------------------------------------------------------------------------*/
 
-class uspHybridDecomposer
+class EllipsoidalStatistical2ndOrderRelaxation
+:
+    public relaxationModel
 {
-
     // Private data
+    
+        label infoCounter_;
 
-        const dictionary& dict_;
+        labelList typeIds_;
 
-        const fvMesh& mesh_;
-
-        uspCloud& cloud_;
-
-        Random& rndGen_;
-
-        label timeSteps_;
-
-        label nAvTimeSteps_;
-
-        label decomposeInterval_;
-
-        scalar bMax_;
-
-        label smoothingPasses_;
-
-        label refinementPasses_;
-
-        scalar Tref_;
-
-        labelList typeIds_;        
-
-        // cell measurements
         scalarField rhoNMean_;
         scalarField rhoNMeanXnParticle_;
         scalarField rhoNMeanInt_;
@@ -120,49 +97,68 @@ class uspHybridDecomposer
         List<scalarField> nGroundElectronicLevel_;
         List<scalarField> nFirstElectronicLevel_;
 
-        // fields required for decomposition
-        volScalarField breakdownParameter_;
+        volScalarField Prandtl_;
+        volScalarField relaxFreq_;
         volScalarField rhoN_;
-        volScalarField rhoM_;
         volScalarField p_;
         volScalarField translationalT_;
         volScalarField rotationalT_;
         volScalarField vibrationalT_;
         volScalarField electronicT_;
+        volScalarField overallT_;
         volVectorField UMean_;
-        volVectorField heatFluxVector_;
         volTensorField pressureTensor_;
-        volTensorField shearStressTensor_;
 
     // Private Member Functions
 
 public:
 
-    //- Construct from components
-    uspHybridDecomposer
+    //- Runtime type information
+    TypeName("EllipsoidalStatistical2ndOrderRelaxation");
+
+    //- Construct from componentsonst label& cell
+    EllipsoidalStatistical2ndOrderRelaxation
     (
         const dictionary& dict,
-        const fvMesh& mesh,
+        const polyMesh& mesh,
         uspCloud& cloud
     );
 
     //- Destructor
-    virtual ~uspHybridDecomposer() = default;
+    virtual ~EllipsoidalStatistical2ndOrderRelaxation() = default;
+
 
     // Member Functions
 
-    void update();
- 
+        //- Calculate macroscopic quantities
+        virtual void calculateProperties();
+
+        //- Reset macroscopic quantities
+        virtual void resetProperties();
+
+        //- Change post-collision velocities to conserve momentum and energy
+        virtual void conserveMomentumAndEnergy(const label& cell);
+
+        //- Relax particles
+        virtual void relax();
+
+        //- Sample linear velocity from CE distribution
+        vector samplePostRelaxationVelocity
+        (   
+            const scalar& m,
+            const scalar& Pr,
+            const scalar& p,
+            const scalar& T,
+            const vector& U,
+            const tensor& pT
+        );
+
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-//#include "uspDynamicLoadBalancingI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

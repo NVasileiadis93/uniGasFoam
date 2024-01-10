@@ -465,7 +465,9 @@ Foam::uspCloud::uspCloud
     typeIdList_(particleProperties_.lookup("typeIdList")),
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
-    particlesPerCell_(0.0),
+    particlesPerSubcell_(0.0),
+    maxCellWeightRatio_(0.0),
+    dynamicAdaptation_(particleProperties_.get<Switch>("dynamicSimulation")),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
     radialExtent_(0.0),
     maxRWF_(1.0),
@@ -509,6 +511,20 @@ Foam::uspCloud::uspCloud
         dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
+    subcellLevels_
+    (
+        IOobject
+        (
+            this->name() + "SubcellLevels",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar(dimensionSet(0, 0, 0, 0, 0), One),
+        zeroGradientFvPatchScalarField::typeName
+    ),
     cellCollisionModel_
     (
         IOobject
@@ -529,6 +545,7 @@ Foam::uspCloud::uspCloud
     //rndGen_(1.0),
     controllers_(t, mesh, *this),
     dynamicLoadBalancing_(t, *this),
+    dynamicAdapter_(particleProperties_, mesh_, *this),
     hybridDecomposer_(particleProperties_.subDict("collisions"), mesh_, *this),
     fields_(t, mesh, *this),
     boundaries_(t, mesh, *this),
@@ -551,7 +568,10 @@ Foam::uspCloud::uspCloud
 
     if (cellWeighted_)
     {
-        particlesPerCell_ = particleProperties_.get<scalar>("particlesPerCell");
+        minParticlesPerSubcell_ = particleProperties_.get<label>("minParticlesPerSubcell");
+        particlesPerSubcell_ = particleProperties_.get<label>("particlesPerSubcell");
+        maxCellWeightRatio_ = particleProperties_.get<scalar>("maxCellWeightRatio");
+        maxSmoothingPasses_ = particleProperties_.get<label>("maxSmoothingPasses");
     }
 
     if (axisymmetric_)
@@ -572,6 +592,21 @@ Foam::uspCloud::uspCloud
 
         // Read parcels
         uspParcel::readFields(*this);
+
+        // Read subcell levels
+        volScalarField fetchSubcellLevels
+        (
+            IOobject
+            (
+                this->name() + "SubcellLevels",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_
+        );
+        subcellLevels_ = fetchSubcellLevels;
 
         // Read cell weight
         volScalarField fetchCellWeightFactor
@@ -628,10 +663,50 @@ Foam::uspCloud::uspCloud
         Info<< nl << "Initial no. of parcels: " << initialParcels
             << nl << endl; 
 
+
+        // Select collision model: binary, relaxation, hybrid
+        const dictionary& collisionDict = particleProperties_.subDict("collisions");
+        collisionModel_ = collisionDict.get<word>("collisionModelType");
+
+        if (collisionModel_ == binaryCollModel_)
+        {
+            Info << "Simulation collision model is: Binary" << nl << endl;
+            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
+            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
+            collisionPartnerSelectionModel_->initialConfiguration();    
+        }
+        else if (collisionModel_ == relaxationCollModel_)
+        {
+            Info << "Simulation collision model is: Relaxation" << nl << endl;
+            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
+        }
+        else if (collisionModel_ == hybridCollModel_)
+        {
+            Info << "Simulation collision model is: Hybrid" << nl << endl;
+            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
+            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
+            collisionPartnerSelectionModel_->initialConfiguration();
+            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);  
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Collision type " << collisionModel_ 
+                << " is not recognised. Collision type should be "
+                << binaryCollModel_ << ", "
+                << relaxationCollModel_ << " or "
+                << hybridCollModel_ 
+                << exit(FatalError);        
+        }
+
     }
     else
     {
 
+        // Set initial subcellLevels
+        subcellLevels_ = 2;
+
+        // Initialize particles
         label initialParcels = this->size();
 
         if (Pstream::parRun())
@@ -654,6 +729,44 @@ Foam::uspCloud::uspCloud
             << ", total no. of parcels: " << finalParcels
             << nl << endl;  
 
+        // Select collision model: binary, relaxation, hybrid
+        const dictionary& collisionDict = particleProperties_.subDict("collisions");
+        collisionModel_ = collisionDict.get<word>("collisionModelType");
+
+        if (collisionModel_ == binaryCollModel_)
+        {
+            Info << "Simulation collision model is: Binary" << nl << endl;
+            cellCollisionModel_ = binCollModel_;
+            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
+            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
+            collisionPartnerSelectionModel_->initialConfiguration();    
+        }
+        else if (collisionModel_ == relaxationCollModel_)
+        {
+            Info << "Simulation collision model is: Relaxation" << nl << endl;
+            cellCollisionModel_ = relCollModel_;
+            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
+        }
+        else if (collisionModel_ == hybridCollModel_)
+        {
+            Info << "Simulation collision model is: Hybrid" << nl << endl;
+            cellCollisionModel_ = relCollModel_;
+            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
+            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
+            collisionPartnerSelectionModel_->initialConfiguration();
+            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);  
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Collision type " << collisionModel_ 
+                << " is not recognised. Collision type should be "
+                << binaryCollModel_ << ", "
+                << relaxationCollModel_ << " or "
+                << hybridCollModel_ 
+                << exit(FatalError);        
+        }
+
     }
 
     reactions_.initialConfiguration();
@@ -665,50 +778,6 @@ Foam::uspCloud::uspCloud
     forAll(collisionSelectionRemainder_, i)
     {
         collisionSelectionRemainder_[i] = rndGen_.sample01<scalar>();
-    }
-
-    // Select collision model: binary, relaxation, hybrid
-    const dictionary& collisionDict = particleProperties_.subDict("collisions");
-    collisionModel_ = collisionDict.get<word>("collisionModelType");
-
-    if (collisionModel_ == binaryCollModel_)
-    {
-
-        Info << "Simulation collision model is: Binary" << nl << endl;
-        cellCollisionModel_ = binCollModel_;
-        binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-        collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-        collisionPartnerSelectionModel_->initialConfiguration();    
-
-    }
-    else if (collisionModel_ == relaxationCollModel_)
-    {
-
-        Info << "Simulation collision model is: Relaxation" << nl << endl;
-        cellCollisionModel_ = relCollModel_;
-        relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
-
-    }
-    else if (collisionModel_ == hybridCollModel_)
-    {
-        Info << "Simulation collision model is: Hybrid" << nl << endl;
-
-        cellCollisionModel_ = relCollModel_;
-        binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-        collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-        collisionPartnerSelectionModel_->initialConfiguration();
-        relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);  
-
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Collision type " << collisionModel_ 
-            << " is not recognised. Collision type should be "
-            << binaryCollModel_ << ", "
-            << relaxationCollModel_ << " or "
-            << hybridCollModel_ 
-            << exit(FatalError);        
     }
 
     cellMeas_.createFields();
@@ -808,9 +877,9 @@ void Foam::uspCloud::evolve()
     if (collisionModel_ == relaxationCollModel_ || 
         collisionModel_ == hybridCollModel_)
     {
-        cellMeas_.calculateFields(false);
+        cellMeas_.calculateFields(true);
         relaxations();
-        cellMeas_.clean(false);
+        cellMeas_.clean(true);
     }
 
     // Update cell occupancy (reactions may have changed it)
@@ -823,11 +892,6 @@ void Foam::uspCloud::evolve()
 
     cellMeas_.calculateFields(true);
 
-    if (collisionModel_ == hybridCollModel_)
-    {
-        hybridDecomposer_.update();
-    }
-
     fields_.calculateFields();
     fields_.writeFields();
 
@@ -836,6 +900,18 @@ void Foam::uspCloud::evolve()
 
     boundaries_.calculateProps();
     boundaries_.outputResults();
+
+    if (collisionModel_ == hybridCollModel_)
+    {
+        hybridDecomposer_.update();
+    }
+
+    if (dynamicAdaptation())
+    {
+        dynamicAdapter_.update();
+        cellWeighting();
+        buildCellOccupancy();
+    }
 
     trackingInfo_.clean();
     boundaryMeas_.clean();

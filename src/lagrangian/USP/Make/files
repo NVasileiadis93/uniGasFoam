@@ -7,11 +7,11 @@ clouds/uspCloud.C
 
 
 /* INITIALISE USP */
-initaliseUspParcels/basic/uspConfiguration/uspConfiguration.C
-initaliseUspParcels/basic/uspAllConfigurations/uspAllConfigurations.C
-initaliseUspParcels/derived/uspMeshFill/uspMeshFill.C
-initaliseUspParcels/derived/uspZoneFill/uspZoneFill.C
-initaliseUspParcels/derived/uspMeshFieldFill/uspMeshFieldFill.C
+initialiseUspParcels/basic/uspConfiguration/uspConfiguration.C
+initialiseUspParcels/basic/uspAllConfigurations/uspAllConfigurations.C
+initialiseUspParcels/derived/uspMeshFill/uspMeshFill.C
+initialiseUspParcels/derived/uspZoneFill/uspZoneFill.C
+initialiseUspParcels/derived/uspMeshFieldFill/uspMeshFieldFill.C
 
 
 /* REACTIONS */
@@ -33,15 +33,21 @@ reactions/derived/dissociationIonisationTypeIDissimilarSpecies/dissociationIonis
 reactions/derived/dissociationIonisationExchange/dissociationIonisationExchange.C
 
 
+/* ADAPTER */
+dynamicAdaptation/uspDynamicAdapter.C
+
+
 /* DECOMPOSER */
-hybridDecomposer/uspHybridDecomposer.C
+hybridDecomposition/uspHybridDecomposer.C
 
 
 /* RELAXATIONS */
 relaxations/basic/relaxationModel/relaxationModel.C
 relaxations/derived/BGK/BGKRelaxation.C
 relaxations/derived/EllipsoidalStatistical/EllipsoidalStatisticalRelaxation.C
+relaxations/derived/EllipsoidalStatistical2ndOrder/EllipsoidalStatistical2ndOrderRelaxation.C
 relaxations/derived/ChapmanEnskog/ChapmanEnskogRelaxation.C
+relaxations/derived/ChapmanEnskogMA/ChapmanEnskogRelaxationMA.C
 
 
 /* BINARY COLLISIONS */

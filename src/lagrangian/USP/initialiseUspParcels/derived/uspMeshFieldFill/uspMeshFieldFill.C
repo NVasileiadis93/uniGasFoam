@@ -196,6 +196,15 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
         forAll(mesh_.cells(), celli)
         {
 
+            label geometricDims = 0;
+            forAll(mesh_.geometricD(), dim)
+            {
+                if (mesh_.geometricD()[dim] == 1)
+                {
+                    geometricDims++;
+                }    
+            }
+
             scalar totalNumberDensity = 0.0;
             forAll(molecules, i)
             {
@@ -205,7 +214,7 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
 
             scalar RWF = cloud_.axiRWF(meshCC[celli]);
             cloud_.cellWeightFactor().primitiveFieldRef()[celli] =
-                (totalNumberDensity*meshV[celli])/(cloud_.particlesPerCell()*cloud_.nParticle()*RWF);
+                (totalNumberDensity*meshV[celli])/(cloud_.particlesPerSubcell()*pow(cloud_.subcellLevels()[celli],geometricDims)*cloud_.nParticle()*RWF);
 
         }
         cloud_.cellWeightFactor().correctBoundaryConditions();

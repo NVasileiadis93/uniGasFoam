@@ -359,6 +359,7 @@ void Foam::cellMeasurements::clean
                 mccu_[iD][cell] =  0.0;
                 mccv_[iD][cell] =  0.0;
                 mccw_[iD][cell] =  0.0;
+
                 eu_[iD][cell] =  0.0;
                 ev_[iD][cell] =  0.0;
                 ew_[iD][cell] =  0.0;
@@ -378,7 +379,7 @@ void Foam::cellMeasurements::clean
 
                 forAll(vibrationalETotal_[iD], v)
                 {
-                vibrationalETotal_[iD][v][cell] = 0.0;
+                    vibrationalETotal_[iD][v][cell] = 0.0;
                 }
 
             }
@@ -408,15 +409,15 @@ void Foam::cellMeasurements::calculateFields
             if (calculateAll || (!calculateAll && cloud_.cellCollModel(cell) == cloud_.relCollModel()))
             {
 
-                const scalar CWF = cloud_.cellWF(p.cell());
-                const scalar RWF = cloud_.axiRWF(p.position());
-                const scalar mass = cloud_.constProps(p.typeId()).mass();
+                const scalar& CWF = p.CWF();
+                const scalar& RWF = p.RWF();
+                const scalar& mass = cloud_.constProps(p.typeId()).mass();
                 const scalar massByMagUsq = mass*magSqr(p.U());
                 const scalarList& electronicEnergies = cloud_.constProps(typeIds_[iD]).electronicEnergyList();
-                const label rotationalDof = cloud_.constProps(p.typeId()).rotationalDoF();
-                const scalar xVel = p.U().x();
-                const scalar yVel = p.U().y();
-                const scalar zVel = p.U().z();
+                const label& rotationalDof = cloud_.constProps(p.typeId()).rotationalDoF();
+                const scalar& xVel = p.U().x();
+                const scalar& yVel = p.U().y();
+                const scalar& zVel = p.U().z();
                 const vector& U = p.U();
 
                 scalarList EVib(cloud_.constProps(typeIds_[iD]).vibrationalDoF());

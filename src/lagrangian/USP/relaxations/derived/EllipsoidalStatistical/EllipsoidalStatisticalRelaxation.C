@@ -184,87 +184,74 @@ void Foam::EllipsoidalStatisticalRelaxation::calculateProperties
 
     }
 
-    if (rhoNMean_ > VSMALL)
-    {
-        const scalar cellVolume = mesh_.cellVolumes()[cell];
+    const scalar cellVolume = mesh_.cellVolumes()[cell];
 
-        // Number density
-        rhoN_ = rhoNMeanXnParticle_/cellVolume;
+    // Number density
+    rhoN_ = rhoNMeanXnParticle_/cellVolume;
 
+    // Velocity
+    scalar rhoMMean = rhoMMeanXnParticle_/cellVolume;
+    UMean_ = momentumMeanXnParticle_/(rhoMMean*cellVolume);
 
-        // Velocity
-        scalar rhoMMean = rhoMMeanXnParticle_/cellVolume;
-        UMean_ = momentumMeanXnParticle_/(rhoMMean*cellVolume);
+    // Translational temperature
+    scalar linearKEMean = 0.5*linearKEMeanXnParticle_/cellVolume;
+    scalar rhoNMean = rhoNMeanXnParticle_/cellVolume;
 
-        // Translational temperature
-        scalar linearKEMean = 0.5*linearKEMeanXnParticle_/cellVolume;
-        scalar rhoNMean = rhoNMeanXnParticle_/cellVolume;
-
-        translationalT_ =
-            2.0/(3.0*physicoChemical::k.value()*rhoNMean)
-           *(
-                linearKEMean
-              - 0.5*rhoMMean*(UMean_ & UMean_)
-            );
-
-        // Pressure
-        p_ =
-            rhoN_*physicoChemical::k.value()
-            *translationalT_;
-
-        // Pressure tensor
-        pressureTensor_.xx() = rhoN_*
-        (
-            muu_/(rhoNMean_) -
-            (
-                (rhoMMean_/(rhoNMean_))
-                *UMean_.x()*UMean_.x()
-            )
-        );
-        pressureTensor_.xy() = rhoN_*
-        (
-            muv_/(rhoNMean_) -
-            ((rhoMMean_/(rhoNMean_)))
-            *UMean_.x()*UMean_.y()
-
-        );
-        pressureTensor_.xz() = rhoN_*
-        (
-            muw_/(rhoNMean_) -
-            ((rhoMMean_/(rhoNMean_))
-            *UMean_.x()*UMean_.z())
-        );
-        pressureTensor_.yx() = pressureTensor_.xy();
-        pressureTensor_.yy() = rhoN_*
-        (
-            mvv_/(rhoNMean_) -
-            ((rhoMMean_/(rhoNMean_)))
-            *UMean_.y()*UMean_.y()
-        );
-        pressureTensor_.yz() = rhoN_*
-        (
-            mvw_/(rhoNMean_) -
-            ((rhoMMean_/(rhoNMean_))
-            *UMean_.y()*UMean_.z())
-        );
-        pressureTensor_.zx() = pressureTensor_.xz();
-        pressureTensor_.zy() = pressureTensor_.yz();
-        pressureTensor_.zz() = rhoN_*
-        (
-            mww_/(rhoNMean_) -
-            ((rhoMMean_/(rhoNMean_))
-            *UMean_.z()*UMean_.z())
+    translationalT_ =
+        2.0/(3.0*physicoChemical::k.value()*rhoNMean)
+       *(
+            linearKEMean
+          - 0.5*rhoMMean*(UMean_ & UMean_)
         );
 
-    }
-    else
-    {
-        rhoN_ = 0.0;
-        UMean_ = vector::zero;
-        p_ = 0.0;
-        translationalT_ = 0.0;
-        pressureTensor_ = tensor::zero;
-    }
+    // Pressure
+    p_ =
+        rhoN_*physicoChemical::k.value()
+        *translationalT_;
+
+    // Pressure tensor
+    pressureTensor_.xx() = rhoN_*
+    (
+        muu_/(rhoNMean_) -
+        (
+            (rhoMMean_/(rhoNMean_))
+            *UMean_.x()*UMean_.x()
+        )
+    );
+    pressureTensor_.xy() = rhoN_*
+    (
+        muv_/(rhoNMean_) -
+        ((rhoMMean_/(rhoNMean_)))
+        *UMean_.x()*UMean_.y()
+
+    );
+    pressureTensor_.xz() = rhoN_*
+    (
+        muw_/(rhoNMean_) -
+        ((rhoMMean_/(rhoNMean_))
+        *UMean_.x()*UMean_.z())
+    );
+    pressureTensor_.yx() = pressureTensor_.xy();
+    pressureTensor_.yy() = rhoN_*
+    (
+        mvv_/(rhoNMean_) -
+        ((rhoMMean_/(rhoNMean_)))
+        *UMean_.y()*UMean_.y()
+    );
+    pressureTensor_.yz() = rhoN_*
+    (
+        mvw_/(rhoNMean_) -
+        ((rhoMMean_/(rhoNMean_))
+        *UMean_.y()*UMean_.z())
+    );
+    pressureTensor_.zx() = pressureTensor_.xz();
+    pressureTensor_.zy() = pressureTensor_.yz();
+    pressureTensor_.zz() = rhoN_*
+    (
+        mww_/(rhoNMean_) -
+        ((rhoMMean_/(rhoNMean_))
+        *UMean_.z()*UMean_.z())
+    );
 
     // Rotational temperature
     if (rotationalDofMean_ > VSMALL)
@@ -338,7 +325,7 @@ void Foam::EllipsoidalStatisticalRelaxation::calculateProperties
 
         totalvDof += degreesOfFreedomSpecies[iD];
 
-        if(rhoNMeanInt_ > VSMALL && rhoNMean_ > VSMALL && nParcels_[iD] > VSMALL)
+        if(rhoNMeanInt_ > VSMALL && nParcels_[iD] > VSMALL)
         {
             scalar fraction = nParcels_[iD]/rhoNMeanInt_;
 
@@ -405,7 +392,6 @@ void Foam::EllipsoidalStatisticalRelaxation::calculateProperties
     {
         nRotDof = rotationalDofMean_ / rhoNMean_;
     }
-
     // Overall temperature
 
     overallT_ =
@@ -417,40 +403,42 @@ void Foam::EllipsoidalStatisticalRelaxation::calculateProperties
         )
        /(3.0 + nRotDof + totalvDof + totalEDof);
 
-    
-
     // Relaxation frequency !!!Check mixtures and vibrational-electronic DoF
-
-    viscosity_ = 0.0;
-    Prandtl_ = 0.0;
-    List<scalar> speciesVisc(typeIds_.size(), Zero);
-    List<scalar> speciesPrandtl(typeIds_.size(), Zero);
-
-    forAll(typeIds_, iD)
+    if (translationalT_ > VSMALL)
     {
+        viscosity_ = 0.0;
+        Prandtl_ = 0.0;
+        List<scalar> speciesVisc(typeIds_.size(), Zero);
+        List<scalar> speciesPrandtl(typeIds_.size(), Zero);
 
-        const scalar& Tref = cloud_.constProps(iD).Tref();
-        const scalar& mass = cloud_.constProps(iD).mass();
-        const scalar& omega = cloud_.constProps(iD).omega();
-        const scalar& d = cloud_.constProps(iD).d();
-        const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
+        forAll(typeIds_, iD)
+        {
 
-        scalar speciesViscRef = 
-            7.5*sqrt(mass*physicoChemical::k.value()*Tref)
-            /(sqrt(mathematical::pi)*(5.0-2.0*omega)*(7.0-2.0*omega)*sqr(d));
-        speciesVisc[iD] = speciesViscRef*pow(translationalT_/Tref,omega);
-        viscosity_ += nParcels_[iD]*speciesVisc[iD];
+            const scalar& Tref = cloud_.constProps(iD).Tref();
+            const scalar& mass = cloud_.constProps(iD).mass();
+            const scalar& omega = cloud_.constProps(iD).omega();
+            const scalar& d = cloud_.constProps(iD).d();
+            const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
 
-        speciesPrandtl[iD] += (5+rotDoF)/(7.5+rotDoF);
-        Prandtl_ += nParcels_[iD]*speciesPrandtl[iD];
+            scalar speciesViscRef = 
+                7.5*sqrt(mass*physicoChemical::k.value()*Tref)
+                /(sqrt(mathematical::pi)*(5.0-2.0*omega)*(7.0-2.0*omega)*sqr(d));
+            speciesVisc[iD] = speciesViscRef*pow(translationalT_/Tref,omega);
+            viscosity_ += nParcels_[iD]*speciesVisc[iD];
 
+            speciesPrandtl[iD] += (5+rotDoF)/(7.5+rotDoF);
+            Prandtl_ += nParcels_[iD]*speciesPrandtl[iD];
+
+        }
+        viscosity_ /= rhoNMean_;
+        Prandtl_ /= rhoNMean_; 
+
+        relaxFreq_ = Prandtl_*p_/viscosity_;
     }
-    
-    viscosity_ /= rhoNMean_;
-    Prandtl_ /= rhoNMean_; 
-
-    //Prandtl_[cell] = 1.0; // reduce to BGK
-    relaxFreq_ = Prandtl_*p_/viscosity_;
+    else
+    {
+        relaxFreq_ = 0.0;
+    }
 
 }
 
@@ -517,47 +505,50 @@ void Foam::EllipsoidalStatisticalRelaxation::relax()
     // Relax particles to local distribution
     label relaxations = 0;
 
-    List<DynamicList<uspParcel*>>&
-        cellOccupancy = cloud_.cellOccupancy();
+    List<DynamicList<uspParcel*>>& cellOccupancy = cloud_.cellOccupancy();
 
     forAll(cellOccupancy, cell)
     {
 
-        if (cloud_.cellCollModel(cell) == cloud_.relCollModel())
+        if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cellOccupancy[cell].size() >= 3)
         {
+
             // Calculate required macroscopic properties
             calculateProperties(cell);
 
-            const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cell]);
-
-            forAll(cellParcels, i)
+            if (translationalT_ > VSMALL)
             {
 
-                if (cloud_.rndGen().sample01<scalar>() < 1.0-exp(-relaxFreq_*deltaT)) //cloud_.rndGen().sample01<scalar>()
+                const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cell]);
+
+                forAll(cellParcels, i)
                 {
 
-                    uspParcel& p = *cellParcels[i];
-                    const scalar mass = cloud_.constProps(p.typeId()).mass();
+                    if (cloud_.rndGen().sample01<scalar>() < 1.0-exp(-relaxFreq_*deltaT)) //cloud_.rndGen().sample01<scalar>()
+                    {
 
-                    // Relax particle
-                    p.U() = samplePostRelaxationVelocity
-                            (
-                                mass,
-                                Prandtl_,
-                                p_,
-                                translationalT_,
-                                UMean_,
-                                pressureTensor_
-                            );
+                        uspParcel& p = *cellParcels[i];
+                        const scalar mass = cloud_.constProps(p.typeId()).mass();
 
+                        // Relax particle
+                        p.U() = samplePostRelaxationVelocity
+                                (
+                                    mass,
+                                    Prandtl_,
+                                    p_,
+                                    translationalT_,
+                                    UMean_,
+                                    pressureTensor_
+                                );
 
-
-                    relaxations++;
-                
+                        relaxations++;
+                    
+                    }
                 }
-            }
 
-            conserveMomentumAndEnergy(cell);
+                conserveMomentumAndEnergy(cell);
+
+            }
 
             resetProperties(cell);
 
@@ -628,10 +619,13 @@ void Foam::EllipsoidalStatisticalRelaxation::conserveMomentumAndEnergy
           - rhoMMeanXnParticle_*(postUMean & postUMean)
         );
 
-    forAll(cellParcels, i)
+    if (postTranslationalT > VSMALL)
     {
-            uspParcel& p = *cellParcels[i];
-            p.U() = UMean_ + (p.U()-postUMean)*sqrt(translationalT_/postTranslationalT);
+        forAll(cellParcels, i)
+        {
+                uspParcel& p = *cellParcels[i];
+                p.U() = UMean_ + (p.U()-postUMean)*sqrt(translationalT_/postTranslationalT);
+        }
     }
 
     //std::cout << "-------------------------------- ESBGK --------------------------------" << std::endl;

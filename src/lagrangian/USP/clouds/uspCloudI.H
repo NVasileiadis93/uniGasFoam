@@ -50,14 +50,34 @@ inline Foam::scalar Foam::uspCloud::nParticle() const
     return nParticle_;
 }
 
+inline bool Foam::uspCloud::dynamicAdaptation() const
+{
+    return dynamicAdaptation_;
+}
+
 inline bool Foam::uspCloud::cellWeighted() const
 {
     return cellWeighted_;
 }
 
-inline Foam::scalar Foam::uspCloud::particlesPerCell() const
+inline Foam::label Foam::uspCloud::particlesPerSubcell() const
 {
-    return particlesPerCell_;
+    return particlesPerSubcell_;
+}
+
+inline Foam::label Foam::uspCloud::minParticlesPerSubcell() const
+{
+    return minParticlesPerSubcell_;
+}
+
+inline Foam::scalar Foam::uspCloud::maxCellWeightRatio() const
+{
+    return maxCellWeightRatio_;
+}
+
+inline Foam::label Foam::uspCloud::maxSmoothingPasses() const
+{
+    return maxSmoothingPasses_;
 }
 
 inline Foam::scalar Foam::uspCloud::cellWF(const label& cell) const
@@ -75,12 +95,10 @@ inline Foam::scalar Foam::uspCloud::radialExtent() const
     return radialExtent_;
 }
 
-
 inline Foam::scalar Foam::uspCloud::maxRWF() const
 {
     return maxRWF_;
 }
-
 
 inline Foam::scalar Foam::uspCloud::axiRWF(const point& p) const
 {
@@ -93,23 +111,25 @@ inline Foam::scalar Foam::uspCloud::axiRWF(const point& p) const
     return 1.0;
 }
 
-
 inline bool Foam::uspCloud::axisymmetric() const
 {
     return axisymmetric_;
 }
-
 
 inline Foam::label Foam::uspCloud::nTerminalOutputs() const
 {
     return nTerminalOutputs_;
 }
 
+inline Foam::volScalarField& Foam::uspCloud::subcellLevels()
+{
+    return subcellLevels_;
+}
+
 inline Foam::volScalarField& Foam::uspCloud::cellWeightFactor()
 {
     return cellWeightFactor_;
 }
-
 
 inline Foam::volScalarField& Foam::uspCloud::sigmaTcRMax()
 {

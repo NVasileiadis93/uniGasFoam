@@ -134,23 +134,24 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
 {
     if (measurePropertiesAtWall_)
     {
-        const label wppIndex = patchId_;
+        const label& wppIndex = patchId_;
         const polyPatch& wpp = mesh_.boundaryMesh()[wppIndex];
-        const label wppLocalFace = wpp.whichFace(p.face());
+        const label& wppLocalFace = wpp.whichFace(p.face());
 
-        const scalar fA = mag(wpp.faceAreas()[wppLocalFace]);
+        const scalar& fA = mag(wpp.faceAreas()[wppLocalFace]);
 
-        const label typei = p.typeId();
+        const label& typei = p.typeId();
         const auto& constProps = cloud_.constProps(typei);
 
-        const scalar m = constProps.mass();
+        const scalar& m = constProps.mass();
+        const vector& U = p.U();
 
         vector nw = wpp.faceAreas()[wppLocalFace];
         nw /= mag(nw);
 
-        scalar U_dot_nw = p.U() & nw;
+        scalar U_dot_nw = U & nw;
 
-        const vector Ut = p.U() - U_dot_nw*nw;
+        const vector Ut = U - U_dot_nw*nw;
 
         scalar invMagUnfA = 1/max(mag(U_dot_nw)*fA, VSMALL);
 
@@ -169,10 +170,10 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
 
         bm.rhoMBF()[typei][wppIndex][wppLocalFace] += m*invMagUnfA;
         bm.linearKEBF()[typei][wppIndex][wppLocalFace] +=
-            0.5*m*(p.U() & p.U())*invMagUnfA;
+            0.5*m*(U & U)*invMagUnfA;
         bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] +=
-            m*(p.U() & p.U())*invMagUnfA;
-        bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*Ut*invMagUnfA;
+            m*(U & U)*invMagUnfA;
+        bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*U*invMagUnfA;
         bm.rotationalEBF()[typei][wppIndex][wppLocalFace] +=
             p.ERot()*invMagUnfA;
         bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] +=
@@ -194,7 +195,7 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
 
         // Pre-interaction energy
         preIE_ =
-            0.5*m*(p.U() & p.U())
+            0.5*m*(U & U)
           + p.ERot()
           + constProps.electronicEnergyList()[p.ELevel()];
 
@@ -210,7 +211,7 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
         }
 
         // pre-interaction momentum
-        preIMom_ = m*p.U();
+        preIMom_ = m*U;
     }
 }
 
@@ -223,28 +224,26 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
 {
     if (measurePropertiesAtWall_)
     {
-        const label wppIndex = patchId_;
+        const label& wppIndex = patchId_;
         const polyPatch& wpp = mesh_.boundaryMesh()[wppIndex];
-        const label wppLocalFace = wpp.whichFace(p.face());
-        const label wppCell = p.cell();
-        const scalar fA = mag(wpp.faceAreas()[wppLocalFace]);
+        const label& wppLocalFace = wpp.whichFace(p.face());
+        const label& wppCell = p.cell();
+        const scalar& fA = mag(wpp.faceAreas()[wppLocalFace]);
 
-        const scalar deltaT = mesh_.time().deltaTValue();
+        const scalar& deltaT = mesh_.time().deltaTValue();
 
-        const label typei = p.typeId();
-        const uspParcel::constantProperties& constProps
-        (
-            cloud_.constProps(typei)
-        );
+        const label& typei = p.typeId();
+        const auto& constProps = cloud_.constProps(typei);
 
         const scalar m = constProps.mass();
+        const vector& U = p.U();
 
         vector nw = wpp.faceAreas()[wppLocalFace];
         nw /= mag(nw);
 
-        scalar U_dot_nw = p.U() & nw;
+        scalar U_dot_nw = U & nw;
 
-        vector Ut = p.U() - U_dot_nw*nw;
+        vector Ut = U - U_dot_nw*nw;
 
         scalar invMagUnfA = 1.0/max(mag(U_dot_nw)*fA, VSMALL);
 
@@ -263,10 +262,10 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
 
         bm.rhoMBF()[typei][wppIndex][wppLocalFace] += m*invMagUnfA;
         bm.linearKEBF()[typei][wppIndex][wppLocalFace] +=
-            0.5*m*(p.U() & p.U())*invMagUnfA;
+            0.5*m*(U & U)*invMagUnfA;
         bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] +=
-            m*(p.U() & p.U())*invMagUnfA;
-        bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*Ut*invMagUnfA;
+            m*(U & U)*invMagUnfA;
+        bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*U*invMagUnfA;
         bm.rotationalEBF()[typei][wppIndex][wppLocalFace] +=
             p.ERot()*invMagUnfA;
         bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] +=
@@ -284,7 +283,7 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
 
         // post - interaction energy
         scalar postIE =
-            0.5*m*(p.U() & p.U())
+            0.5*m*(U & U)
           + p.ERot()
           + constProps.electronicEnergyList()[p.ELevel()];
 
@@ -299,7 +298,7 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
             }
         }
         // post - interaction momentum
-        const vector postIMom = m*p.U();
+        const vector postIMom = m*U;
 
         scalar CWF = cloud_.cellWF(wppCell);
         scalar RWF = cloud_.axiRWF(p.position());

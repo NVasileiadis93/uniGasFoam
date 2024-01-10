@@ -140,6 +140,7 @@ public:
         virtual void writeField() = 0;
 
         virtual void updateProperties(const dictionary& dict);
+        
 };
 
 

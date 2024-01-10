@@ -67,31 +67,13 @@ void Foam::noTimeCounter::collide()
         return;
     }
 
-    // Temporary storage for subCells
-    const vector solutionDims = cloud_.mesh().solutionD();
-
-    vector dimensionMultiplier = vector::zero;
-    label nSolutionDims = 0;
-    forAll(solutionDims, i)
-    {
-        if (solutionDims[i] == 1)
-        {
-            dimensionMultiplier[i] = pow(2,nSolutionDims);
-            nSolutionDims++;
-        }
-    }
-    const label nSubcells = pow(2,nSolutionDims);
-
-    List<DynamicList<label>> subCells(nSubcells);
-
     const scalar deltaT = cloud_.mesh().time().deltaTValue();
 
     label collisionCandidates = 0;
 
     label collisions = 0;
 
-    const List<DynamicList<uspParcel*>>&
-        cellOccupancy = cloud_.cellOccupancy();
+    const List<DynamicList<uspParcel*>>& cellOccupancy = cloud_.cellOccupancy();
 
     const polyMesh& mesh = cloud_.mesh();
 
@@ -100,6 +82,64 @@ void Foam::noTimeCounter::collide()
 
         if (cloud_.cellCollModel(cellI) == cloud_.binCollModel())
         {        
+
+            // Temporary storage for subCells
+            label nSolutionDims = 0;
+            vector solutionDims; 
+            vector dimWeight = vector::zero;
+            const label nSubcellLevels = cloud_.subcellLevels()[cellI];
+            
+            if (!cloud_.axisymmetric())
+            {
+                forAll(solutionDims, dim)
+                {
+                    solutionDims[dim] = cloud_.mesh().solutionD()[dim];
+                    if (solutionDims[dim] == 1)
+                    {
+                        dimWeight[dim] = pow(nSubcellLevels,nSolutionDims);
+                        nSolutionDims++;
+                    }
+                }
+            }
+            else
+            {
+                solutionDims.x() = 1;
+                solutionDims.y() = 1;
+                solutionDims.z() = -1;
+                dimWeight.x() = 1;
+                dimWeight.y() = nSubcellLevels;
+                dimWeight.z() = 0;
+                nSolutionDims = 2;
+            }    
+
+            vector minCellPoint = vector(GREAT, GREAT, GREAT);
+            vector maxCellPoint = vector(-GREAT, -GREAT, -GREAT);
+            const List<label>& cellNodes = mesh_.cellPoints()[cellI];
+
+            forAll(cellNodes, nodeI) 
+            {
+                const point& cellPoint = mesh_.points()[cellNodes[nodeI]];
+                minCellPoint.x() = min(minCellPoint.x(),cellPoint.x());
+                minCellPoint.y() = min(minCellPoint.y(),cellPoint.y());
+                minCellPoint.z() = min(minCellPoint.z(),cellPoint.z());
+                maxCellPoint.x() = max(maxCellPoint.x(),cellPoint.x());
+                maxCellPoint.y() = max(maxCellPoint.y(),cellPoint.y());
+                maxCellPoint.z() = max(maxCellPoint.z(),cellPoint.z());                
+            }
+            
+            const label nSubcells = pow(nSubcellLevels,nSolutionDims);
+
+            List<DynamicList<label>> subCells(nSubcells);
+
+            const vector cellLength = maxCellPoint - minCellPoint;
+
+            //std::cout << "-------------------------------------------------------"  << std::endl;
+            //std::cout << nSolutionDims << " " << nSubcellLevels << " " << nSubcells << std::endl;
+            //std::cout << solutionDims.x() << " " << solutionDims.y() << " " << solutionDims.z() << std::endl;
+            //std::cout << "-------------------------------------------------------"  << std::endl;
+            //std::cout << cellLength.x() << " " << cellLength.y() << " " << cellLength.z() << std::endl;
+            //std::cout << "-------------------------------------------------------"  << std::endl;
+            //std::cin.get();
 
             const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cellI]);
             const scalar cellVolume = mesh.cellVolumes()[cellI];
@@ -120,22 +160,42 @@ void Foam::noTimeCounter::collide()
                 // Inverse addressing specifying which subCell a parcel is in
                 List<label> whichSubCell(cellParcels.size());
 
-                point cC = mesh.cellCentres()[cellI];
+                vector dimPos = vector::zero;
 
                 forAll(cellParcels, i)
                 {
                     const uspParcel& p = *cellParcels[i];
 
-                    vector relPos(p.position() - cC);
+                    vector relPos(p.position() - minCellPoint);
 
-                    label subCell = pos(relPos.x())*dimensionMultiplier.x() 
-                                + pos(relPos.y())*dimensionMultiplier.y()  
-                                + pos(relPos.z())*dimensionMultiplier.z();
+                    forAll(solutionDims, dim)
+                    {
+                        if (solutionDims[dim] == 1)
+                        {
+                            for (label l = 0; l < nSubcellLevels; ++l)
+                            {
+                                
+                                if (relPos[dim] <= (l+1)/scalar(nSubcellLevels)*cellLength[dim])
+                                {
+                                    dimPos[dim] = l;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    label subCell = dimPos & dimWeight;
 
                     subCells[subCell].append(i);
 
                     whichSubCell[i] = subCell;
                 }
+
+                //forAll(subCells, i)
+                //{
+                //    std::cout << "SC: " << i << " " << subCells[i].size() << std::endl;
+                //}
+                //std::cin.get();
 
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

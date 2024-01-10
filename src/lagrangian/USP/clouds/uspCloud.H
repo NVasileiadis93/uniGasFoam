@@ -54,6 +54,7 @@ SourceFiles
 #include "uspFaceTracker.H"
 #include "uspControllers.H"
 #include "uspDynamicLoadBalancing.H"
+#include "uspDynamicAdapter.H"
 #include "uspHybridDecomposer.H"
 
 #include "uspReactions.H"
@@ -108,13 +109,27 @@ private:
         //- Number of real atoms/molecules represented by a parcel
         scalar nParticle_;
 
+        // dynamic simulation set-ups
+
+            //- Bool to identify is this is a subcell dynamic simulation
+            bool dynamicAdaptation_;
+
         // Cell weighted set-ups
             //- Bool to identify is this is a cell weighted simulation
             //  Movements dealt differently if true
             bool cellWeighted_;
 
-            //- Desired number of particles per cell
-            label particlesPerCell_;
+            //- Desired number of particles per subcell
+            label particlesPerSubcell_;
+
+            //- Minimum allowed number of particles per subcell
+            label minParticlesPerSubcell_;
+
+            //- Maximum allowed cell weight ratio between adjacent cells
+            scalar maxCellWeightRatio_;
+
+            //- Maximum allowed number of smoothing passes
+            label maxSmoothingPasses_;
 
         // Axisymmetric set-ups
 
@@ -127,7 +142,6 @@ private:
 
             //- Maximum radial scaling factor for axisymmetric simulations
             scalar maxRWF_;
-
 
         //- Write out the information to terminal every nTerminalOutputs
         label nTerminalOutputs_;
@@ -166,6 +180,9 @@ private:
         volScalarField sigmaTcRMax_;
 
         // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
+        volScalarField subcellLevels_;
+
+        // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
         volScalarField cellCollisionModel_;
 
         //- A field holding the remainder from the previous collision selections
@@ -185,6 +202,9 @@ private:
 
         //- hybrid decomposer
         uspHybridDecomposer hybridDecomposer_;
+
+        //- dynamic adapter
+        uspDynamicAdapter dynamicAdapter_;
 
         //- Fields
         uspFieldProperties fields_;
@@ -296,11 +316,24 @@ public:
         //- Return the number of real particles represented by one parcel
         inline scalar nParticle() const;
 
-        //- Return the bool to identify if this is a cell wighted simulation
+        //- Return the bool to identify if this is an dynamic subcell simulation
+        inline bool dynamicAdaptation() const;
+
+        //- Return the bool to identify if this is a cell weighted simulation
         //  Measurements, etc dealt differently if true
         inline bool cellWeighted() const;
 
-        inline scalar particlesPerCell() const;
+        //- Return the desired number of particles per subcell
+        inline label particlesPerSubcell() const;
+
+        //- Return the minimum allowed number of particles per subcell
+        inline label minParticlesPerSubcell() const;
+
+        //- Return the maximum allowed cell weight ratio between adjacent cells
+        inline scalar maxCellWeightRatio() const;
+
+        //- Return the maximum allowed number of smoothing passes
+        inline label maxSmoothingPasses() const;
 
         //- Return the cell weighting factor
         inline scalar cellWF(const label& cell) const;
@@ -323,6 +356,10 @@ public:
 
         //- Return the number of timesteps to write out to terminal at
         inline label nTerminalOutputs() const;
+
+        //- Return the subcellLevels field.  non - const access to allow
+        //- definition during initialisation and adaptation.
+        inline volScalarField& subcellLevels();
 
         //- Return the cellWeight field.  non - const access to allow
         //- definition during initialisation.
@@ -376,7 +413,7 @@ public:
 
         //- Generate a random rotational energy, sampled from the
         //- equilibrium distribution (Bird eqn 11.22 and 11.23 and
-        //- adapting code from usp3.FOR)
+        //- adapting code from DSMC3.FOR)
         scalar equipartitionRotationalEnergy
         (
             const scalar temperature,
@@ -475,8 +512,6 @@ public:
 
         //- Return reference to binary elastic collision model
         inline const BinaryCollisionModel& binaryCollision() const;
-
-        //- Return non-const reference to binary elastic collision model
         inline BinaryCollisionModel& binaryCollision();
 
         inline const uspBoundaries& boundaries() const;
@@ -493,6 +528,9 @@ public:
 
         inline const uspHybridDecomposer& hybridDecomposer() const;
         inline uspHybridDecomposer& hybridDecomposer();
+
+        inline const uspDynamicAdapter& dynamicAdapter() const;
+        inline uspDynamicAdapter& dynamicAdapter();
 
         inline const uspFaceTracker& tracker() const;
         inline uspFaceTracker& tracker();

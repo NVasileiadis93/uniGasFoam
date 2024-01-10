@@ -57,61 +57,65 @@ class ChapmanEnskogRelaxation
 {
     // Private data
 
+        label timestepCounter_;
+        scalar heatFluxX_;
+        scalar heatFluxY_;
+        scalar shearStressXY_;
+
         label infoCounter_;
-        scalar Pr_=1.0;
-        
-        volScalarField relaxationFrequency_;
-        volScalarField rhoN_;
-        volScalarField rhoM_;
-        volScalarField p_;
-        volScalarField translationalT_;
-        volScalarField rotationalT_;
-        volScalarField vibrationalT_;
-        volScalarField electronicT_;
-        volScalarField overallT_;
-        volVectorField UMean_;
-        volVectorField heatFluxVector_;
-        volTensorField pressureTensor_;
-        volTensorField stressTensor_;
 
         labelList typeIds_;
-        scalarField rhoNMean_;
-        scalarField rhoNInstantaneous_;
-        scalarField rhoNMeanXnParticle_;
-        scalarField rhoNMeanInt_;
-        scalarField molsElec_;
-        scalarField rhoMMean_;
-        scalarField rhoMMeanXnParticle_;
-        scalarField linearKEMean_;
-        scalarField linearKEMeanXnParticle_;
-        scalarField rotationalEMean_;
-        scalarField rotationalDofMean_;
-        scalarField muu_;
-        scalarField muv_;
-        scalarField muw_;
-        scalarField mvv_;
-        scalarField mvw_;
-        scalarField mww_;
-        scalarField mcc_;
-        scalarField mccu_;
-        scalarField mccv_;
-        scalarField mccw_;
-        scalarField eu_;
-        scalarField ev_;
-        scalarField ew_;
-        scalarField e_;
-        scalarField totalvDof_;
-        vectorField momentumMean_;
-        vectorField momentumMeanXnParticle_;
-        List<List<scalarField>> vibrationalETotal_;
-        List<scalarField> electronicETotal_;
-        List<scalarField> nParcels_;
-        List<scalarField> nParcelsXnParticle_;
-        List<scalarField> mccSpecies_;
-        List<scalarField> vibT_;
-        List<scalarField> vDof_;
-        List<scalarField> nGroundElectronicLevel_;
-        List<scalarField> nFirstElectronicLevel_;
+
+        // cell measurements
+        scalar rhoNMean_;
+        scalar rhoNMeanXnParticle_;
+        scalar rhoNMeanInt_;
+        scalar molsElec_;
+        scalar rhoMMean_;
+        scalar rhoMMeanXnParticle_;
+        scalar linearKEMean_;
+        scalar linearKEMeanXnParticle_;
+        scalar rotationalEMean_;
+        scalar rotationalDofMean_;
+        scalar muu_;
+        scalar muv_;
+        scalar muw_;
+        scalar mvv_;
+        scalar mvw_;
+        scalar mww_;
+        scalar mcc_;
+        scalar mccu_;
+        scalar mccv_;
+        scalar mccw_;
+        scalar eu_;
+        scalar ev_;
+        scalar ew_;
+        scalar e_;
+        vector momentumMean_;
+        vector momentumMeanXnParticle_;
+        List<List<scalar>> vibrationalETotal_;
+        List<scalar> electronicETotal_;
+        List<scalar> nParcels_;
+        List<scalar> nParcelsXnParticle_;
+        List<scalar> mccSpecies_;
+        List<scalar> nGroundElectronicLevel_;
+        List<scalar> nFirstElectronicLevel_;
+
+        // vol fields
+        scalar viscosity_;
+        scalar Prandtl_;
+        scalar relaxFreq_;
+        scalar rhoN_;
+        scalar p_;
+        scalar translationalT_;
+        scalar rotationalT_;
+        scalar vibrationalT_;
+        scalar electronicT_;
+        scalar overallT_;
+        vector UMean_;
+        vector heatFluxVector_;
+        tensor pressureTensor_;
+        tensor stressTensor_;
 
     // Private Member Functions
 
@@ -135,7 +139,13 @@ public:
     // Member Functions
 
         //- Calculate macroscopic quantities
-        virtual void calculateProperties();
+        virtual void calculateProperties(const label& cell);
+
+        //- Reset macroscopic quantities
+        virtual void resetProperties();
+
+        //- Change post-collision velocities to conserve momentum and energy
+        virtual void conserveMomentumAndEnergy(const label& cell);
 
         //- Relax particles
         virtual void relax();
@@ -143,13 +153,24 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
-            const scalar& B,
-            const scalar& m,
+            const scalar& breakdownParameter,
+            const scalar& mass,
             const scalar& p,
-            const scalar& T,
-            const vector& U,
-            const vector& q,
-            const tensor& s
+            const scalar& translationalT,
+            const vector& UMean,
+            const vector& heatFluxVector,
+            const tensor& stressTensor
+        );
+
+        //- Sample linear velocity from CE distribution
+        vector samplePostRelaxationVelocityESBGK
+        (   
+            const scalar& mass,
+            const scalar& Prandtl,
+            const scalar& p,
+            const scalar& translationalT,
+            const vector& UMean,
+            const tensor& pressureTensor
         );
 
 };
