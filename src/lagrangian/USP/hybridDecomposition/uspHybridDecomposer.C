@@ -945,7 +945,7 @@ void uspHybridDecomposer::update()
         gradU = fvc::grad(UMean_);
 
         heatFluxVectorNS_ = -kappa_*gradT;
-        shearStressTensorNS_=mu_*(gradU + gradU.T()-(2e0/3e0)*I*tr(gradU));
+        shearStressTensorNS_ = mu_*(gradU + gradU.T()-(2e0/3e0)*I*tr(gradU));
 
         if (breakdownCriterion_ == "ChapmanEnskog")
         {
@@ -1047,7 +1047,6 @@ void uspHybridDecomposer::update()
             forAll(mesh_.cells(), cellI)
             {
 
-                
                 u0 = std::sqrt(2.0*Foam::constant::physicoChemical::k.value()/mass*translationalT_[cellI]);
 
                 heatFluxVector_[cellI] = heatFluxVector_[cellI]/(p_[cellI]*u0);
@@ -1080,13 +1079,13 @@ void uspHybridDecomposer::update()
                 CLB_[cellI] = 0.0;
                 forAll(CLBQ_[cellI],i) 
                 {
-                    CLBQ_[cellI][i] = sqr(shearStressTensor_[cellI][i]-shearStressTensorNS_[cellI][i]);
+                    CLBQ_[cellI][i] = sqr(heatFluxVector_[cellI][i]-heatFluxVectorNS_[cellI][i]);
                     CLB_[cellI] += CLBQ_[cellI][i]; 
                 }
 
                 forAll(CLBS_[cellI],i) 
                 {
-                    CLBS_[cellI][i] = sqr(heatFluxVector_[cellI][i]-heatFluxVectorNS_[cellI][i]);
+                    CLBS_[cellI][i] = sqr(shearStressTensor_[cellI][i]-shearStressTensorNS_[cellI][i]);
                     CLB_[cellI] += CLBS_[cellI][i];
                 }
 
