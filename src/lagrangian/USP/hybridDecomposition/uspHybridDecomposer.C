@@ -541,7 +541,7 @@ uspHybridDecomposer::uspHybridDecomposer
 void uspHybridDecomposer::update()
 {
 
-    scalar theta_ = 0.05;
+    scalar theta_ = 0.2;
 
     timeSteps_++;
 
@@ -901,14 +901,14 @@ void uspHybridDecomposer::update()
 
         if (!firstDecomp)
         {
-            rhoN_ = (1.0-theta_)*rhoN_ + theta_*prevRhoN_;
-            rhoM_ = (1.0-theta_)*rhoM_ + theta_*prevRhoM_;
-            p_ = (1.0-theta_)*p_ + theta_*prevP_;
-            translationalT_ = (1.0-theta_)*translationalT_ + theta_*prevTranslationalT_;
-            UMean_ = (1.0-theta_)*UMean_ + theta_*prevUMean_;
-            heatFluxVector_ = (1.0-theta_)*heatFluxVector_ + theta_*prevHeatFluxVector_;
-            pressureTensor_ = (1.0-theta_)*pressureTensor_ + theta_*prevPressureTensor_;
-            shearStressTensor_ = (1.0-theta_)*shearStressTensor_ + theta_*prevShearStressTensor_;
+            rhoN_ = theta_*rhoN_ + (1.0-theta_)*prevRhoN_;
+            rhoM_ = theta_*rhoM_ + (1.0-theta_)*prevRhoM_;
+            p_ = theta_*p_ + (1.0-theta_)*prevP_;
+            translationalT_ = theta_*translationalT_ + (1.0-theta_)*prevTranslationalT_;
+            UMean_ = theta_*UMean_ + (1.0-theta_)*prevUMean_ ;
+            heatFluxVector_ = theta_*heatFluxVector_ + (1.0-theta_)*prevHeatFluxVector_;
+            pressureTensor_ = theta_*pressureTensor_ + (1.0-theta_)*prevPressureTensor_;
+            shearStressTensor_ = theta_*shearStressTensor_ + (1.0-theta_)*prevShearStressTensor_;
         }
         else
         {
