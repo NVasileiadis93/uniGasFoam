@@ -171,9 +171,9 @@ public:
 
         void createFields();
 
-        void calculateFields(const bool& calculateAll);
+        void calculateFields();
 
-        void clean(const bool& cleanAll);
+        void clean();
 
         inline const List<scalarField>& rhoNMean() const;
 

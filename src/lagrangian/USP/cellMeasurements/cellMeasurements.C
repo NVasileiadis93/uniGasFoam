@@ -322,10 +322,7 @@ void Foam::cellMeasurements::createFields()
 }
 
 
-void Foam::cellMeasurements::clean
-(
-    const bool& cleanAll
-)
+void Foam::cellMeasurements::clean()
 {
     // Clean geometric fields
     forAll(typeIds_, iD)
@@ -334,65 +331,58 @@ void Foam::cellMeasurements::clean
         forAll(mesh_.cells(), cell)
         {
 
-            if (cleanAll || (!cleanAll && cloud_.cellCollModel(cell) == cloud_.relCollModel()))
+            rhoNMean_[iD][cell] = 0.0;
+            rhoNInstantaneous_[iD][cell] =  0.0;
+            rhoNMeanXnParticle_[iD][cell] =  0.0;
+            rhoNMeanInt_[iD][cell] =  0.0;
+            molsElec_[iD][cell] =  0.0;
+            rhoMMean_[iD][cell] =  0.0;
+            rhoMMeanXnParticle_[iD][cell] =  0.0;
+            linearKEMean_[iD][cell] =  0.0;
+            linearKEMeanXnParticle_[iD][cell] =  0.0;
+            rotationalEMean_[iD][cell] =  0.0;
+            rotationalDofMean_[iD][cell] =  0.0;
+
+            muu_[iD][cell] =  0.0;
+            muv_[iD][cell] =  0.0;
+            muw_[iD][cell] =  0.0;
+            mvv_[iD][cell] =  0.0;
+            mvw_[iD][cell] =  0.0;
+            mww_[iD][cell] =  0.0;
+            mcc_[iD][cell] =  0.0;
+            mccu_[iD][cell] =  0.0;
+            mccv_[iD][cell] =  0.0;
+            mccw_[iD][cell] =  0.0;
+
+            eu_[iD][cell] =  0.0;
+            ev_[iD][cell] =  0.0;
+            ew_[iD][cell] =  0.0;
+            e_[iD][cell] =  0.0;
+
+            momentumMean_[iD][cell] =  vector::zero;
+            momentumMeanXnParticle_[iD][cell] = vector::zero;
+            collisionSeparation_[cell] =  0.0;
+            nColls_[cell] =  0.0;
+
+            electronicETotal_[iD][cell] = 0.0;
+            mccSpecies_[iD][cell] = 0.0;
+            nParcels_[iD][cell] = 0.0;
+            nGroundElectronicLevel_[iD][cell] = 0.0;
+            nFirstElectronicLevel_[iD][cell] = 0.0;
+            nParcelsXnParticle_[iD][cell] = 0.0;
+
+            forAll(vibrationalETotal_[iD], v)
             {
-
-                rhoNMean_[iD][cell] = 0.0;
-                rhoNInstantaneous_[iD][cell] =  0.0;
-                rhoNMeanXnParticle_[iD][cell] =  0.0;
-                rhoNMeanInt_[iD][cell] =  0.0;
-                molsElec_[iD][cell] =  0.0;
-                rhoMMean_[iD][cell] =  0.0;
-                rhoMMeanXnParticle_[iD][cell] =  0.0;
-                linearKEMean_[iD][cell] =  0.0;
-                linearKEMeanXnParticle_[iD][cell] =  0.0;
-                rotationalEMean_[iD][cell] =  0.0;
-                rotationalDofMean_[iD][cell] =  0.0;
-
-                muu_[iD][cell] =  0.0;
-                muv_[iD][cell] =  0.0;
-                muw_[iD][cell] =  0.0;
-                mvv_[iD][cell] =  0.0;
-                mvw_[iD][cell] =  0.0;
-                mww_[iD][cell] =  0.0;
-                mcc_[iD][cell] =  0.0;
-                mccu_[iD][cell] =  0.0;
-                mccv_[iD][cell] =  0.0;
-                mccw_[iD][cell] =  0.0;
-
-                eu_[iD][cell] =  0.0;
-                ev_[iD][cell] =  0.0;
-                ew_[iD][cell] =  0.0;
-                e_[iD][cell] =  0.0;
-
-                momentumMean_[iD][cell] =  vector::zero;
-                momentumMeanXnParticle_[iD][cell] = vector::zero;
-                collisionSeparation_[cell] =  0.0;
-                nColls_[cell] =  0.0;
-
-                electronicETotal_[iD][cell] = 0.0;
-                mccSpecies_[iD][cell] = 0.0;
-                nParcels_[iD][cell] = 0.0;
-                nGroundElectronicLevel_[iD][cell] = 0.0;
-                nFirstElectronicLevel_[iD][cell] = 0.0;
-                nParcelsXnParticle_[iD][cell] = 0.0;
-
-                forAll(vibrationalETotal_[iD], v)
-                {
-                    vibrationalETotal_[iD][v][cell] = 0.0;
-                }
-
+                vibrationalETotal_[iD][v][cell] = 0.0;
             }
+
         }
     }
 
 }
 
 
-void Foam::cellMeasurements::calculateFields
-(
-    const bool& calculateAll
-)
+void Foam::cellMeasurements::calculateFields()
 {
 
     const scalar nParticle = cloud_.nParticle();
@@ -406,101 +396,98 @@ void Foam::cellMeasurements::calculateFields
         {
             const label cell = p.cell();
 
-            if (calculateAll || (!calculateAll && cloud_.cellCollModel(cell) == cloud_.relCollModel()))
+            const scalar& CWF = p.CWF();
+            const scalar& RWF = p.RWF();
+            const scalar& mass = cloud_.constProps(p.typeId()).mass();
+            const scalar massByMagUsq = mass*magSqr(p.U());
+            const scalarList& electronicEnergies = cloud_.constProps(typeIds_[iD]).electronicEnergyList();
+            const label& rotationalDof = cloud_.constProps(p.typeId()).rotationalDoF();
+            const scalar& xVel = p.U().x();
+            const scalar& yVel = p.U().y();
+            const scalar& zVel = p.U().z();
+            const vector& U = p.U();
+
+            scalarList EVib(cloud_.constProps(typeIds_[iD]).vibrationalDoF());
+            
+            if (EVib.size() > 0)
             {
-
-                const scalar& CWF = p.CWF();
-                const scalar& RWF = p.RWF();
-                const scalar& mass = cloud_.constProps(p.typeId()).mass();
-                const scalar massByMagUsq = mass*magSqr(p.U());
-                const scalarList& electronicEnergies = cloud_.constProps(typeIds_[iD]).electronicEnergyList();
-                const label& rotationalDof = cloud_.constProps(p.typeId()).rotationalDoF();
-                const scalar& xVel = p.U().x();
-                const scalar& yVel = p.U().y();
-                const scalar& zVel = p.U().z();
-                const vector& U = p.U();
-
-                scalarList EVib(cloud_.constProps(typeIds_[iD]).vibrationalDoF());
-                
-                if (EVib.size() > 0)
+                forAll(EVib, i)
                 {
-                    forAll(EVib, i)
-                    {
-                        EVib[i] =
-                            p.vibLevel()[i]
-                        *physicoChemical::k.value()
-                        *cloud_.constProps(p.typeId()).thetaV()[i];
+                    EVib[i] =
+                        p.vibLevel()[i]
+                    *physicoChemical::k.value()
+                    *cloud_.constProps(p.typeId()).thetaV()[i];
 
-                        vibrationalETotal_[iD][i][cell] +=
-                            p.vibLevel()[i]
-                        *physicoChemical::k.value()
-                        *cloud_.constProps(p.typeId()).thetaV()[i];
-                    }
-                }
-
-                rhoNMean_[iD][cell] += 1.0;
-                rhoNInstantaneous_[iD][cell] += 1.0;
-                rhoMMean_[iD][cell] += mass;
-                linearKEMean_[iD][cell] += mass*(U & U);
-                momentumMean_[iD][cell] += mass*U;
-                rotationalEMean_[iD][cell] += p.ERot();
-                rotationalDofMean_[iD][cell] += rotationalDof;
-                electronicETotal_[iD][cell] +=
-                    electronicEnergies[p.ELevel()];
-                nParcels_[iD][cell] += 1.0;
-                mccSpecies_[iD][cell] += massByMagUsq;
-
-                nParcelsXnParticle_[iD][cell] += CWF*RWF*nParticle;
-                rhoNMeanXnParticle_[iD][cell] += CWF*RWF*nParticle;
-                rhoMMeanXnParticle_[iD][cell] += mass*CWF*RWF*nParticle;
-                momentumMeanXnParticle_[iD][cell] += mass*(U)*CWF*RWF*nParticle;
-                linearKEMeanXnParticle_[iD][cell] += mass*(U & U)*CWF*RWF*nParticle;
-
-                muu_[iD][cell] += mass*sqr(xVel);
-                muv_[iD][cell] += mass*(xVel*yVel);
-                muw_[iD][cell] += mass*(xVel*zVel);
-                mvv_[iD][cell] += mass*sqr(yVel);
-                mvw_[iD][cell] += mass*(yVel*zVel);
-                mww_[iD][cell] += mass*sqr(zVel);
-                mcc_[iD][cell] += massByMagUsq;
-                mccu_[iD][cell] += massByMagUsq*(xVel);
-                mccv_[iD][cell] += massByMagUsq*(yVel);
-                mccw_[iD][cell] += massByMagUsq*(zVel);
-
-                scalar vibEn = 0.0;
-
-                forAll(EVib, v)
-                {
-                    vibEn += EVib[v];
-                }
-
-                eu_[iD][cell] += (p.ERot() + vibEn)*xVel;
-                ev_[iD][cell] += (p.ERot() + vibEn)*yVel;
-                ew_[iD][cell] += (p.ERot() + vibEn)*zVel;
-                e_[iD][cell] += p.ERot() + vibEn;
-
-                if (rotationalDof > VSMALL)
-                {
-                    rhoNMeanInt_[iD][cell] += 1.0;
-                }
-
-                label nElecLevels =
-                    cloud_.constProps(p.typeId()).nElectronicLevels();
-
-                if (nElecLevels > 1)
-                {
-                    molsElec_[iD][cell] += 1.0;
-
-                    if (p.ELevel() == 0)
-                    {
-                        nGroundElectronicLevel_[iD][cell]++;
-                    }
-                    if (p.ELevel() == 1)
-                    {
-                        nFirstElectronicLevel_[iD][cell]++;
-                    }
+                    vibrationalETotal_[iD][i][cell] +=
+                        p.vibLevel()[i]
+                    *physicoChemical::k.value()
+                    *cloud_.constProps(p.typeId()).thetaV()[i];
                 }
             }
+
+            rhoNMean_[iD][cell] += 1.0;
+            rhoNInstantaneous_[iD][cell] += 1.0;
+            rhoMMean_[iD][cell] += mass;
+            linearKEMean_[iD][cell] += mass*(U & U);
+            momentumMean_[iD][cell] += mass*U;
+            rotationalEMean_[iD][cell] += p.ERot();
+            rotationalDofMean_[iD][cell] += rotationalDof;
+            electronicETotal_[iD][cell] +=
+                electronicEnergies[p.ELevel()];
+            nParcels_[iD][cell] += 1.0;
+            mccSpecies_[iD][cell] += massByMagUsq;
+
+            nParcelsXnParticle_[iD][cell] += CWF*RWF*nParticle;
+            rhoNMeanXnParticle_[iD][cell] += CWF*RWF*nParticle;
+            rhoMMeanXnParticle_[iD][cell] += mass*CWF*RWF*nParticle;
+            momentumMeanXnParticle_[iD][cell] += mass*(U)*CWF*RWF*nParticle;
+            linearKEMeanXnParticle_[iD][cell] += mass*(U & U)*CWF*RWF*nParticle;
+
+            muu_[iD][cell] += mass*sqr(xVel);
+            muv_[iD][cell] += mass*(xVel*yVel);
+            muw_[iD][cell] += mass*(xVel*zVel);
+            mvv_[iD][cell] += mass*sqr(yVel);
+            mvw_[iD][cell] += mass*(yVel*zVel);
+            mww_[iD][cell] += mass*sqr(zVel);
+            mcc_[iD][cell] += massByMagUsq;
+            mccu_[iD][cell] += massByMagUsq*(xVel);
+            mccv_[iD][cell] += massByMagUsq*(yVel);
+            mccw_[iD][cell] += massByMagUsq*(zVel);
+
+            scalar vibEn = 0.0;
+
+            forAll(EVib, v)
+            {
+                vibEn += EVib[v];
+            }
+
+            eu_[iD][cell] += (p.ERot() + vibEn)*xVel;
+            ev_[iD][cell] += (p.ERot() + vibEn)*yVel;
+            ew_[iD][cell] += (p.ERot() + vibEn)*zVel;
+            e_[iD][cell] += p.ERot() + vibEn;
+
+            if (rotationalDof > VSMALL)
+            {
+                rhoNMeanInt_[iD][cell] += 1.0;
+            }
+
+            label nElecLevels =
+                cloud_.constProps(p.typeId()).nElectronicLevels();
+
+            if (nElecLevels > 1)
+            {
+                molsElec_[iD][cell] += 1.0;
+
+                if (p.ELevel() == 0)
+                {
+                    nGroundElectronicLevel_[iD][cell]++;
+                }
+                if (p.ELevel() == 1)
+                {
+                    nFirstElectronicLevel_[iD][cell]++;
+                }
+            }
+
         }
     }
 

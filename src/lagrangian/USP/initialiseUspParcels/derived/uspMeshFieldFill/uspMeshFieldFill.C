@@ -57,11 +57,6 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
 
     Info<< nl << "Initialising particles" << endl;
 
-    const word initialDistributionType
-    (
-        uspInitialiseDict_.get<word>("initialDistributionType")
-    );
-
     //- read initial fields
     volScalarField initialTransT_
     (
@@ -126,34 +121,6 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
             IOobject::NO_WRITE
         ),
         mesh_
-    );
-
-    volVectorField initialHeatFlux_
-    (
-        IOobject
-        (
-            "heatFlux",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedVector(dimPressure*dimVelocity, Zero)
-    );
-
-    volTensorField initialStress_
-    (
-        IOobject
-        (
-            "stress",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedTensor(dimPressure, Zero)
     );
 
     // Read in the type ids
@@ -291,87 +258,17 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
                     ++nParticlesToInsert;
                 }
 
-                // Compute breakdown parameter if particles are initialized
-                //based on the Chapman-Enskog distribution
-                scalar breakdownParameter=0.0;
-    
-                vector heatFlux=vector::zero;
-
-                tensor stress=tensor::zero;
-
-                if (initialDistributionType == "ChapmanEnskog")
-                {
-                    scalar mostProbableSpeed(
-                        cloud_.maxwellianMostProbableSpeed
-                        (
-                            translationalTemperature,
-                            cP.mass()
-                        )
-                    );
-
-                    heatFlux = initialHeatFlux_[celli];
-
-                    stress = initialStress_[celli];
-
-                    scalar maxHeatFlux=-1.0;
-                    forAll(heatFlux,i) 
-                    {
-                        if (maxHeatFlux < fabs(heatFlux[i])) 
-                        {
-                            maxHeatFlux = fabs(heatFlux[i]);
-                        }
-                    }
-                    maxHeatFlux = 2.0*maxHeatFlux/(pressure*mostProbableSpeed);
-
-                    scalar maxStress=-1.0;
-                    forAll(stress,i) 
-                    {
-                        if (maxStress < fabs(stress[i])) 
-                        {
-                            maxStress = fabs(stress[i]);
-                        }
-                    }
-                    maxStress = maxStress/pressure;
-
-                    breakdownParameter = max(maxHeatFlux,maxStress);
-
-                }
-
                 for (label pI = 0; pI < nParticlesToInsert; ++pI)
                 {
                     point p = tet.randomPoint(rndGen_);
 
-                    vector U=vector::zero;
-                    if (initialDistributionType == "Maxwellian")
-                    {
+                    vector U = vector::zero;
 
-                        U = cloud_.equipartitionLinearVelocity
-                        (
-                            translationalTemperature,
-                            cP.mass()
-                        );
-                        
-                    }
-                    else if (initialDistributionType == "ChapmanEnskog")
-                    {
-                        U = cloud_.chapmanEnskogLinearVelocity
-                        (
-                            breakdownParameter,
-                            pressure,
-                            translationalTemperature,
-                            cP.mass(),
-                            heatFlux,
-                            stress
-                        );
-
-                    }
-                    else
-                    {
-                        FatalErrorIn("Foam::uspCloud<uspParcel>::initialise")
-                            << "initialDistributionType " << initialDistributionType << " not defined." << nl
-                            << abort(FatalError);
-                    }
-
+                    U = cloud_.equipartitionLinearVelocity
+                    (
+                        translationalTemperature,
+                        cP.mass()
+                    );
 
                     scalar ERot = cloud_.equipartitionRotationalEnergy
                     (

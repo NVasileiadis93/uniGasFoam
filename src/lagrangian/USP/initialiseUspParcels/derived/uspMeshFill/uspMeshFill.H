@@ -69,8 +69,6 @@ public:
 
     // Member Functions
 
-        virtual void checkChapmanEnskog();
-
         virtual void setInitialConfiguration();
 };
 

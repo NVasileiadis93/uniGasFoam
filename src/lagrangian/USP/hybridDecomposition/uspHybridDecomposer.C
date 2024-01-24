@@ -47,8 +47,9 @@ uspHybridDecomposer::uspHybridDecomposer
     breakdownCriterion_(dict.subDict("hybridProperties").get<word>("breakdownCriterion")),
     decomposeInterval_(dict.subDict("hybridProperties").get<label>("decomposeInterval")),
     breakdownMax_(dict.subDict("hybridProperties").get<scalar>("breakdownMax")),
-    smoothingPasses_(dict.subDict("hybridProperties").get<scalar>("smoothingPasses")),
-    refinementPasses_(dict.subDict("hybridProperties").get<scalar>("refinementPasses")),
+    theta_(dict.subDict("hybridProperties").getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(dict.subDict("hybridProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    refinementPasses_(dict.subDict("hybridProperties").getOrDefault<scalar>("refinementPasses",0)),
     Tref_(dict.subDict("collisionCoeffs").get<scalar>("Tref")),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -89,7 +90,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless, Zero)
@@ -102,7 +103,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless, Zero)
@@ -154,7 +155,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
@@ -168,7 +169,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimless, Zero),
@@ -182,7 +183,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedTensor(dimless, Zero),
@@ -196,7 +197,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless, Zero)
@@ -248,7 +249,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless/dimVolume, Zero)
@@ -261,7 +262,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimMass/dimVolume, Zero)
@@ -313,7 +314,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimMass*pow(dimTime,-3), Zero),
@@ -340,7 +341,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedTensor(dimPressure, Zero),
@@ -354,7 +355,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless/dimVolume, Zero)
@@ -367,7 +368,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimMass/dimVolume, Zero)
@@ -419,7 +420,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimMass*pow(dimTime,-3), Zero),
@@ -446,7 +447,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedTensor(dimPressure, Zero),
@@ -460,7 +461,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimMass*pow(dimTime,-3), Zero),
@@ -474,7 +475,7 @@ uspHybridDecomposer::uspHybridDecomposer
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedTensor(dimPressure, Zero),
@@ -540,8 +541,6 @@ uspHybridDecomposer::uspHybridDecomposer
 
 void uspHybridDecomposer::update()
 {
-
-    scalar theta_ = 0.2;
 
     timeSteps_++;
 

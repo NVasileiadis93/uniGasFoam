@@ -877,9 +877,9 @@ void Foam::uspCloud::evolve()
     if (collisionModel_ == relaxationCollModel_ || 
         collisionModel_ == hybridCollModel_)
     {
-        cellMeas_.calculateFields(true);
+        cellMeas_.calculateFields();
         relaxations();
-        cellMeas_.clean(true);
+        cellMeas_.clean();
     }
 
     // Update cell occupancy (reactions may have changed it)
@@ -890,7 +890,7 @@ void Foam::uspCloud::evolve()
 
     reactions_.outputData();
 
-    cellMeas_.calculateFields(true);
+    cellMeas_.calculateFields();
 
     fields_.calculateFields();
     fields_.writeFields();
@@ -915,7 +915,7 @@ void Foam::uspCloud::evolve()
 
     trackingInfo_.clean();
     boundaryMeas_.clean();
-    cellMeas_.clean(true);
+    cellMeas_.clean();
 
     functions_.postEvolve();
 }

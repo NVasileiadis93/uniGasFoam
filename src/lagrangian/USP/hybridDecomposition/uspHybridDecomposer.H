@@ -82,6 +82,8 @@ class uspHybridDecomposer
 
         scalar breakdownMax_;
 
+        scalar theta_;
+
         label smoothingPasses_;
 
         label refinementPasses_;
