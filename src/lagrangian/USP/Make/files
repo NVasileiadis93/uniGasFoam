@@ -46,6 +46,7 @@ relaxations/basic/relaxationModel/relaxationModel.C
 relaxations/derived/BGK/BGKRelaxation.C
 relaxations/derived/EllipsoidalStatistical/EllipsoidalStatisticalRelaxation.C
 relaxations/derived/EllipsoidalStatistical2ndOrder/EllipsoidalStatistical2ndOrderRelaxation.C
+relaxations/derived/Shakhov/ShakhovRelaxation.C
 relaxations/derived/ChapmanEnskog/ChapmanEnskogRelaxation.C
 relaxations/derived/ChapmanEnskogMA/ChapmanEnskogRelaxationMA.C
 
