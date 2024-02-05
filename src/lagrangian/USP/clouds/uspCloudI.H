@@ -178,14 +178,14 @@ inline Foam::Random& Foam::uspCloud::rndGen()
 }
 
 
-inline const Foam::BinaryCollisionModel&
+inline const Foam::binaryCollisionModel&
 Foam::uspCloud::binaryCollision() const
 {
     return binaryCollisionModel_;
 }
 
 
-inline Foam::BinaryCollisionModel& Foam::uspCloud::binaryCollision()
+inline Foam::binaryCollisionModel& Foam::uspCloud::binaryCollision()
 {
     return binaryCollisionModel_();
 }

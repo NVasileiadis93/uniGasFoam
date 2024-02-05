@@ -178,18 +178,6 @@ inline const List<scalarField>& cellMeasurements::e() const
 }
 
 
-inline const scalarField& cellMeasurements::collisionSeparation() const
-{
-    return collisionSeparation_;
-}
-
-
-inline scalarField& cellMeasurements::collisionSeparation()
-{
-    return collisionSeparation_;
-}
-
-
 inline const scalarField& cellMeasurements::nColls() const
 {
     return nColls_;

@@ -151,8 +151,6 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
 
         scalar U_dot_nw = U & nw;
 
-        const vector Ut = U - U_dot_nw*nw;
-
         scalar invMagUnfA = 1/max(mag(U_dot_nw)*fA, VSMALL);
 
         boundaryMeasurements& bm = cloud_.boundaryFluxMeasurements();
@@ -169,15 +167,11 @@ void Foam::uspPatchBoundary::measurePropertiesBeforeControl
         }
 
         bm.rhoMBF()[typei][wppIndex][wppLocalFace] += m*invMagUnfA;
-        bm.linearKEBF()[typei][wppIndex][wppLocalFace] +=
-            0.5*m*(U & U)*invMagUnfA;
-        bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] +=
-            m*(U & U)*invMagUnfA;
+        bm.linearKEBF()[typei][wppIndex][wppLocalFace] += 0.5*m*(U & U)*invMagUnfA;
+        bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] += m*(U & U)*invMagUnfA;
         bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*U*invMagUnfA;
-        bm.rotationalEBF()[typei][wppIndex][wppLocalFace] +=
-            p.ERot()*invMagUnfA;
-        bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] +=
-            constProps.rotationalDoF()*invMagUnfA;
+        bm.rotationalEBF()[typei][wppIndex][wppLocalFace] += p.ERot()*invMagUnfA;
+        bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] += constProps.rotationalDoF()*invMagUnfA;
 
         if (constProps.vibrationalDoF() > 0)
         {
@@ -243,8 +237,6 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
 
         scalar U_dot_nw = U & nw;
 
-        vector Ut = U - U_dot_nw*nw;
-
         scalar invMagUnfA = 1.0/max(mag(U_dot_nw)*fA, VSMALL);
 
         boundaryMeasurements& bm = cloud_.boundaryFluxMeasurements();
@@ -261,15 +253,11 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
         }
 
         bm.rhoMBF()[typei][wppIndex][wppLocalFace] += m*invMagUnfA;
-        bm.linearKEBF()[typei][wppIndex][wppLocalFace] +=
-            0.5*m*(U & U)*invMagUnfA;
-        bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] +=
-            m*(U & U)*invMagUnfA;
+        bm.linearKEBF()[typei][wppIndex][wppLocalFace] += 0.5*m*(U & U)*invMagUnfA;
+        bm.mccSpeciesBF()[typei][wppIndex][wppLocalFace] += m*(U & U)*invMagUnfA;
         bm.momentumBF()[typei][wppIndex][wppLocalFace] += m*U*invMagUnfA;
-        bm.rotationalEBF()[typei][wppIndex][wppLocalFace] +=
-            p.ERot()*invMagUnfA;
-        bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] +=
-            constProps.rotationalDoF()*invMagUnfA;
+        bm.rotationalEBF()[typei][wppIndex][wppLocalFace] += p.ERot()*invMagUnfA;
+        bm.rotationalDofBF()[typei][wppIndex][wppLocalFace] += constProps.rotationalDoF()*invMagUnfA;
         forAll(p.vibLevel(), i)
         {
             bm.vibrationalEBF()[typei][wppIndex][wppLocalFace] +=
@@ -297,6 +285,7 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
                    *physicoChemical::k.value();
             }
         }
+
         // post - interaction momentum
         const vector postIMom = m*U;
 
@@ -304,10 +293,7 @@ void Foam::uspPatchBoundary::measurePropertiesAfterControl
         scalar RWF = cloud_.axiRWF(p.position());
         scalar nParticle = cloud_.nParticle()*CWF*RWF;
 
-        scalar deltaQ =
-            nParticle
-           *(preIE_ - postIE + (heatOfReaction*physicoChemical::k.value()))
-           /(deltaT*fA);
+        scalar deltaQ = nParticle*(preIE_ - postIE + (heatOfReaction*physicoChemical::k.value()))/(deltaT*fA);
         vector deltaFD = nParticle*(preIMom_ - postIMom)/(deltaT*fA);
 
         bm.qBF()[typei][wppIndex][wppLocalFace] += deltaQ;

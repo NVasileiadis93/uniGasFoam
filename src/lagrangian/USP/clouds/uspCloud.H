@@ -45,7 +45,7 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "scalarIOField.H"
-#include "BinaryCollisionModel.H"
+#include "binaryCollisionModel.H"
 #include "relaxationModel.H"
 
 #include "uspBoundaries.H"
@@ -55,10 +55,10 @@ SourceFiles
 #include "uspControllers.H"
 #include "uspDynamicLoadBalancing.H"
 #include "uspDynamicAdapter.H"
-#include "uspHybridDecomposer.H"
+#include "uspHybridDecomposition.H"
 
 #include "uspReactions.H"
-#include "collisionPartnerSelection.H"
+#include "binaryCollisionPartner.H"
 #include "boundaryMeasurements.H"
 #include "cellMeasurements.H"
 
@@ -90,11 +90,11 @@ private:
 
         const label relCollModel_ = 0;
 
-        const word binaryCollModel_ = "binaryCollision";
+        const word binaryCollModel_ = "binary";
         
-        const word relaxationCollModel_ = "relaxationCollision";
+        const word relaxationCollModel_ = "relaxation";
         
-        const word hybridCollModel_ = "hybridCollision";
+        const word hybridCollModel_ = "hybrid";
 
         //- A variable holding the simulation collision type (usp, skm, hybrid)
         word collisionModel_;
@@ -200,9 +200,6 @@ private:
         //- load balancing
         uspDynamicLoadBalancing dynamicLoadBalancing_;
 
-        //- hybrid decomposer
-        uspHybridDecomposer hybridDecomposer_;
-
         //- dynamic adapter
         uspDynamicAdapter dynamicAdapter_;
 
@@ -219,13 +216,16 @@ private:
         // References to the cloud sub - models
 
             //- Binary collision model
-            autoPtr<BinaryCollisionModel> binaryCollisionModel_;
+            autoPtr<binaryCollisionModel> binaryCollisionModel_;
 
             //- Collision selection routine model
-            autoPtr<collisionPartnerSelection> collisionPartnerSelectionModel_;
+            autoPtr<binaryCollisionPartner> binaryCollisionPartnerModel_;
 
             //- Collision selection routine model
             autoPtr<relaxationModel> relaxationModel_;
+
+            //- Hybrid decomposer
+            autoPtr<uspHybridDecomposition> hybridDecomposition_;
 
             //- Reactions
             uspReactions reactions_;
@@ -272,6 +272,9 @@ private:
 
         //- Relax particles
         void relaxations();
+
+        //- Decompose domain
+        void decomposition();
 
         //- Disallow default bitwise copy construct
         uspCloud(const uspCloud&);
@@ -511,8 +514,8 @@ public:
     // Sub-models
 
         //- Return reference to binary elastic collision model
-        inline const BinaryCollisionModel& binaryCollision() const;
-        inline BinaryCollisionModel& binaryCollision();
+        inline const binaryCollisionModel& binaryCollision() const;
+        inline binaryCollisionModel& binaryCollision();
 
         inline const uspBoundaries& boundaries() const;
         inline uspBoundaries& boundaries();
@@ -526,8 +529,8 @@ public:
         inline const uspDynamicLoadBalancing& dynamicLoadBalancing() const;
         inline uspDynamicLoadBalancing& dynamicLoadBalancing();
 
-        inline const uspHybridDecomposer& hybridDecomposer() const;
-        inline uspHybridDecomposer& hybridDecomposer();
+        inline const uspHybridDecomposition& hybridDecomposition() const;
+        inline uspHybridDecomposition& hybridDecomposition();
 
         inline const uspDynamicAdapter& dynamicAdapter() const;
         inline uspDynamicAdapter& dynamicAdapter();

@@ -94,12 +94,10 @@ class uspVolFields
         volScalarField q_;
         volScalarField tau_;
         volScalarField MFP_; // Mean free path
-        volScalarField MFPdX_;
+        volScalarField dxMFP_;
         volScalarField MCR_; // Mean collision rate
         volScalarField MCT_;
-        volScalarField MCTdt_;
-        volScalarField MCS_;
-        volScalarField SOF_;
+        volScalarField dtMCT_;
         volScalarField Ma_;
         volScalarField densityError_;
         volScalarField velocityError_;
@@ -137,7 +135,6 @@ class uspVolFields
         scalarField ev_;
         scalarField ew_;
         scalarField e_;
-        scalarField collisionSeparation_;
         scalarField nColls_;
         vectorField momentumMean_;
         vectorField momentumMeanXnParticle_;
@@ -161,7 +158,6 @@ class uspVolFields
         List<scalarField> rotationalEBF_;
         List<scalarField> rotationalDofBF_;
         List<scalarField> qBF_;
-        List<scalarField> vibTxvDofBF_;
         List<scalarField> totalvDofBF_;
         List<scalarField> speciesRhoNIntBF_;
         List<scalarField> speciesRhoNElecBF_;
@@ -172,8 +168,6 @@ class uspVolFields
         List<List<scalarField>> electronicEBF_;
         List<List<scalarField>> speciesRhoNBF_;
         List<List<scalarField>> mccSpeciesBF_;
-        List<List<scalarField>> vibTBF_;
-        List<List<scalarField>> vDofBF_;
 
         bool averagingAcrossManyRuns_;
         bool measureMeanFreePath_;

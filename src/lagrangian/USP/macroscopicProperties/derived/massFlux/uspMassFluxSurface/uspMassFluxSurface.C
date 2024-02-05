@@ -290,11 +290,10 @@ void Foam::uspMassFluxSurface::calculateField()
                 if (typeIds_.find(id) != -1)
                 {
 
-                    label faceOwner = mesh_.faceOwner()[faceI];
+                    //fix for non-uniform cell weighting
                     label faceNeighbour = mesh_.faceNeighbour()[faceI];
 
                     scalar CWF = cloud_.cellWF(faceNeighbour);
-                    //    0.5*(cloud_.cellWF(faceOwner)+cloud_.cellWF(faceNeighbour));
                     scalar RWF =
                         cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 

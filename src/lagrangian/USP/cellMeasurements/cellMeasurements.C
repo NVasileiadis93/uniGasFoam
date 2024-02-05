@@ -76,7 +76,6 @@ Foam::cellMeasurements::cellMeasurements
     e_(),
     momentumMean_(),
     momentumMeanXnParticle_(),
-    collisionSeparation_(mesh_.nCells(), 0.0),
     nColls_(mesh_.nCells(), 0.0),
     vibrationalETotal_(),
     electronicETotal_(),
@@ -322,7 +321,7 @@ void Foam::cellMeasurements::createFields()
 }
 
 
-void Foam::cellMeasurements::clean()
+void Foam::cellMeasurements::clean(const bool& cleanColls)
 {
     // Clean geometric fields
     forAll(typeIds_, iD)
@@ -361,9 +360,11 @@ void Foam::cellMeasurements::clean()
 
             momentumMean_[iD][cell] =  vector::zero;
             momentumMeanXnParticle_[iD][cell] = vector::zero;
-            collisionSeparation_[cell] =  0.0;
-            nColls_[cell] =  0.0;
-
+            if (cleanColls)
+            {
+                nColls_[cell] =  0.0;
+            }
+            
             electronicETotal_[iD][cell] = 0.0;
             mccSpecies_[iD][cell] = 0.0;
             nParcels_[iD][cell] = 0.0;

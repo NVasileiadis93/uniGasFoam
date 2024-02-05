@@ -374,12 +374,6 @@ void uspDynamicAdapter::update()
 
         }*/
 
-
-        forAll(mesh_.cells(), cell)
-        {
-            Info << cell << " " << mesh_.C()[cell].x() << " " << mesh_.C()[cell].y() << " " << mesh_.C()[cell].z() << endl;
-        }
-
         // Adapt subcell levels
         if (adaptiveSubcells_)
         {

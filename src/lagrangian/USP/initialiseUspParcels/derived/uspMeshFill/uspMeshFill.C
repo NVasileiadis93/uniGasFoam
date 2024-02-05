@@ -92,9 +92,7 @@ void Foam::uspMeshFill::setInitialConfiguration()
         totalNumberDensity += numberDensities[i];
         
     }
-
     numberDensities /= cloud_.nParticle();
-    scalar pressure = totalNumberDensity*physicoChemical::k.value()*translationalTemperature;
 
     const auto& meshCC = cloud_.mesh().cellCentres();
     const auto& meshV = cloud_.mesh().V();

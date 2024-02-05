@@ -124,8 +124,6 @@ class cellMeasurements
 
         List<vectorField> momentumMeanXnParticle_;
 
-        scalarField collisionSeparation_;
-
         scalarField nColls_;
 
         List<List<scalarField>> vibrationalETotal_;
@@ -173,7 +171,7 @@ public:
 
         void calculateFields();
 
-        void clean();
+        void clean(const bool& cleanColls);
 
         inline const List<scalarField>& rhoNMean() const;
 
@@ -228,10 +226,6 @@ public:
         inline const List<vectorField>& momentumMean() const;
 
         inline const List<vectorField>& momentumMeanXnParticle() const;
-
-        inline const scalarField& collisionSeparation() const;
-
-        inline scalarField& collisionSeparation();
 
         inline const scalarField& nColls() const;
 

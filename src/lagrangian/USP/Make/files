@@ -5,6 +5,16 @@ parcels/uspParcelIO.C
 /* CLOUD */
 clouds/uspCloud.C
 
+/* DYNAMIC ADAPTATION */
+dynamicAdaptation/uspDynamicAdapter.C
+
+
+/* HYBRID DECOMPOSITION */
+hybridDecomposition/basic/uspHybridDecomposition.C
+hybridDecomposition/derived/localKnudsen/localKnudsen.C
+hybridDecomposition/derived/simplifiedChapmanEnskog/simplifiedChapmanEnskog.C
+hybridDecomposition/derived/constitutiveLaws/constitutiveLaws.C
+
 
 /* INITIALISE USP */
 initialiseUspParcels/basic/uspConfiguration/uspConfiguration.C
@@ -12,6 +22,31 @@ initialiseUspParcels/basic/uspAllConfigurations/uspAllConfigurations.C
 initialiseUspParcels/derived/uspMeshFill/uspMeshFill.C
 initialiseUspParcels/derived/uspZoneFill/uspZoneFill.C
 initialiseUspParcels/derived/uspMeshFieldFill/uspMeshFieldFill.C
+
+
+/* BINARY COLLISIONS */
+binaryCollisions/basic/binaryCollisionModel/binaryCollisionModel.C
+binaryCollisions/derived/noBinaryCollision/noBinaryCollision.C
+binaryCollisions/derived/variableHardSphere/variableHardSphere.C
+binaryCollisions/derived/variableSoftSphere/variableSoftSphere.C
+binaryCollisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
+binaryCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
+
+
+/* COLLISION PARTNER SELECTION ROUTINES */
+binaryCollisionPartner/basic/binaryCollisionPartner.C
+binaryCollisionPartner/derived/noTimeCounter/noTimeCounter.C
+binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
+binaryCollisionPartner/derived/simplifiedBernoulliTrials/simplifiedBernoulliTrials.C
+binaryCollisionPartner/derived/majorantCollisionFrequency/majorantCollisionFrequency.C
+
+
+/* RELAXATIONS */
+relaxations/basic/relaxationModel/relaxationModel.C
+relaxations/derived/BGK/BGK.C
+relaxations/derived/ellipsoidalStatistical/ellipsoidalStatistical.C
+relaxations/derived/Shakhov/Shakhov.C
+relaxations/derived/unifiedShakhov/unifiedShakhov.C
 
 
 /* REACTIONS */
@@ -32,40 +67,6 @@ reactions/derived/dissociationIonisationTypeISameSpecies/dissociationIonisationT
 reactions/derived/dissociationIonisationTypeIDissimilarSpecies/dissociationIonisationTypeIDissimilarSpecies.C
 reactions/derived/dissociationIonisationExchange/dissociationIonisationExchange.C
 
-
-/* ADAPTER */
-dynamicAdaptation/uspDynamicAdapter.C
-
-
-/* DECOMPOSER */
-hybridDecomposition/uspHybridDecomposer.C
-
-
-/* RELAXATIONS */
-relaxations/basic/relaxationModel/relaxationModel.C
-relaxations/derived/BGK/BGKRelaxation.C
-relaxations/derived/EllipsoidalStatistical/EllipsoidalStatisticalRelaxation.C
-relaxations/derived/EllipsoidalStatistical2ndOrder/EllipsoidalStatistical2ndOrderRelaxation.C
-relaxations/derived/Shakhov/ShakhovRelaxation.C
-relaxations/derived/ChapmanEnskog/ChapmanEnskogRelaxation.C
-relaxations/derived/ChapmanEnskogMA/ChapmanEnskogRelaxationMA.C
-
-
-/* BINARY COLLISIONS */
-collisions/basic/BinaryCollisionModel/BinaryCollisionModel.C
-collisions/derived/NoBinaryCollision/NoBinaryCollision.C
-collisions/derived/VariableHardSphere/VariableHardSphere.C
-collisions/derived/VariableSoftSphere/VariableSoftSphere.C
-collisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
-collisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
-
-
-/* COLLISION PARTNER SELECTION ROUTINES */
-collisionPartnerSelection/basic/collisionPartnerSelection.C
-collisionPartnerSelection/derived/noTimeCounter/noTimeCounter.C
-collisionPartnerSelection/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
-collisionPartnerSelection/derived/simplifiedBernoulliTrials/simplifiedBernoulliTrials.C
-collisionPartnerSelection/derived/majorantCollisionFrequency/majorantCollisionFrequency.C
 
 /* FIELD MEASUREMENTS */
 macroscopicProperties/basic/uspFieldProperties/uspFieldProperties.C
@@ -111,7 +112,6 @@ boundaries/derived/cyclicBoundaries/uspReflectiveParticleMembranePatch/uspReflec
 macroscopicProperties/derived/combined/uspBinsMethod/uspBinsMethod.C
 macroscopicProperties/derived/combined/uspZone/uspZone.C
 macroscopicProperties/derived/combined/uspVolFields/uspVolFields.C
-
 
 /*    DENSITY */
 

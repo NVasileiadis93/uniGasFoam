@@ -305,14 +305,20 @@ Foam::label Foam::uspCloud::pickFromCandidateSubList
 
 void Foam::uspCloud::collisions()
 {
-    collisionPartnerSelectionModel_->collide();
+    binaryCollisionPartnerModel_->collide();
 }
 
 void Foam::uspCloud::relaxations()
 {
-    //Info << "Mpika relaxations..." << endl;
     relaxationModel_->relax();
 }
+
+void Foam::uspCloud::decomposition()
+{
+    hybridDecomposition_->decompose();
+}
+
+  
 
 // * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
 
@@ -546,12 +552,12 @@ Foam::uspCloud::uspCloud
     controllers_(t, mesh, *this),
     dynamicLoadBalancing_(t, *this),
     dynamicAdapter_(particleProperties_, mesh_, *this),
-    hybridDecomposer_(particleProperties_.subDict("collisions"), mesh_, *this),
+    hybridDecomposition_(),
     fields_(t, mesh, *this),
     boundaries_(t, mesh, *this),
     trackingInfo_(mesh, *this, true),
     binaryCollisionModel_(),
-    collisionPartnerSelectionModel_(),
+    binaryCollisionPartnerModel_(),
     relaxationModel_(),
     reactions_(t, mesh, *this),
     boundaryMeas_(mesh, *this, true),
@@ -666,36 +672,35 @@ Foam::uspCloud::uspCloud
 
         // Select collision model: binary, relaxation, hybrid
         const dictionary& collisionDict = particleProperties_.subDict("collisions");
-        collisionModel_ = collisionDict.get<word>("collisionModelType");
+        collisionModel_ = collisionDict.get<word>("collisionModel");
 
         if (collisionModel_ == binaryCollModel_)
         {
-            Info << "Simulation collision model is: Binary" << nl << endl;
-            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-            collisionPartnerSelectionModel_->initialConfiguration();    
+            Info << "Simulation collision model is: binary" << nl << endl;
+            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionPartnerModel_->initialConfiguration();    
         }
         else if (collisionModel_ == relaxationCollModel_)
         {
-            Info << "Simulation collision model is: Relaxation" << nl << endl;
+            Info << "Simulation collision model is: relaxation" << nl << endl;
             relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
-            Info << "Simulation collision model is: Hybrid" << nl << endl;
-            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-            collisionPartnerSelectionModel_->initialConfiguration();
-            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);  
+            Info << "Simulation collision model is: hybrid" << nl << endl;
+            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionPartnerModel_->initialConfiguration();
+            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);
+            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_.subDict("decomposition"), mesh_, *this);
         }
         else
         {
             FatalErrorInFunction
-                << "Collision type " << collisionModel_ 
-                << " is not recognised. Collision type should be "
-                << binaryCollModel_ << ", "
-                << relaxationCollModel_ << " or "
-                << hybridCollModel_ 
+                << "Unknown collisionModel type " << collisionModel_ << endl << endl
+                << "Valid collisionModel types :" << endl
+                << "3(" << collisionModel_ << " " << relaxationCollModel_ << " " << hybridCollModel_ << ")"
                 << exit(FatalError);        
         }
 
@@ -731,40 +736,39 @@ Foam::uspCloud::uspCloud
 
         // Select collision model: binary, relaxation, hybrid
         const dictionary& collisionDict = particleProperties_.subDict("collisions");
-        collisionModel_ = collisionDict.get<word>("collisionModelType");
+        collisionModel_ = collisionDict.get<word>("collisionModel");
 
         if (collisionModel_ == binaryCollModel_)
         {
-            Info << "Simulation collision model is: Binary" << nl << endl;
+            Info << "Simulation collision model is: binary" << nl << endl;
             cellCollisionModel_ = binCollModel_;
-            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-            collisionPartnerSelectionModel_->initialConfiguration();    
+            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionPartnerModel_ -> initialConfiguration();    
         }
         else if (collisionModel_ == relaxationCollModel_)
         {
-            Info << "Simulation collision model is: Relaxation" << nl << endl;
+            Info << "Simulation collision model is: relaxation" << nl << endl;
             cellCollisionModel_ = relCollModel_;
-            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
+            relaxationModel_ = relaxationModel::New(collisionDict, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
-            Info << "Simulation collision model is: Hybrid" << nl << endl;
+            Info << "Simulation collision model is: hybrid" << nl << endl;
             cellCollisionModel_ = relCollModel_;
-            binaryCollisionModel_ = BinaryCollisionModel::New(collisionDict,*this);
-            collisionPartnerSelectionModel_ = collisionPartnerSelection::New(mesh_, *this, collisionDict);
-            collisionPartnerSelectionModel_->initialConfiguration();
-            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);  
+            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionPartnerModel_ -> initialConfiguration();
+            relaxationModel_ = relaxationModel::New(collisionDict, mesh_, *this);  
+            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_.subDict("decomposition"), mesh_, *this);
         }
         else
         {
             FatalErrorInFunction
-                << "Collision type " << collisionModel_ 
-                << " is not recognised. Collision type should be "
-                << binaryCollModel_ << ", "
-                << relaxationCollModel_ << " or "
-                << hybridCollModel_ 
-                << exit(FatalError);        
+                << "Unknown collisionModel type " << collisionModel_ << endl << endl
+                << "Valid collisionModel types :" << endl
+                << "3(" << collisionModel_ << " " << relaxationCollModel_ << " " << hybridCollModel_ << ")"
+                << exit(FatalError);         
         }
 
     }
@@ -879,7 +883,7 @@ void Foam::uspCloud::evolve()
     {
         cellMeas_.calculateFields();
         relaxations();
-        cellMeas_.clean();
+        cellMeas_.clean(false);
     }
 
     // Update cell occupancy (reactions may have changed it)
@@ -903,7 +907,7 @@ void Foam::uspCloud::evolve()
 
     if (collisionModel_ == hybridCollModel_)
     {
-        hybridDecomposer_.update();
+        decomposition();
     }
 
     if (dynamicAdaptation())
@@ -915,7 +919,7 @@ void Foam::uspCloud::evolve()
 
     trackingInfo_.clean();
     boundaryMeas_.clean();
-    cellMeas_.clean();
+    cellMeas_.clean(true);
 
     functions_.postEvolve();
 }

@@ -54,8 +54,8 @@ collisions
 
     collisionModelType               	hybridCollision; //binaryCollision, relaxationCollision, hybridCollision
     relaxationModel                     EllipsoidalStatisticalRelaxation;
-    collisionPartnerSelectionModel  	noTimeCounter;
-    BinaryCollisionModel                VariableHardSphere;
+    binaryCollisionPartnerModel  	noTimeCounter;
+    binaryCollisionModel                VariableHardSphere;
 
     collisionCoeffs
     {
