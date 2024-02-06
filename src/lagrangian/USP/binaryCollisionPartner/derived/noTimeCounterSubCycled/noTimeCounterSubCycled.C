@@ -69,23 +69,6 @@ void noTimeCounterSubCycled::collide()
         return;
     }
 
-    // Temporary storage for subCells
-    const vector solutionDims = cloud_.mesh().solutionD();
-
-    vector dimensionMultiplier = vector::zero;
-    label nSolutionDims = 0;
-    forAll(solutionDims, i)
-    {
-        if (solutionDims[i] == 1)
-        {
-            dimensionMultiplier[i] = pow(2,nSolutionDims);
-            nSolutionDims++;
-        }
-    }
-    const label nSubcells = pow(2,nSolutionDims);
-
-    List<DynamicList<label>> subCells(nSubcells);
-
     const scalar deltaT = cloud_.mesh().time().deltaTValue();
 
     label collisionCandidates = 0;
@@ -99,172 +82,233 @@ void noTimeCounterSubCycled::collide()
 
     for (label ii = 0; ii < nSubCycles_; ii++)
     {
+        
         forAll(cellOccupancy, cellI)
         {
-            const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cellI]);
-            const scalar cellVolume = mesh.cellVolumes()[cellI];
 
-            label nC(cellParcels.size());
+            if (cloud_.cellCollModel(cellI) == cloud_.binCollModel())
+            {    
 
-            if (nC > 1)
-            {
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // Assign particles to one of 8 Cartesian subCells
+                const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cellI]);
+                const scalar cellVolume = mesh.cellVolumes()[cellI];
 
-                // Clear temporary lists
-                for (auto& sc : subCells)
+                label nC(cellParcels.size());
+
+                if (nC > 1)
                 {
-                    sc.clear();
-                }
 
-                // Inverse addressing specifying which subCell a parcel is in
-                List<label> whichSubCell(cellParcels.size());
+                    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    // Temporary storage for subCells
+                    scalar subcellLevelsProduct = 1.0; 
+                    vector dimWeight = vector::zero;
+                    const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
+                    const vector& subcellLevels = cloud_.subcellLevels()[cellI];
 
-                const point& cC = mesh.cellCentres()[cellI];
-
-                forAll(cellParcels, i)
-                {
-                    const uspParcel& p = *cellParcels[i];
-
-                    vector relPos(p.position() - cC);
-
-                    label subCell = pos(relPos.x())*dimensionMultiplier.x() 
-                                  + pos(relPos.y())*dimensionMultiplier.y()  
-                                  + pos(relPos.z())*dimensionMultiplier.z();
-
-                    subCells[subCell].append(i);
-
-                    whichSubCell[i] = subCell;
-                }
-
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-                scalar sigmaTcRMax = cloud_.sigmaTcRMax()[cellI];
-
-                scalar selectedPairs = 0.0;
-
-                scalar CWF = cloud_.cellWF(cellI);
-
-                scalar RWF = 0.0;
-                scalar nMols = 0.0;
-
-                forAll(cellParcels, i)
-                {
-                    const uspParcel& p = *cellParcels[i];
-
-                    RWF += cloud_.axiRWF(p.position());
-                    nMols += 1.0;
-                }
-
-                RWF /= nMols;
-
-                selectedPairs =
-                    cloud_.collisionSelectionRemainder()[cellI]
-                  + 0.5*nC*(nC - 1)*cloud_.nParticle()*CWF*RWF*sigmaTcRMax
-                   *(deltaT/nSubCycles_)/cellVolume;
-
-                label nCandidates(selectedPairs);
-
-                cloud_.collisionSelectionRemainder()[cellI] =
-                    selectedPairs - nCandidates;
-
-                collisionCandidates += nCandidates;
-
-                for (label c = 0; c < nCandidates; ++c)
-                {
-                    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    // subCell candidate selection procedure
-
-                    // Select the first collision candidate
-                    label candidateP = rndGen_.position<label>(0, nC - 1);
-
-                    // Declare the second collision candidate
-                    label candidateQ = -1;
-
-                    const List<label>& subCellPs =
-                        subCells[whichSubCell[candidateP]];
-
-                    label nSC = subCellPs.size();
-
-                    if (nSC > 1)
+                    forAll(solutionDimensions, dim)
                     {
-                        // If there are two or more particle in a subCell,
-                        // choose another from the same cell.  If the same
-                        // candidate is chosen, choose again. If two electrons
-                        // are chosen, choose again.
-
-                        do
+                        if (solutionDimensions[dim])
                         {
-                            candidateQ =
-                                subCellPs[rndGen_.position<label>(0, nSC - 1)];
-
-                        } while (candidateP == candidateQ);
-                    }
-                    else
-                    {
-                        // Select a possible second collision candidate from the
-                        // whole cell.  If the same candidate is chosen, choose
-                        // again. If two electrons are chosen, choose again.
-
-                        do
-                        {
-                            candidateQ = rndGen_.position<label>(0, nC - 1);
-
-                        } while (candidateP == candidateQ);
+                            dimWeight[dim] = subcellLevelsProduct;
+                            subcellLevelsProduct *= subcellLevels[dim];
+                        }
                     }
 
-                    uspParcel& parcelP = *cellParcels[candidateP];
-                    uspParcel& parcelQ = *cellParcels[candidateQ];
+                    vector minCellPoint = vector(GREAT, GREAT, GREAT);
+                    vector maxCellPoint = vector(-GREAT, -GREAT, -GREAT);
+                    const List<label>& cellNodes = mesh_.cellPoints()[cellI];
 
-                    label chargeP = -2;
-                    label chargeQ = -2;
-
-                    chargeP = cloud_.constProps(parcelP.typeId()).charge();
-                    chargeQ = cloud_.constProps(parcelQ.typeId()).charge();
-
-                    // do not allow electron - electron collisions
-
-                    if (!(chargeP == -1 && chargeQ == -1))
+                    forAll(cellNodes, nodeI) 
                     {
-                        scalar sigmaTcR = cloud_.binaryCollision().sigmaTcR
-                        (
-                            parcelP,
-                            parcelQ
-                        );
+                        const point& cellPoint = mesh_.points()[cellNodes[nodeI]];
+                        minCellPoint.x() = min(minCellPoint.x(),cellPoint.x());
+                        minCellPoint.y() = min(minCellPoint.y(),cellPoint.y());
+                        minCellPoint.z() = min(minCellPoint.z(),cellPoint.z());
+                        maxCellPoint.x() = max(maxCellPoint.x(),cellPoint.x());
+                        maxCellPoint.y() = max(maxCellPoint.y(),cellPoint.y());
+                        maxCellPoint.z() = max(maxCellPoint.z(),cellPoint.z());                
+                    }
 
-                        // Update the maximum value of sigmaTcR stored, but use
-                        // the initial value in the acceptance-rejection
-                        // criteria because the number of collision candidates
-                        // selected was based on this
+                    const vector cellLength = maxCellPoint - minCellPoint;
 
+                    const label nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
 
-                        if (sigmaTcR > cloud_.sigmaTcRMax()[cellI])
+                    List<DynamicList<label>> subCells(nSubcells);
+
+                    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    // Assign particles to one of the virtual cartesian subcells
+
+                    // Inverse addressing specifying which subCell a parcel is in
+                    List<label> whichSubCell(cellParcels.size());
+
+                    vector dimPos = vector::zero;
+
+                    forAll(cellParcels, i)
+                    {
+                        const uspParcel& p = *cellParcels[i];
+
+                        vector relPos(p.position() - minCellPoint);
+
+                        forAll(solutionDimensions, dim)
                         {
-                            cloud_.sigmaTcRMax()[cellI] = sigmaTcR;
+                            if (solutionDimensions[dim])
+                            {
+                                for (label l = 0; l < label(subcellLevels[dim]); ++l)
+                                {
+
+                                    if (relPos[dim] <= (l+1)/subcellLevels[dim]*cellLength[dim])
+                                    {
+                                        dimPos[dim] = l;
+                                        break;
+                                    }
+                                }
+                            }
                         }
 
-                        if ((sigmaTcR/sigmaTcRMax) > rndGen_.sample01<scalar>())
+                        label subCell = dimPos & dimWeight;
+
+                        subCells[subCell].append(i);
+
+                        whichSubCell[i] = subCell;
+
+                    }
+                    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                    scalar sigmaTcRMax = cloud_.sigmaTcRMax()[cellI];
+
+                    scalar selectedPairs = 0.0;
+
+                    scalar CWF = cloud_.cellWF(cellI);
+
+                    scalar RWF = 0.0;
+                    scalar nMols = 0.0;
+
+                    forAll(cellParcels, i)
+                    {
+                        const uspParcel& p = *cellParcels[i];
+
+                        RWF += cloud_.axiRWF(p.position());
+                        nMols += 1.0;
+                    }
+
+                    RWF /= nMols;
+
+                    selectedPairs =
+                        cloud_.collisionSelectionRemainder()[cellI]
+                      + 0.5*nC*(nC - 1)*cloud_.nParticle()*CWF*RWF*sigmaTcRMax
+                       *(deltaT/nSubCycles_)/cellVolume;
+
+                    label nCandidates(selectedPairs);
+
+                    cloud_.collisionSelectionRemainder()[cellI] =
+                        selectedPairs - nCandidates;
+
+                    collisionCandidates += nCandidates;
+
+                    for (label c = 0; c < nCandidates; ++c)
+                    {
+                        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        // subCell candidate selection procedure
+
+                        // Select the first collision candidate
+                        label candidateP = rndGen_.position<label>(0, nC - 1);
+
+                        // Declare the second collision candidate
+                        label candidateQ = -1;
+
+                        const List<label>& subCellPs =
+                            subCells[whichSubCell[candidateP]];
+
+                        label nSC = subCellPs.size();
+
+                        if (nSC > 1)
                         {
-                            // chemical reactions
+                            // If there are two or more particle in a subCell,
+                            // choose another from the same cell.  If the same
+                            // candidate is chosen, choose again. If two electrons
+                            // are chosen, choose again.
 
-                            // find which reaction model parcel p and q
-                            // should use
-
-                            label rMId = cloud_.reactions().returnModelId
-                            (parcelP, parcelQ);
-                            
-                            if (rMId != -1)
+                            do
                             {
-                                cloud_.reactions().reactions()[rMId]->reaction
-                                (
-                                    parcelP,
-                                    parcelQ
-                                );
+                                candidateQ = subCellPs[rndGen_.position<label>(0, nSC - 1)];
+                            } while (candidateP == candidateQ);
+                        }
+                        else
+                        {
+                            // Select a possible second collision candidate from the
+                            // whole cell.  If the same candidate is chosen, choose
+                            // again. If two electrons are chosen, choose again.
 
-                                // if reaction unsuccessful use conventional
-                                // collision model
-                                if (cloud_.reactions().reactions()[rMId]->relax())
+                            do
+                            {
+                                candidateQ = rndGen_.position<label>(0, nC - 1);
+
+                            } while (candidateP == candidateQ);
+                        }
+
+                        uspParcel& parcelP = *cellParcels[candidateP];
+                        uspParcel& parcelQ = *cellParcels[candidateQ];
+
+                        label chargeP = -2;
+                        label chargeQ = -2;
+
+                        chargeP = cloud_.constProps(parcelP.typeId()).charge();
+                        chargeQ = cloud_.constProps(parcelQ.typeId()).charge();
+
+                        // do not allow electron - electron collisions
+
+                        if (!(chargeP == -1 && chargeQ == -1))
+                        {
+                            scalar sigmaTcR = cloud_.binaryCollision().sigmaTcR
+                            (
+                                parcelP,
+                                parcelQ
+                            );
+
+                            // Update the maximum value of sigmaTcR stored, but use
+                            // the initial value in the acceptance-rejection
+                            // criteria because the number of collision candidates
+                            // selected was based on this
+
+
+                            if (sigmaTcR > cloud_.sigmaTcRMax()[cellI])
+                            {
+                                cloud_.sigmaTcRMax()[cellI] = sigmaTcR;
+                            }
+
+                            if ((sigmaTcR/sigmaTcRMax) > rndGen_.sample01<scalar>())
+                            {
+                                // chemical reactions
+
+                                // find which reaction model parcel p and q
+                                // should use
+
+                                label rMId = cloud_.reactions().returnModelId
+                                (parcelP, parcelQ);
+
+                                if (rMId != -1)
                                 {
+                                    cloud_.reactions().reactions()[rMId]->reaction
+                                    (
+                                        parcelP,
+                                        parcelQ
+                                    );
+
+                                    // if reaction unsuccessful use conventional
+                                    // collision model
+                                    if (cloud_.reactions().reactions()[rMId]->relax())
+                                    {
+                                        cloud_.binaryCollision().collide
+                                        (
+                                            parcelP,
+                                            parcelQ,
+                                            cellI
+                                        );
+                                    }
+                                }
+                                else
+                                {
+                                    // if reaction model not found, use conventional
+                                    // collision model
                                     cloud_.binaryCollision().collide
                                     (
                                         parcelP,
@@ -272,20 +316,9 @@ void noTimeCounterSubCycled::collide()
                                         cellI
                                     );
                                 }
-                            }
-                            else
-                            {
-                                // if reaction model not found, use conventional
-                                // collision model
-                                cloud_.binaryCollision().collide
-                                (
-                                    parcelP,
-                                    parcelQ,
-                                    cellI
-                                );
-                            }
 
-                            collisions++;
+                                collisions++;
+                            }
                         }
                     }
                 }

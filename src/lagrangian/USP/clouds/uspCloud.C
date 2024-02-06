@@ -196,113 +196,6 @@ void Foam::uspCloud::addElectrons()
     }
 }
 
-
-Foam::label Foam::uspCloud::pickFromCandidateList
-(
-    DynamicList<label>& candidatesInCell
-)
-{
-    label entry = -1;
-    const label size = candidatesInCell.size();
-
-    if (size > 0)
-    {
-        // choose a random number between 0 and the size of the candidateList
-        // size
-        label randomIndex = rndGen_.position<label>(0, size-1);
-        entry = candidatesInCell[randomIndex];
-
-        // build a new list without the chosen entry
-        DynamicList<label> newCandidates(0);
-
-        forAll(candidatesInCell, i)
-        {
-            if (i != randomIndex)
-            {
-                newCandidates.append(candidatesInCell[i]);
-            }
-        }
-
-        // transfer the new list
-        candidatesInCell.transfer(newCandidates);
-        candidatesInCell.shrink();
-    }
-
-    return entry;
-}
-
-
-void Foam::uspCloud::updateCandidateSubList
-(
-    const label candidate,
-    DynamicList<label>& candidatesInSubCell
-)
-{
-    const label newIndex = candidatesInSubCell.find(candidate);
-
-    DynamicList<label> newCandidates(0);
-
-    forAll(candidatesInSubCell, i)
-    {
-        if (i != newIndex)
-        {
-            newCandidates.append(candidatesInSubCell[i]);
-        }
-    }
-
-    // transfer the new list
-    candidatesInSubCell.transfer(newCandidates);
-    candidatesInSubCell.shrink();
-}
-
-
-Foam::label Foam::uspCloud::pickFromCandidateSubList
-(
-    DynamicList<label>& candidatesInCell,
-    DynamicList<label>& candidatesInSubCell
-)
-{
-    label entry = -1;
-    const label subCellSize = candidatesInSubCell.size();
-
-    if (subCellSize > 0)
-    {
-        label randomIndex = rndGen_.position<label>(0, subCellSize-1);
-        entry = candidatesInSubCell[randomIndex];
-
-        DynamicList<label> newSubCellList(0);
-
-        forAll(candidatesInSubCell, i)
-        {
-            if (i != randomIndex)
-            {
-                newSubCellList.append(candidatesInSubCell[i]);
-            }
-        }
-
-        candidatesInSubCell.transfer(newSubCellList);
-        candidatesInSubCell.shrink();
-
-        label newIndex = candidatesInCell.find(entry);
-
-        DynamicList<label> newList(0);
-
-        forAll(candidatesInCell, i)
-        {
-            if (i != newIndex)
-            {
-                newList.append(candidatesInCell[i]);
-            }
-        }
-
-        candidatesInCell.transfer(newList);
-        candidatesInCell.shrink();
-    }
-
-    return entry;
-}
-
-
 void Foam::uspCloud::collisions()
 {
     binaryCollisionPartnerModel_->collide();
@@ -468,6 +361,7 @@ Foam::uspCloud::uspCloud
 :
     CloudWithModels<uspParcel>(mesh, cloudName, false),
     collisionModel_(),
+    solutionDimensions_(),
     typeIdList_(particleProperties_.lookup("typeIdList")),
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
@@ -528,7 +422,7 @@ Foam::uspCloud::uspCloud
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimensionSet(0, 0, 0, 0, 0), One),
+        dimensionedVector(dimensionSet(0, 0, 0, 0, 0), vector::one),
         zeroGradientFvPatchScalarField::typeName
     ),
     cellCollisionModel_
@@ -552,13 +446,13 @@ Foam::uspCloud::uspCloud
     controllers_(t, mesh, *this),
     dynamicLoadBalancing_(t, *this),
     dynamicAdapter_(particleProperties_, mesh_, *this),
-    hybridDecomposition_(),
     fields_(t, mesh, *this),
     boundaries_(t, mesh, *this),
     trackingInfo_(mesh, *this, true),
     binaryCollisionModel_(),
     binaryCollisionPartnerModel_(),
     relaxationModel_(),
+    hybridDecomposition_(),
     reactions_(t, mesh, *this),
     boundaryMeas_(mesh, *this, true),
     cellMeas_(mesh, *this, true),
@@ -569,6 +463,28 @@ Foam::uspCloud::uspCloud
         solution_.active()
     )
 {
+
+    // Set solution dimensions
+    if (!axisymmetric_)
+    {
+        forAll(solutionDimensions_, dim)
+        {
+            if (mesh.solutionD()[dim] == 1)
+            {
+                solutionDimensions_[dim] = true;
+            }
+            else
+            {
+                solutionDimensions_[dim] = false;
+            }
+        }
+    }
+    else
+    {
+        solutionDimensions_[0] = true;
+        solutionDimensions_[1] = true;
+        solutionDimensions_[2] = false;
+    }    
 
     buildConstProps();
 
@@ -600,7 +516,7 @@ Foam::uspCloud::uspCloud
         uspParcel::readFields(*this);
 
         // Read subcell levels
-        volScalarField fetchSubcellLevels
+        volVectorField fetchSubcellLevels
         (
             IOobject
             (
@@ -709,7 +625,21 @@ Foam::uspCloud::uspCloud
     {
 
         // Set initial subcellLevels
-        subcellLevels_ = 2;
+        forAll(mesh.cells(), cell)
+        {
+            forAll(solutionDimensions_, dim)
+            {
+                if (solutionDimensions_[dim])
+                {
+                    subcellLevels_[cell][dim] = 2;
+                }
+                else
+                {
+                    subcellLevels_[cell][dim] = 1;
+                }
+            }
+        }
+        subcellLevels_.correctBoundaryConditions();
 
         // Initialize particles
         label initialParcels = this->size();

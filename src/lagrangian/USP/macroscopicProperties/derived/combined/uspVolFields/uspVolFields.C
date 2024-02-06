@@ -1646,10 +1646,11 @@ void Foam::uspVolFields::calculateField()
                             maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
                         }
 
-                        forAll(mesh_.geometricD(), dim)
+                        const boolVector& solutionDimensions = cloud_.solutionDimensions();
+                        forAll(solutionDimensions, dim)
                         {
-                            scalar cellDimension = (maxPoint[dim]-minPoint[dim])/cloud_.subcellLevels()[cell];
-                            if (mesh_.geometricD()[dim] == 1 && largestCellDimension < cellDimension)
+                            scalar cellDimension = (maxPoint[dim]-minPoint[dim])/cloud_.subcellLevels()[cell][dim];
+                            if (solutionDimensions[dim] && largestCellDimension < cellDimension)
                             {
                                 largestCellDimension = cellDimension;
                             }

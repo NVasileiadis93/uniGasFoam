@@ -83,64 +83,6 @@ void Foam::noTimeCounter::collide()
         if (cloud_.cellCollModel(cellI) == cloud_.binCollModel())
         {        
 
-            // Temporary storage for subCells
-            label nSolutionDims = 0;
-            vector solutionDims; 
-            vector dimWeight = vector::zero;
-            const label nSubcellLevels = cloud_.subcellLevels()[cellI];
-            
-            if (!cloud_.axisymmetric())
-            {
-                forAll(solutionDims, dim)
-                {
-                    solutionDims[dim] = cloud_.mesh().solutionD()[dim];
-                    if (solutionDims[dim] == 1)
-                    {
-                        dimWeight[dim] = pow(nSubcellLevels,nSolutionDims);
-                        nSolutionDims++;
-                    }
-                }
-            }
-            else
-            {
-                solutionDims.x() = 1;
-                solutionDims.y() = 1;
-                solutionDims.z() = -1;
-                dimWeight.x() = 1;
-                dimWeight.y() = nSubcellLevels;
-                dimWeight.z() = 0;
-                nSolutionDims = 2;
-            }    
-
-            vector minCellPoint = vector(GREAT, GREAT, GREAT);
-            vector maxCellPoint = vector(-GREAT, -GREAT, -GREAT);
-            const List<label>& cellNodes = mesh_.cellPoints()[cellI];
-
-            forAll(cellNodes, nodeI) 
-            {
-                const point& cellPoint = mesh_.points()[cellNodes[nodeI]];
-                minCellPoint.x() = min(minCellPoint.x(),cellPoint.x());
-                minCellPoint.y() = min(minCellPoint.y(),cellPoint.y());
-                minCellPoint.z() = min(minCellPoint.z(),cellPoint.z());
-                maxCellPoint.x() = max(maxCellPoint.x(),cellPoint.x());
-                maxCellPoint.y() = max(maxCellPoint.y(),cellPoint.y());
-                maxCellPoint.z() = max(maxCellPoint.z(),cellPoint.z());                
-            }
-            
-            const label nSubcells = pow(nSubcellLevels,nSolutionDims);
-
-            List<DynamicList<label>> subCells(nSubcells);
-
-            const vector cellLength = maxCellPoint - minCellPoint;
-
-            //std::cout << "-------------------------------------------------------"  << std::endl;
-            //std::cout << nSolutionDims << " " << nSubcellLevels << " " << nSubcells << std::endl;
-            //std::cout << solutionDims.x() << " " << solutionDims.y() << " " << solutionDims.z() << std::endl;
-            //std::cout << "-------------------------------------------------------"  << std::endl;
-            //std::cout << cellLength.x() << " " << cellLength.y() << " " << cellLength.z() << std::endl;
-            //std::cout << "-------------------------------------------------------"  << std::endl;
-            //std::cin.get();
-
             const DynamicList<uspParcel*>& cellParcels(cellOccupancy[cellI]);
             const scalar cellVolume = mesh.cellVolumes()[cellI];
 
@@ -148,14 +90,45 @@ void Foam::noTimeCounter::collide()
 
             if (nC > 1)
             {
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // Assign particles to one of the Cartesian subCells
 
-                // Clear temporary lists
-                for (auto& sc : subCells)
+                // Temporary storage for subCells
+                scalar subcellLevelsProduct = 1.0; 
+                vector dimWeight = vector::zero;
+                const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
+                const vector& subcellLevels = cloud_.subcellLevels()[cellI];
+
+                forAll(solutionDimensions, dim)
                 {
-                    sc.clear();
+                    if (solutionDimensions[dim])
+                    {
+                        dimWeight[dim] = subcellLevelsProduct;
+                        subcellLevelsProduct *= subcellLevels[dim];
+                    }
                 }
+
+                vector minCellPoint = vector(GREAT, GREAT, GREAT);
+                vector maxCellPoint = vector(-GREAT, -GREAT, -GREAT);
+                const List<label>& cellNodes = mesh_.cellPoints()[cellI];
+
+                forAll(cellNodes, nodeI) 
+                {
+                    const point& cellPoint = mesh_.points()[cellNodes[nodeI]];
+                    minCellPoint.x() = min(minCellPoint.x(),cellPoint.x());
+                    minCellPoint.y() = min(minCellPoint.y(),cellPoint.y());
+                    minCellPoint.z() = min(minCellPoint.z(),cellPoint.z());
+                    maxCellPoint.x() = max(maxCellPoint.x(),cellPoint.x());
+                    maxCellPoint.y() = max(maxCellPoint.y(),cellPoint.y());
+                    maxCellPoint.z() = max(maxCellPoint.z(),cellPoint.z());                
+                }
+
+                const vector cellLength = maxCellPoint - minCellPoint;
+
+                const label nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+
+                List<DynamicList<label>> subCells(nSubcells);
+                           
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                // Assign particles to one of the virtual cartesian subcells
 
                 // Inverse addressing specifying which subCell a parcel is in
                 List<label> whichSubCell(cellParcels.size());
@@ -168,14 +141,14 @@ void Foam::noTimeCounter::collide()
 
                     vector relPos(p.position() - minCellPoint);
 
-                    forAll(solutionDims, dim)
+                    forAll(solutionDimensions, dim)
                     {
-                        if (solutionDims[dim] == 1)
+                        if (solutionDimensions[dim])
                         {
-                            for (label l = 0; l < nSubcellLevels; ++l)
+                            for (label l = 0; l < label(subcellLevels[dim]); ++l)
                             {
                                 
-                                if (relPos[dim] <= (l+1)/scalar(nSubcellLevels)*cellLength[dim])
+                                if (relPos[dim] <= (l+1)/subcellLevels[dim]*cellLength[dim])
                                 {
                                     dimPos[dim] = l;
                                     break;
@@ -189,14 +162,8 @@ void Foam::noTimeCounter::collide()
                     subCells[subCell].append(i);
 
                     whichSubCell[i] = subCell;
+                    
                 }
-
-                //forAll(subCells, i)
-                //{
-                //    std::cout << "SC: " << i << " " << subCells[i].size() << std::endl;
-                //}
-                //std::cin.get();
-
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                 scalar sigmaTcRMax = cloud_.sigmaTcRMax()[cellI];

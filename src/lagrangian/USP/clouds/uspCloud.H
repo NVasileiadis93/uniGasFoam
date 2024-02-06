@@ -41,6 +41,7 @@ SourceFiles
 #include "uspParcel.H"
 #include "IOdictionary.H"
 #include "autoPtr.H"
+#include "boolVector.H"
 #include "Random.H"
 #include "fvMesh.H"
 #include "volFields.H"
@@ -98,6 +99,9 @@ private:
 
         //- A variable holding the simulation collision type (usp, skm, hybrid)
         word collisionModel_;
+
+        // A boolean vector containing the solution dimensions
+        boolVector solutionDimensions_;
 
         //- A list of unique instances of molecule types in the
         //- simulation.
@@ -179,8 +183,8 @@ private:
         //  start/restart.
         volScalarField sigmaTcRMax_;
 
-        // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
-        volScalarField subcellLevels_;
+        // A field containing the number of subcells in each directions
+        volVectorField subcellLevels_;
 
         // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
         volScalarField cellCollisionModel_;
@@ -241,23 +245,6 @@ private:
 
     // Private Member Functions
 
-
-        label pickFromCandidateList(DynamicList<label>& candidatesInCell);
-
-        // whenever you pick from the candidate list
-        // always update the candidate sublist
-        void updateCandidateSubList
-        (
-            const label candidate,
-            DynamicList<label>& candidatesInSubCell
-        );
-
-        label pickFromCandidateSubList
-        (
-            DynamicList<label>& candidatesInCell,
-            DynamicList<label>& candidatesInSubCell
-        );
-
         //- Build the constant properties for all of the species
         void buildConstProps();
 
@@ -313,6 +300,9 @@ public:
         //- from the input dictionary
         labelList getTypeIDs(const dictionary& dict) const;
 
+        //- Return the solution dimensions vector.
+        inline boolVector solutionDimensions() const;
+
         //- Return the idList
         inline const List<word>& typeIdList() const;
 
@@ -362,7 +352,7 @@ public:
 
         //- Return the subcellLevels field.  non - const access to allow
         //- definition during initialisation and adaptation.
-        inline volScalarField& subcellLevels();
+        inline volVectorField& subcellLevels();
 
         //- Return the cellWeight field.  non - const access to allow
         //- definition during initialisation.

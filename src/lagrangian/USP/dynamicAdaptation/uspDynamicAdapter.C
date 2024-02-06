@@ -68,7 +68,8 @@ uspDynamicAdapter::uspDynamicAdapter
             IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless/dimVolume, Zero)
+        dimensionedScalar(dimless/dimVolume, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     translationalT_
     (
@@ -81,7 +82,8 @@ uspDynamicAdapter::uspDynamicAdapter
             IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimTemperature, Zero)
+        dimensionedScalar(dimTemperature, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     UMean_
     (
@@ -94,20 +96,22 @@ uspDynamicAdapter::uspDynamicAdapter
             IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedVector(dimVelocity, Zero)
+        dimensionedVector(dimVelocity, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     cellSizeMFPRatio_
     (
         IOobject
         (
-            "cellSizeToMFPRatio",
+            "cellSizeToMFPRatioAdapt",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedVector(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     timeStepMCTRatio_
     (
@@ -117,10 +121,11 @@ uspDynamicAdapter::uspDynamicAdapter
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
 
@@ -348,50 +353,69 @@ void uspDynamicAdapter::update()
                     maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
                 }
 
-                forAll(mesh_.geometricD(), dim)
-                {
-                    scalar cellDimension = maxPoint[dim]-minPoint[dim];
-                    if (mesh_.geometricD()[dim] == 1 && largestCellDimension < cellDimension)
-                    {
-                        largestCellDimension = cellDimension;
-                    }
-                }
-
-                cellSizeMFPRatio_[cell] = largestCellDimension/MFP_[cell];
+                cellSizeMFPRatio_[cell] = (maxPoint-minPoint)/MFP_[cell];
 
             }
-
 
         }
 
-        // Adapt time-step (not coded yet)
-        /*forAll(mesh_.cells(), cell)
+        // smooth fields
+        for (label pass=0; pass<smoothingPasses_; ++pass)
         {
-            if (rhoNMean_[cell] > VSMALL && cloud_.cellCollModel(cell) == cloud_.binCollModel())
-            {
+            cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
+            cellSizeMFPRatio_.correctBoundaryConditions();
+        }
 
-            }
-
-        }*/
+        // Adapt time-step (not coded yet)
+        //forAll(mesh_.cells(), cell)
+        //{
+        //    if (rhoNMean_[cell] > VSMALL && cloud_.cellCollModel(cell) == cloud_.binCollModel())
+        //    {
+        //
+        //    }
+        //
+        //}
 
         // Adapt subcell levels
         if (adaptiveSubcells_)
         {
 
+            const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
             forAll(mesh_.cells(), cell)
             {
                 if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
                 {
-                    cloud_.subcellLevels()[cell] = min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio_[cell]/maxSubcellSizeMFPRatio_));
+                    
+                    forAll(solutionDimensions, dim)
+                    {
+                        if (solutionDimensions[dim])
+                        {
+                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio_[cell][dim]/maxSubcellSizeMFPRatio_)));
+                        }
+                        else
+                        {
+                            cloud_.subcellLevels()[cell][dim] = label(1.0);
+                        }
+                    }
                 }
                 else
                 {
-                    cloud_.subcellLevels()[cell] = minSubcellLevels_;
+                    forAll(solutionDimensions, dim)
+                    {
+                        if (solutionDimensions[dim])
+                        {
+                            cloud_.subcellLevels()[cell][dim] = minSubcellLevels_;
+                        }
+                        else
+                        {
+                            cloud_.subcellLevels()[cell][dim] = 1.0;
+                        }
+                    }    
                 }
             }
             cloud_.subcellLevels().correctBoundaryConditions();
 
-            for (label pass=0; pass<smoothingPasses_; ++pass)
+            /*for (label pass=0; pass<smoothingPasses_; ++pass)
             {
                 cloud_.subcellLevels() = fvc::average(fvc::interpolate(cloud_.subcellLevels()));
                 cloud_.subcellLevels().correctBoundaryConditions();
@@ -399,9 +423,37 @@ void uspDynamicAdapter::update()
 
             forAll(mesh_.cells(), cell)
             {
-                cloud_.subcellLevels()[cell] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cloud_.subcellLevels()[cell]+0.5)));
+                if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
+                {
+                    
+                    forAll(solutionDimensions, dim)
+                    {
+                        if (solutionDimensions[dim])
+                        {
+                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cloud_.subcellLevels()[cell][dim]+0.5)));
+                        }
+                        else
+                        {
+                            cloud_.subcellLevels()[cell][dim] = 1.0;
+                        }
+                    }
+                }
+                else
+                {
+                    forAll(solutionDimensions, dim)
+                    {
+                        if (solutionDimensions[dim])
+                        {
+                            cloud_.subcellLevels()[cell][dim] = minSubcellLevels_;
+                        }
+                        else
+                        {
+                            cloud_.subcellLevels()[cell][dim] = 1.0;
+                        }
+                    }    
+                }
             }
-            cloud_.subcellLevels().correctBoundaryConditions();     
+            cloud_.subcellLevels().correctBoundaryConditions();*/  
 
         }
 
@@ -413,18 +465,11 @@ void uspDynamicAdapter::update()
                 forAll(mesh_.cells(), cell)
                 {
 
-                    label geometricDims = 0;
-                    forAll(mesh_.geometricD(), dim)
-                    {
-                        if (mesh_.geometricD()[dim] == 1)
-                        {
-                            geometricDims++;
-                        }    
-                    }
-
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
+                    const vector& subcellLevels = cloud_.subcellLevels()[cell];
+                    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
                     cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
-                        (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*pow(cloud_.subcellLevels()[cell],geometricDims)*cloud_.nParticle()*RWF);
+                        (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
                 }
                 cloud_.cellWeightFactor().correctBoundaryConditions();
@@ -444,22 +489,11 @@ void uspDynamicAdapter::update()
                 forAll(mesh_.cells(), cell)
                 {
 
-                    label geometricDims = 0;
-                    forAll(mesh_.geometricD(), dim)
-                    {
-                        if (mesh_.geometricD()[dim] == 1)
-                        {
-                            geometricDims++;
-                        }    
-                    }
-
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
-                    cloud_.cellWeightFactor().primitiveFieldRef()[cell] = 
-                        min
-                        (
-                            cloud_.cellWeightFactor()[cell],
-                            (rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*pow(cloud_.subcellLevels()[cell],geometricDims)*cloud_.nParticle()*RWF)
-                        );
+                    const vector& subcellLevels = cloud_.subcellLevels()[cell];
+                    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+                    cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
+                        (rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
                 }
                 cloud_.cellWeightFactor().correctBoundaryConditions();

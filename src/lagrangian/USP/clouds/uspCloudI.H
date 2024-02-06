@@ -40,6 +40,11 @@ inline Foam::label Foam::uspCloud::relCollModel() const
     return relCollModel_;
 }
 
+inline Foam::boolVector Foam::uspCloud::solutionDimensions() const
+{
+    return solutionDimensions_;
+}
+
 inline const Foam::List<Foam::word>& Foam::uspCloud::typeIdList() const
 {
     return typeIdList_;
@@ -121,7 +126,7 @@ inline Foam::label Foam::uspCloud::nTerminalOutputs() const
     return nTerminalOutputs_;
 }
 
-inline Foam::volScalarField& Foam::uspCloud::subcellLevels()
+inline Foam::volVectorField& Foam::uspCloud::subcellLevels()
 {
     return subcellLevels_;
 }

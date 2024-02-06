@@ -100,21 +100,14 @@ void Foam::uspMeshFill::setInitialConfiguration()
     //Compute cell weights
     if (cloud_.cellWeighted())
     {
-        forAll(mesh_.cells(), celli)
+        forAll(mesh_.cells(), cell)
         {
 
-            label geometricDims = 0;
-            forAll(mesh_.geometricD(), dim)
-            {
-                if (mesh_.geometricD()[dim] == 1)
-                {
-                    geometricDims++;
-                }    
-            }
-
-            scalar RWF = cloud_.axiRWF(meshCC[celli]);
-            cloud_.cellWeightFactor().primitiveFieldRef()[celli] =
-                (totalNumberDensity*meshV[celli])/(cloud_.particlesPerSubcell()*pow(cloud_.subcellLevels()[celli],geometricDims)*cloud_.nParticle()*RWF);
+            scalar RWF = cloud_.axiRWF(meshCC[cell]);
+            const vector& subcellLevels = cloud_.subcellLevels()[cell];
+            const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+            cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
+                (totalNumberDensity*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
         }
         cloud_.cellWeightFactor().correctBoundaryConditions();
@@ -125,10 +118,10 @@ void Foam::uspMeshFill::setInitialConfiguration()
         cloud_.cellWeightFactor().correctBoundaryConditions();
     }
 
-    forAll(mesh_.cells(), celli)
+    forAll(mesh_.cells(), cell)
     {
         List<tetIndices> cellTets =
-            polyMeshTetDecomposition::cellTetIndices(mesh_, celli);
+            polyMeshTetDecomposition::cellTetIndices(mesh_, cell);
 
         for (const tetIndices& cellTetIs : cellTets)
         {
@@ -154,8 +147,8 @@ void Foam::uspMeshFill::setInitialConfiguration()
                 scalar numberDensity = numberDensities[i];
 
                 // Calculate the number of particles required
-                scalar CWF = cloud_.cellWF(celli);
-                scalar RWF = cloud_.axiRWF(meshCC[celli]);
+                scalar CWF = cloud_.cellWF(cell);
+                scalar RWF = cloud_.axiRWF(meshCC[cell]);
                 scalar particlesRequired = numberDensity*tetVolume/(CWF*RWF);
 
                 // Only integer numbers of particles can be inserted
@@ -210,8 +203,8 @@ void Foam::uspMeshFill::setInitialConfiguration()
 
                     label newParcel = 0;
 
-                    scalar CWF = cloud_.cellWF(celli);
-                    scalar RWF = cloud_.axiRWF(meshCC[celli]);
+                    scalar CWF = cloud_.cellWF(cell);
+                    scalar RWF = cloud_.axiRWF(meshCC[cell]);
 
                     cloud_.addNewParcel
                     (
@@ -221,7 +214,7 @@ void Foam::uspMeshFill::setInitialConfiguration()
                         RWF,
                         ERot,
                         ELevel,
-                        celli,
+                        cell,
                         typeId,
                         newParcel,
                         vibLevel

@@ -2,8 +2,10 @@
 parcels/uspParcel.C
 parcels/uspParcelIO.C
 
+
 /* CLOUD */
 clouds/uspCloud.C
+
 
 /* DYNAMIC ADAPTATION */
 dynamicAdaptation/uspDynamicAdapter.C
@@ -37,8 +39,6 @@ binaryCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariab
 binaryCollisionPartner/basic/binaryCollisionPartner.C
 binaryCollisionPartner/derived/noTimeCounter/noTimeCounter.C
 binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
-binaryCollisionPartner/derived/simplifiedBernoulliTrials/simplifiedBernoulliTrials.C
-binaryCollisionPartner/derived/majorantCollisionFrequency/majorantCollisionFrequency.C
 
 
 /* RELAXATIONS */
@@ -75,13 +75,14 @@ faceTracker/uspFaceTracker.C
 boundaryMeasurements/boundaryMeasurements.C
 cellMeasurements/cellMeasurements.C
 
+
 /* BOUNDARIES */
 boundaries/basic/uspBoundaries/uspBoundaries.C
-
 boundaries/basic/uspBoundaryBase/uspBoundaryBase.C
 boundaries/basic/uspCyclicBoundary/uspCyclicBoundary.C
 boundaries/basic/uspGeneralBoundary/uspGeneralBoundary.C
 boundaries/basic/uspPatchBoundary/uspPatchBoundary.C
+
 
 /* PATCH BOUNDARY MODELS */
 boundaries/derived/patchBoundaries/uspDeletionPatch/uspDeletionPatch.C
@@ -92,6 +93,7 @@ boundaries/derived/patchBoundaries/uspMixedDiffuseSpecularWallPatch/uspMixedDiff
 boundaries/derived/patchBoundaries/uspMixedDiffuseSpecularWallFieldPatch/uspMixedDiffuseSpecularWallFieldPatch.C
 boundaries/derived/patchBoundaries/uspCLLWallPatch/uspCLLWallPatch.C
 boundaries/derived/patchBoundaries/uspCLLWallFieldPatch/uspCLLWallFieldPatch.C
+
 
 /* GENERAL BOUNDARY MODELS */
 boundaries/derived/generalBoundaries/uspFreeStreamInflowPatch/uspFreeStreamInflowPatch.C
@@ -104,28 +106,17 @@ boundaries/derived/generalBoundaries/uspLiouFangPressureOutlet/uspLiouFangPressu
 boundaries/derived/generalBoundaries/uspWangPressureInlet/uspWangPressureInlet.C
 boundaries/derived/generalBoundaries/uspMassFlowRateInlet/uspMassFlowRateInlet.C
 
+
 /* CYCLIC BOUNDARY MODELS */
 boundaries/derived/cyclicBoundaries/uspReflectiveParticleMembranePatch/uspReflectiveParticleMembranePatch.C
 
-/* COMBINED */
 
+/* MACROSCOPIC PROPERTIES */
 macroscopicProperties/derived/combined/uspBinsMethod/uspBinsMethod.C
 macroscopicProperties/derived/combined/uspZone/uspZone.C
 macroscopicProperties/derived/combined/uspVolFields/uspVolFields.C
-
-/*    DENSITY */
-
-/*    TEMPERATURE */
-
-/*    VELOCITY */
 macroscopicProperties/derived/velocity/uspVelocityDistributionZone/uspVelocityDistributionZone.C
 macroscopicProperties/derived/velocity/uspSpeedDistributionZone/uspSpeedDistributionZone.C
-
-/* OTHER FIELDS */
-
-/* PRESSURE */
-
-/* MASS FLUX */
 macroscopicProperties/derived/massFlux/uspMassFluxSurface/uspMassFluxSurface.C
 
 
@@ -135,21 +126,12 @@ controllers/basic/uspControllerBase/uspControllerBase.C
 controllers/basic/uspStateController/uspStateController.C
 controllers/basic/uspFluxController/uspFluxController.C
 
-/* DENSITY*/
 controllers/derived/density/densityController/densityController.C
-
-/* TEMPERATURE*/
 controllers/derived/temperature/temperatureController/temperatureController.C
-
-/*OTHERS*/
 controllers/derived/others/gravitationalAccelerationController/gravitationalAccelerationController.C
-
 
 /* LOAD BALANCING */
 dynamicLoadBalancing/uspDynamicLoadBalancing.C
-
-
-
 
 
 /* SUB MODELS */
@@ -165,7 +147,6 @@ LEGACY/timeData/timeData.C
 LEGACY/binModel/binModel.C
 LEGACY/distribution/distribution.C
 LEGACY/distribution/distributionIO.C
-
 LEGACY/binModel/derived/cylinderBin/cylinderBin.C
 LEGACY/binModel/derived/sphericalBins/sphericalBins.C
 LEGACY/binModel/derived/cuboidBinII/cuboidBinII.C

@@ -160,28 +160,21 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
     //Compute cell weights
     if (cloud_.cellWeighted())
     {
-        forAll(mesh_.cells(), celli)
+        forAll(mesh_.cells(), cell)
         {
-
-            label geometricDims = 0;
-            forAll(mesh_.geometricD(), dim)
-            {
-                if (mesh_.geometricD()[dim] == 1)
-                {
-                    geometricDims++;
-                }    
-            }
 
             scalar totalNumberDensity = 0.0;
             forAll(molecules, i)
             {
                 const volScalarField& initialNumberDensity_ = initialNumberDensityPtr_[i];
-                totalNumberDensity += initialNumberDensity_[celli];
+                totalNumberDensity += initialNumberDensity_[cell];
             }
 
-            scalar RWF = cloud_.axiRWF(meshCC[celli]);
-            cloud_.cellWeightFactor().primitiveFieldRef()[celli] =
-                (totalNumberDensity*meshV[celli])/(cloud_.particlesPerSubcell()*pow(cloud_.subcellLevels()[celli],geometricDims)*cloud_.nParticle()*RWF);
+            scalar RWF = cloud_.axiRWF(meshCC[cell]);
+            const vector& subcellLevels = cloud_.subcellLevels()[cell];
+            const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+            cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
+                (totalNumberDensity*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
         }
         cloud_.cellWeightFactor().correctBoundaryConditions();
@@ -192,10 +185,10 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
         cloud_.cellWeightFactor().correctBoundaryConditions();
     }
 
-    forAll(mesh_.cells(), celli)
+    forAll(mesh_.cells(), cell)
     {
         List<tetIndices> cellTets =
-            polyMeshTetDecomposition::cellTetIndices(mesh_, celli);
+            polyMeshTetDecomposition::cellTetIndices(mesh_, cell);
 
         for (const tetIndices& cellTetIs : cellTets)
         {
@@ -208,7 +201,7 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
             forAll(molecules, i)
             {
                 const volScalarField& initialNumberDensity_ = initialNumberDensityPtr_[i];
-                pressure += initialNumberDensity_[celli]*physicoChemical::k.value()*initialTransT_[celli];
+                pressure += initialNumberDensity_[cell]*physicoChemical::k.value()*initialTransT_[cell];
             }
 
             forAll(molecules, i)
@@ -227,21 +220,21 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
                 const auto& cP = cloud_.constProps(typeId);
 
                 const volScalarField& initialNumberDensity_ = initialNumberDensityPtr_[i];
-                scalar numberDensity = initialNumberDensity_[celli]/cloud_.nParticle();
+                scalar numberDensity = initialNumberDensity_[cell]/cloud_.nParticle();
 
-                scalar translationalTemperature = initialTransT_[celli];
+                scalar translationalTemperature = initialTransT_[cell];
 
-                scalar rotationalTemperature = initialRotT_[celli];
+                scalar rotationalTemperature = initialRotT_[cell];
 
-                scalar vibrationalTemperature = initialVibT_[celli];
+                scalar vibrationalTemperature = initialVibT_[cell];
 
-                scalar electronicTemperature = initialElecT_[celli];
+                scalar electronicTemperature = initialElecT_[cell];
 
-                vector velocity = initialU_[celli];
+                vector velocity = initialU_[cell];
 
                 // Calculate the number of particles required
-                scalar CWF = cloud_.cellWF(celli);
-                scalar RWF = cloud_.axiRWF(meshCC[celli]);
+                scalar CWF = cloud_.cellWF(cell);
+                scalar RWF = cloud_.axiRWF(meshCC[cell]);
                 scalar particlesRequired = numberDensity*tetVolume/(CWF*RWF);
 
                 // Only integer numbers of particles can be inserted
@@ -296,8 +289,8 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
 
                     label newParcel = 0;
 
-                    scalar CWF = cloud_.cellWF(celli);
-                    scalar RWF = cloud_.axiRWF(meshCC[celli]);
+                    scalar CWF = cloud_.cellWF(cell);
+                    scalar RWF = cloud_.axiRWF(meshCC[cell]);
 
                     cloud_.addNewParcel
                     (
@@ -307,7 +300,7 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
                         RWF,
                         ERot,
                         ELevel,
-                        celli,
+                        cell,
                         typeId,
                         newParcel,
                         vibLevel
@@ -324,24 +317,24 @@ void Foam::uspMeshFieldFill::setInitialConfiguration()
     List<scalar> numberDensities_;
     numberDensities_.setSize(molecules.size());
 
-    forAll(mesh_.cells(), celli)
+    forAll(mesh_.cells(), cell)
     {
 
         forAll(molecules, i)
         {
             const volScalarField& initialNumberDensity_ = initialNumberDensityPtr_[i];
-            numberDensities_[i] = initialNumberDensity_[celli];
+            numberDensities_[i] = initialNumberDensity_[cell];
         }
         
         label mostAbundantType(findMax(numberDensities_));
 
         const auto& cP = cloud_.constProps(mostAbundantType);
 
-        cloud_.sigmaTcRMax()[celli] =
+        cloud_.sigmaTcRMax()[cell] =
         cP.sigmaT()
         *cloud_.maxwellianMostProbableSpeed
             (
-                initialTransT_[celli],
+                initialTransT_[cell],
                 cP.mass()
             );
 

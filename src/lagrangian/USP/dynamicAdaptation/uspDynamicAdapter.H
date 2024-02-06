@@ -111,7 +111,7 @@ class uspDynamicAdapter
         volScalarField rhoN_;
         volScalarField translationalT_;
         volVectorField UMean_;
-        volScalarField cellSizeMFPRatio_;
+        volVectorField cellSizeMFPRatio_;
         volScalarField timeStepMCTRatio_;
 
     // Private Member Functions
