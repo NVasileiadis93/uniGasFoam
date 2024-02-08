@@ -45,7 +45,6 @@ SourceFiles
 #include "vector.H"
 #include "polyMesh.H"
 #include "uspCloud.H"
-#include "distribution.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

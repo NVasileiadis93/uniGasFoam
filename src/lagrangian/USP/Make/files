@@ -120,8 +120,7 @@ macroscopicProperties/derived/massFlux/uspMassFluxSurface/uspMassFluxSurface.C
 dynamicLoadBalancing/uspDynamicLoadBalancing.C
 
 /* SUB MODELS */
-submodels/cloudFunctionObjects/uspCloudFunctionObjects.C
-submodels/faceTracker/uspFaceTrackerFO.C
+clouds/uspCloudFunctionObjects.C
 
 /* INPOUT OUTPOUT */
 IO/writeTimeData/writeTimeData.C
