@@ -45,7 +45,6 @@ inline Foam::uspParcel::constantProperties::constantProperties
     vibrationalDoF_(dict.get<label>("vibrationalModes")),
     omega_(dict.get<scalar>("omega")),
     alpha_(dict.get<scalar>("alpha")),
-    Tref_(dict.get<scalar>("Tref")),
     thetaV_(dict.lookup("characteristicVibrationalTemperature")),
     thetaD_(dict.lookup("dissociationTemperature")),
     Zref_(dict.lookup("Zref")),
@@ -236,12 +235,6 @@ inline Foam::scalar Foam::uspParcel::constantProperties::omega() const
 inline Foam::scalar Foam::uspParcel::constantProperties::alpha() const
 {
     return alpha_;
-}
-
-
-inline Foam::scalar Foam::uspParcel::constantProperties::Tref() const
-{
-    return Tref_;
 }
 
 

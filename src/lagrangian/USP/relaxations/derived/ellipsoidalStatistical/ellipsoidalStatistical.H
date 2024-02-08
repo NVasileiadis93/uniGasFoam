@@ -60,6 +60,7 @@ class ellipsoidalStatistical
     // Private data
     
         const dictionary propertiesDict_;
+        const scalar Tref_;
         const bool macroInterpolation_;
 
         label infoCounter_;

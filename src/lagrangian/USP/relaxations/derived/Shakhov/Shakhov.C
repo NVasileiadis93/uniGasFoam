@@ -48,8 +48,8 @@ Foam::Shakhov::Shakhov
 :
     relaxationModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
+    Tref_(propertiesDict_.get<scalar>("Tref")),
     macroInterpolation_(propertiesDict_.getOrDefault<bool>("macroInterpolation", false)),
-    timeAverage_(propertiesDict_.getOrDefault<bool>("timeAverage", false)),
     theta_(propertiesDict_.getOrDefault<scalar>("theta", 1.0)),
     infoCounter_(0),
     shufflePasses_(5),
@@ -727,7 +727,6 @@ void Foam::Shakhov::calculateProperties()
             forAll(typeIds_, iD)
             {
 
-                const scalar& Tref = cloud_.constProps(iD).Tref();
                 const scalar& mass = cloud_.constProps(iD).mass();
                 const scalar& omega = cloud_.constProps(iD).omega();
                 const scalar& a = cloud_.constProps(iD).alpha();
@@ -735,10 +734,10 @@ void Foam::Shakhov::calculateProperties()
                 const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
 
                 scalar speciesViscRef = 
-                    1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref)
+                    1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
                     /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
                     
-                speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref,omega);
+                speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
                 viscosity += nParcels_[iD][cell]*speciesVisc[iD];
 
                 speciesPrandtl[iD] += (5+rotDoF)/(7.5+rotDoF);
@@ -761,20 +760,10 @@ void Foam::Shakhov::calculateProperties()
 
     // time-average and scale heat flux vector
     const scalar& deltaT = cloud_.mesh().time().deltaTValue();
-    if (timeAverage_)
+    forAll(mesh_.cells(), cell)
     {
-        forAll(mesh_.cells(), cell)
-        {
-            heatFluxVector_[cell] = theta_*heatFluxVector_[cell]/(1.0+0.5*Prandtl_[cell]*relaxFreq_[cell]*deltaT) + (1.0-theta_)*heatFluxVectorPrevious_[cell];
-            heatFluxVectorPrevious_[cell] = heatFluxVector_[cell];
-        }
-    }
-    else
-    {
-        forAll(mesh_.cells(), cell)
-        {
-            heatFluxVector_[cell] = heatFluxVector_[cell]/(1.0+0.5*Prandtl_[cell]*relaxFreq_[cell]*deltaT);
-        }
+        heatFluxVector_[cell] = theta_*heatFluxVector_[cell]/(1.0+0.5*Prandtl_[cell]*relaxFreq_[cell]*deltaT) + (1.0-theta_)*heatFluxVectorPrevious_[cell];
+        heatFluxVectorPrevious_[cell] = heatFluxVector_[cell];
     }
 
     //Correct boundary conditions

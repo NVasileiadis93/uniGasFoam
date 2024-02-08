@@ -47,12 +47,11 @@ Foam::localKnudsen::localKnudsen
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    decomposeInterval_(dict.get<label>("decomposeInterval")),
-    breakdownMax_(dict.get<scalar>("breakdownMax")),
-    timeAverage_(dict.getOrDefault<bool>("timeAverage",false)),
-    theta_(dict.getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.getOrDefault<scalar>("smoothingPasses",0)),
-    Tref_(dict.get<scalar>("Tref")),
+    decomposeInterval_(dict.subDict("decompositionProperties").get<label>("decomposeInterval")),
+    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
+    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -438,20 +437,10 @@ void Foam::localKnudsen::decompose()
             }
 
             // time average macroscopic quantities
-            if (timeAverage_)
-            {
-                KnRho_[cell] = theta_*instKnRho + (1.0-theta_)*KnRho_[cell];
-                KnT_[cell] = theta_*instKnT + (1.0-theta_)*KnT_[cell];
-                KnU_[cell] = theta_*instKnU + (1.0-theta_)*KnU_[cell];
-                KnGLL_[cell] = theta_*instKnGLL + (1.0-theta_)*KnGLL_[cell];
-            }
-            else
-            {
-                KnRho_[cell] = instKnRho;
-                KnT_[cell] = instKnT;
-                KnU_[cell] = instKnU;
-                KnGLL_[cell] = instKnGLL;
-            }
+            KnRho_[cell] = theta_*instKnRho + (1.0-theta_)*KnRho_[cell];
+            KnT_[cell] = theta_*instKnT + (1.0-theta_)*KnT_[cell];
+            KnU_[cell] = theta_*instKnU + (1.0-theta_)*KnU_[cell];
+            KnGLL_[cell] = theta_*instKnGLL + (1.0-theta_)*KnGLL_[cell];
 
         }
 

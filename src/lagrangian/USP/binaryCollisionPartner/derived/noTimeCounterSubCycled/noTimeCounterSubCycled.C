@@ -44,13 +44,13 @@ addToRunTimeSelectionTable
 
 noTimeCounterSubCycled::noTimeCounterSubCycled
 (
+    const dictionary& dict,
     const polyMesh& mesh,
-    uspCloud& cloud,
-    const dictionary& dict
+    uspCloud& cloud
 )
 :
-    binaryCollisionPartner(mesh, cloud, dict),
-    propsDict_(dict.subDict(typeName + "Properties")),
+    binaryCollisionPartner(dict, mesh, cloud),
+    propsDict_(dict.subDict("collisionProperties")),
     nSubCycles_(propsDict_.get<label>("nSubCycles")),
     infoCounter_(0)
 {}

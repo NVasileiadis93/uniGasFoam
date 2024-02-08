@@ -68,10 +68,10 @@ class simplifiedChapmanEnskog
 
         label decomposeInterval_;
         scalar breakdownMax_;
-        bool timeAverage_;
         scalar theta_;
         label smoothingPasses_;
-
+        scalar Tref_;
+        
         label timeSteps_;
         label nAvTimeSteps_;
 

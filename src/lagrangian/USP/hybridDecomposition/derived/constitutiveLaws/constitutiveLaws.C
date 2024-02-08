@@ -47,12 +47,11 @@ Foam::constitutiveLaws::constitutiveLaws
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    decomposeInterval_(dict.get<label>("decomposeInterval")),
-    breakdownMax_(dict.get<scalar>("breakdownMax")),
-    timeAverage_(dict.getOrDefault<bool>("timeAverage",false)),
-    theta_(dict.getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.getOrDefault<scalar>("smoothingPasses",0)),
-    Tref_(dict.get<scalar>("Tref")),
+    decomposeInterval_(dict.subDict("decompositionProperties").get<label>("decomposeInterval")),
+    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
+    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -697,18 +696,9 @@ void Foam::constitutiveLaws::decompose()
             }
 
             // time average macroscopic quantities
-            if (timeAverage_)
-            {
-                CLB_[cell] = theta_*instCLB + (1.0-theta_)*CLB_[cell];
-                CLBQ_[cell] = theta_*instCLBQ + (1.0-theta_)*CLBQ_[cell];
-                CLBS_[cell] = theta_*instCLBS + (1.0-theta_)*CLBS_[cell];
-            }
-            else
-            {
-                CLB_[cell] = instCLB;
-                CLBQ_[cell] = instCLBQ;
-                CLBS_[cell] = instCLBS;
-            }
+            CLB_[cell] = theta_*instCLB + (1.0-theta_)*CLB_[cell];
+            CLBQ_[cell] = theta_*instCLBQ + (1.0-theta_)*CLBQ_[cell];
+            CLBS_[cell] = theta_*instCLBS + (1.0-theta_)*CLBS_[cell];
 
         }
 

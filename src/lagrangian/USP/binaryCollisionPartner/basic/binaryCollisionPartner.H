@@ -78,27 +78,27 @@ public:
         binaryCollisionPartner,
         dictionary,
         (
+            const dictionary& dict,
             const polyMesh& mesh,
-            uspCloud& cloud,
-            const dictionary& dict
+            uspCloud& cloud
         ),
-        (mesh, cloud, dict)
+        (dict, mesh, cloud)
     );
 
     //- Constructor
     binaryCollisionPartner
     (
+        const dictionary& dict,
         const polyMesh& mesh,
-        uspCloud& cloud,
-        const dictionary& dict
+        uspCloud& cloud
     );
 
     //- Selectors
     static autoPtr<binaryCollisionPartner> New
     (
+        const dictionary& dict,
         const polyMesh& mesh,
-        uspCloud& cloud,
-        const dictionary& dict
+        uspCloud& cloud
     );
 
     //- Destructor

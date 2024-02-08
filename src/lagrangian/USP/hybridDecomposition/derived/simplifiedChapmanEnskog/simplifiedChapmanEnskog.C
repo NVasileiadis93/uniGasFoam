@@ -47,11 +47,11 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    decomposeInterval_(dict.get<label>("decomposeInterval")),
-    breakdownMax_(dict.get<scalar>("breakdownMax")),
-    timeAverage_(dict.getOrDefault<bool>("timeAverage",false)),
-    theta_(dict.getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.getOrDefault<scalar>("smoothingPasses",0)),
+    decomposeInterval_(dict.subDict("decompositionProperties").get<label>("decomposeInterval")),
+    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
+    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -476,14 +476,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
             }
 
             // time average macroscopic quantities
-            if (timeAverage_)
-            {
-                B_[cell] = theta_*instB + (1.0-theta_)*B_[cell];
-            }
-            else
-            {
-                B_[cell] = instB;
-            }
+            B_[cell] = theta_*instB + (1.0-theta_)*B_[cell];
 
         }
 

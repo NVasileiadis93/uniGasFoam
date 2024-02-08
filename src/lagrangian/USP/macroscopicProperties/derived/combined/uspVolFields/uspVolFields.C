@@ -1403,45 +1403,9 @@ void Foam::uspVolFields::calculateField()
                             pressureTensor_[cell].zy()*UMean_[cell].y() -
                             pressureTensor_[cell].zz()*UMean_[cell].z();
 
-
-                        // Scale heatFluxVector, pressureTensor and shearStressTensor for USP scheme
-                        /*Prandtl = 0.0;
-                        viscosity = 0.0;
-                        forAll(typeIds_, iD)
-                        {
-
-                            const scalar& Tref = cloud_.constProps(iD).Tref();
-                            const scalar& mass = cloud_.constProps(iD).mass();
-                            const scalar& omega = cloud_.constProps(iD).omega();
-                            const scalar& a = cloud_.constProps(iD).alpha();
-                            const scalar& d = cloud_.constProps(iD).d();
-                            const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
-
-                            scalar speciesViscRef = 
-                                1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref)
-                                /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
-                        
-                            speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref,omega);
-                            viscosity += nParcels_[iD][cell]*speciesVisc[iD];
-
-                            speciesPrandtl[iD] += (5.0+rotDoF)/(7.5+rotDoF);
-                            Prandtl += nParcels_[iD][cell]*speciesPrandtl[iD];
-
-                        }
-                        viscosity /= rhoNMean_[cell];
-                        Prandtl /= rhoNMean_[cell]; 
-                        relaxFreq = p_[cell]/viscosity;*/
-
-                        pSum = 0.0;
-                        Prandtl = 0.0;
-                        forAll(typeIds_, iD)
-                        {
-                            const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
-                            pSum += nParcels_[iD][cell];
-                            Prandtl += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
-                        }
-                        Prandtl /= pSum;
-                        tau = -0.5*log(1.0-pSum*nColls_[cell]/sqr(rhoNMean_[cell]));
+                        //Only works for single species
+                        scalar tau = -0.5*log(1.0-nColls_[cell]/rhoNMean_[cell]);
+                        scalar Prandtl = (5.0+nRotDof)/(7.5+nRotDof);
 
                         heatFluxVector_[cell] /= (1.0 - Prandtl*tau);
                         pressureTensor_[cell] /= (1.0 - tau);

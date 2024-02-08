@@ -67,7 +67,9 @@ class uspDynamicAdapter
 
         label maxSubcellLevels_ = 5;
 
-        label smoothingPasses_ = 10;
+        label smoothingPasses_;
+
+        scalar theta_;
 
         const dictionary& dict_;
 
@@ -113,6 +115,7 @@ class uspDynamicAdapter
         volVectorField UMean_;
         volVectorField cellSizeMFPRatio_;
         volScalarField timeStepMCTRatio_;
+        volScalarField cellWeightFactor_;
 
     // Private Member Functions
 

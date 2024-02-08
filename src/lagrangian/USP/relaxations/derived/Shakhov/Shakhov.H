@@ -60,9 +60,9 @@ class Shakhov
     // Private data
     
         const dictionary propertiesDict_;
-        const bool macroInterpolation_;
-        const bool timeAverage_;
+        const scalar Tref_;
         const scalar theta_;
+        const bool macroInterpolation_;
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;

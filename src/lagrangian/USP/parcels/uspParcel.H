@@ -84,9 +84,6 @@ public:
             //- VSS scattering parameter
             scalar alpha_;
 
-            //- Diameter reference temperature
-            scalar Tref_;
-
             //- Characteristic vibrational temperature
             scalarList thetaV_;
 
@@ -153,9 +150,6 @@ public:
 
             //- Return the VSS scattering parameter
             inline scalar alpha() const;
-
-            //- Return the diameter reference temperature
-            inline scalar Tref() const;
 
             //- Return the characteristic vibrational temperature
             inline const scalarList& thetaV() const;

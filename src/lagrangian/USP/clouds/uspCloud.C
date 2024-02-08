@@ -498,8 +498,7 @@ Foam::uspCloud::uspCloud
 
     if (axisymmetric_)
     {
-        radialExtent_ =
-            particleProperties_.get<scalar>("radialExtentOfDomain");
+        radialExtent_ = particleProperties_.get<scalar>("radialExtentOfDomain");
         maxRWF_ = particleProperties_.get<scalar>("maxRadialWeightingFactor");
     }
 
@@ -587,29 +586,28 @@ Foam::uspCloud::uspCloud
 
 
         // Select collision model: binary, relaxation, hybrid
-        const dictionary& collisionDict = particleProperties_.subDict("collisions");
-        collisionModel_ = collisionDict.get<word>("collisionModel");
+        collisionModel_ = particleProperties_.get<word>("collisionModel");
 
         if (collisionModel_ == binaryCollModel_)
         {
             Info << "Simulation collision model is: binary" << nl << endl;
-            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_->initialConfiguration();    
         }
         else if (collisionModel_ == relaxationCollModel_)
         {
             Info << "Simulation collision model is: relaxation" << nl << endl;
-            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);   
+            relaxationModel_ =relaxationModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
             Info << "Simulation collision model is: hybrid" << nl << endl;
-            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_->initialConfiguration();
-            relaxationModel_ =relaxationModel::New(collisionDict, mesh_, *this);
-            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_.subDict("decomposition"), mesh_, *this);
+            relaxationModel_ =relaxationModel::New(particleProperties_, mesh_, *this);
+            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_, mesh_, *this);
         }
         else
         {
@@ -665,32 +663,31 @@ Foam::uspCloud::uspCloud
             << nl << endl;  
 
         // Select collision model: binary, relaxation, hybrid
-        const dictionary& collisionDict = particleProperties_.subDict("collisions");
-        collisionModel_ = collisionDict.get<word>("collisionModel");
+        collisionModel_ = particleProperties_.get<word>("collisionModel");
 
         if (collisionModel_ == binaryCollModel_)
         {
             Info << "Simulation collision model is: binary" << nl << endl;
             cellCollisionModel_ = binCollModel_;
-            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_ -> initialConfiguration();    
         }
         else if (collisionModel_ == relaxationCollModel_)
         {
             Info << "Simulation collision model is: relaxation" << nl << endl;
             cellCollisionModel_ = relCollModel_;
-            relaxationModel_ = relaxationModel::New(collisionDict, mesh_, *this);   
+            relaxationModel_ = relaxationModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
             Info << "Simulation collision model is: hybrid" << nl << endl;
             cellCollisionModel_ = relCollModel_;
-            binaryCollisionModel_ = binaryCollisionModel::New(collisionDict,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(mesh_, *this, collisionDict);
+            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
+            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_ -> initialConfiguration();
-            relaxationModel_ = relaxationModel::New(collisionDict, mesh_, *this);  
-            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_.subDict("decomposition"), mesh_, *this);
+            relaxationModel_ = relaxationModel::New(particleProperties_, mesh_, *this);  
+            hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_, mesh_, *this);
         }
         else
         {
@@ -863,10 +860,10 @@ Foam::label Foam::uspCloud::nTerminalOutputs()
 
 void Foam::uspCloud::info() const
 {
-    label nuspParticles = this->size();
-    reduce(nuspParticles, sumOp<label>());
+    label nUspParticles = this->size();
+    reduce(nUspParticles, sumOp<label>());
 
-    scalar nMol = nuspParticles*nParticle_;
+    scalar nMol = nUspParticles*nParticle_;
 
     scalar linearKineticEnergy = infoMeasurements()[1];
     reduce(linearKineticEnergy, sumOp<scalar>());
@@ -880,9 +877,9 @@ void Foam::uspCloud::info() const
     scalar electronicEnergy = infoMeasurements()[4];
     reduce(electronicEnergy, sumOp<scalar>());
 
-    Info<< "    Number of usp particles        = " << nuspParticles << endl;
+    Info<< "    Number of usp particles        = " << nUspParticles << endl;
 
-    if (nuspParticles)
+    if (nUspParticles)
     {
         scalar totalEnergy =
             rotationalEnergy

@@ -48,6 +48,8 @@ uspDynamicAdapter::uspDynamicAdapter
     timeInterval_(),
     maxSubcellSizeMFPRatio_(),
     Tref_(),
+    smoothingPasses_(),
+    theta_(),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -126,6 +128,20 @@ uspDynamicAdapter::uspDynamicAdapter
         mesh_,
         dimensionedScalar(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
+    ),
+    cellWeightFactor_
+    (
+        IOobject
+        (
+            "cellWeightFactor",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
 
@@ -165,10 +181,11 @@ uspDynamicAdapter::uspDynamicAdapter
     if (cloud_.dynamicAdaptation())
     {
         adaptiveSubcells_ = dict.subDict("dynamicSimulationProperties").get<bool>("adaptiveSubcells");
-        adaptiveCellWeights_ = dict.subDict("dynamicSimulationProperties").get<bool>("adaptiveCellWeights");
         timeInterval_ = dict.subDict("dynamicSimulationProperties").get<label>("timeInterval");
         maxSubcellSizeMFPRatio_ = dict.subDict("dynamicSimulationProperties").get<scalar>("maxSubcellSizeMFPRatio");
-        Tref_ = dict.subDict("dynamicSimulationProperties").get<scalar>("Tref");
+        smoothingPasses_ = dict.subDict("dynamicSimulationProperties").getOrDefault<label>("smoothingPasses", 0);
+        theta_ = dict.subDict("dynamicSimulationProperties").getOrDefault<scalar>("theta", 1.0);
+        Tref_ = dict.subDict("collisionProperties").get<scalar>("Tref");
     }
 
 }
@@ -206,8 +223,6 @@ void uspDynamicAdapter::update()
 
     if (timeSteps_ == timeInterval_)
     {
-
-        Info << "-----------mpika adapt-----------" << endl;
 
         const auto& meshCC = cloud_.mesh().cellCentres();
         const auto& meshV = cloud_.mesh().V();
@@ -379,7 +394,6 @@ void uspDynamicAdapter::update()
         // Adapt subcell levels
         if (adaptiveSubcells_)
         {
-
             const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
             forAll(mesh_.cells(), cell)
             {
@@ -415,65 +429,22 @@ void uspDynamicAdapter::update()
             }
             cloud_.subcellLevels().correctBoundaryConditions();
 
-            /*for (label pass=0; pass<smoothingPasses_; ++pass)
-            {
-                cloud_.subcellLevels() = fvc::average(fvc::interpolate(cloud_.subcellLevels()));
-                cloud_.subcellLevels().correctBoundaryConditions();
-            }
-
-            forAll(mesh_.cells(), cell)
-            {
-                if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
-                {
-                    
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cloud_.subcellLevels()[cell][dim]+0.5)));
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = 1.0;
-                        }
-                    }
-                }
-                else
-                {
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = minSubcellLevels_;
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = 1.0;
-                        }
-                    }    
-                }
-            }
-            cloud_.subcellLevels().correctBoundaryConditions();*/  
-
         }
 
-        // update cell weighting factor  
-        if (adaptiveCellWeights_)
-        {        
-            if (cloud_.cellWeighted())
+        // update cell weighting factor        
+        if (cloud_.cellWeighted())
+        {
+            
+            forAll(mesh_.cells(), cell)
             {
-                forAll(mesh_.cells(), cell)
-                {
 
-                    scalar RWF = cloud_.axiRWF(meshCC[cell]);
-                    const vector& subcellLevels = cloud_.subcellLevels()[cell];
-                    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
-                        (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+                scalar RWF = cloud_.axiRWF(meshCC[cell]);
+                const vector& subcellLevels = cloud_.subcellLevels()[cell];
+                const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+                cellWeightFactor_[cell] = (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
-                }
-                cloud_.cellWeightFactor().correctBoundaryConditions();
             }
+            cellWeightFactor_.correctBoundaryConditions();
 
             // smooth cell weighting factor
             scalar maxCellWeightRatio;
@@ -483,8 +454,8 @@ void uspDynamicAdapter::update()
 
                 smoothingPasses++;
 
-                cloud_.cellWeightFactor() = fvc::average(fvc::interpolate(cloud_.cellWeightFactor()));
-                cloud_.cellWeightFactor().correctBoundaryConditions(); 
+                cellWeightFactor_ = fvc::average(fvc::interpolate(cellWeightFactor_));
+                cellWeightFactor_.correctBoundaryConditions(); 
 
                 forAll(mesh_.cells(), cell)
                 {
@@ -492,11 +463,10 @@ void uspDynamicAdapter::update()
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
                     const vector& subcellLevels = cloud_.subcellLevels()[cell];
                     const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cloud_.cellWeightFactor().primitiveFieldRef()[cell] =
-                        (rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+                    cellWeightFactor_[cell] = (rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
 
                 }
-                cloud_.cellWeightFactor().correctBoundaryConditions();
+                cellWeightFactor_.correctBoundaryConditions();
 
                 maxCellWeightRatio = VSMALL;
                 forAll(mesh_.faces(), face)
@@ -505,8 +475,8 @@ void uspDynamicAdapter::update()
                     if (mesh_.isInternalFace(face))
                     {
 
-                        scalar ownerCWF = cloud_.cellWeightFactor()[mesh_.faceOwner()[face]];
-                        scalar neighbourCWF = cloud_.cellWeightFactor()[mesh_.faceNeighbour()[face]];
+                        scalar ownerCWF = cellWeightFactor_[mesh_.faceOwner()[face]];
+                        scalar neighbourCWF = cellWeightFactor_[mesh_.faceNeighbour()[face]];
                         scalar cellWeightRatio = max(ownerCWF/neighbourCWF, neighbourCWF/ownerCWF);
                         if (cellWeightRatio > maxCellWeightRatio)
                         {
@@ -522,6 +492,11 @@ void uspDynamicAdapter::update()
                 }
 
             } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
+
+            // time average cell weight factor
+            cloud_.cellWeightFactor() = theta_*cellWeightFactor_ + (1.0-theta_)*cloud_.cellWeightFactor() ;
+            cellWeightFactor_ = cloud_.cellWeightFactor();
+
         }
 
         // reset

@@ -38,9 +38,9 @@ defineRunTimeSelectionTable(binaryCollisionPartner, dictionary);
 
 Foam::binaryCollisionPartner::binaryCollisionPartner
 (
+    const dictionary& dict,
     const polyMesh& mesh,
-    uspCloud& cloud,
-    const dictionary& dict
+    uspCloud& cloud
 )
 :
     mesh_(refCast<const fvMesh>(mesh)),
@@ -54,9 +54,9 @@ Foam::binaryCollisionPartner::binaryCollisionPartner
 Foam::autoPtr<Foam::binaryCollisionPartner>
 Foam::binaryCollisionPartner::New
 (
+    const dictionary& dict,
     const polyMesh& mesh,
-    uspCloud& cloud,
-    const dictionary& dict
+    uspCloud& cloud
 )
 {
     const word modelType(dict.get<word>("binaryCollisionPartnerModel"));
@@ -76,7 +76,7 @@ Foam::binaryCollisionPartner::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<binaryCollisionPartner>(cstrIter()(mesh, cloud, dict));
+    return autoPtr<binaryCollisionPartner>(cstrIter()(dict, mesh, cloud));
 }
 
 

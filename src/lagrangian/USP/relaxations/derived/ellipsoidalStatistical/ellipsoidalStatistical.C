@@ -48,6 +48,7 @@ Foam::ellipsoidalStatistical::ellipsoidalStatistical
 :
     relaxationModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
+    Tref_(propertiesDict_.get<scalar>("Tref")),
     macroInterpolation_(propertiesDict_.getOrDefault<bool>("macroInterpolation", false)),
     infoCounter_(0),
     shufflePasses_(5),
@@ -645,7 +646,6 @@ void Foam::ellipsoidalStatistical::calculateProperties()
             forAll(typeIds_, iD)
             {
 
-                const scalar& Tref = cloud_.constProps(iD).Tref();
                 const scalar& mass = cloud_.constProps(iD).mass();
                 const scalar& omega = cloud_.constProps(iD).omega();
                 const scalar& a = cloud_.constProps(iD).alpha();
@@ -653,10 +653,10 @@ void Foam::ellipsoidalStatistical::calculateProperties()
                 const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
 
                 scalar speciesViscRef = 
-                    1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref)
+                    1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
                     /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
                     
-                speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref,omega);
+                speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
                 viscosity += nParcels_[iD][cell]*speciesVisc[iD];
 
                 speciesPrandtl[iD] += (5+rotDoF)/(7.5+rotDoF);

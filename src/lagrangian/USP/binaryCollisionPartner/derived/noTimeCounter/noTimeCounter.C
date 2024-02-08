@@ -44,12 +44,12 @@ addToRunTimeSelectionTable
 
 Foam::noTimeCounter::noTimeCounter
 (
+    const dictionary& dict,
     const polyMesh& mesh,
-    uspCloud& cloud,
-    const dictionary& dict
+    uspCloud& cloud
 )
 :
-    binaryCollisionPartner(mesh, cloud, dict),
+    binaryCollisionPartner(dict, mesh, cloud),
     infoCounter_(0)
 {}
 

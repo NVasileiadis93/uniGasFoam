@@ -114,9 +114,9 @@ public:
     //- Construct from components
     noTimeCounterSubCycled
     (
+        const dictionary& dict,
         const polyMesh& mesh,
-        uspCloud& cloud,
-        const dictionary& dict
+        uspCloud& cloud
     );
 
     //- Destructor

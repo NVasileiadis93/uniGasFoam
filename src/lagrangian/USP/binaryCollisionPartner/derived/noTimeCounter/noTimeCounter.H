@@ -99,9 +99,9 @@ public:
     //- Construct from components
     noTimeCounter
     (
+        const dictionary& dict,
         const polyMesh& mesh,
-        uspCloud& cloud,
-        const dictionary& dict
+        uspCloud& cloud
     );
 
     //- Destructor
