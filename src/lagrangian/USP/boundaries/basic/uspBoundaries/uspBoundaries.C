@@ -469,15 +469,6 @@ void uspBoundaries::checkPatchBoundaryModels(const polyMesh& mesh)
 }
 
 
-void uspBoundaries::updateTimeInfo()
-{
-    for (auto& model : generalBoundaryModels_)
-    {
-        model->updateTime();
-    }
-}
-
-
 void uspBoundaries::setInitialConfig()
 {
     for (auto& model : patchBoundaryModels_)

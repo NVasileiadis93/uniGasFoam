@@ -107,17 +107,6 @@ void Foam::uspFieldProperties::createFields()
 }
 
 
-void Foam::uspFieldProperties::updateTimeInfo()
-{
-    // This function is to be called at the beginning of the USP time-step,
-    // in order to update the time scheme used by each measurement property.
-    forAll(fields_, f)
-    {
-        fields_[f]->updateTime();
-    }
-}
-
-
 void Foam::uspFieldProperties::calculateFields()
 {
     forAll(fields_, f)

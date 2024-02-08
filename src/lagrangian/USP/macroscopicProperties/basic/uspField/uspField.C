@@ -47,7 +47,8 @@ uspField::uspField
     mesh_(refCast<const fvMesh>(mesh)),
     cloud_(cloud),
     timeDict_(dict.subDict("timeProperties")),
-    timeVel_(t, timeDict_),
+    resetFieldsAtOutput_(timeDict_.getOrDefault<scalar>("resetFieldsAtOutput",true)),
+    resetFieldsAtOutputUntilTime_(timeDict_.getOrDefault<scalar>("resetFieldsAtOutputUntilTime",0.0)),
     casePath_(t.path()/"fieldMeasurements"),
     timePath_()
 {
@@ -89,21 +90,27 @@ autoPtr<uspField> uspField::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void uspField::updateTime()
-{
-    ++timeVel_;
-}
-
-
 void uspField::updateProperties(const dictionary& dict)
 {
 
     timeDict_ = dict.subDict("timeProperties");
 
-    timeDict_.readIfPresent("resetAtOutput", timeVel_.resetFieldsAtOutput());
+    resetFieldsAtOutput_ = timeDict_.getOrDefault<scalar>("resetFieldsAtOutput",true);
 
-    timeDict_.readIfPresent("resetAtOutputUntilTime", timeVel_.resetFieldsAtOutputUntilTime());
+    resetFieldsAtOutputUntilTime_ = timeDict_.getOrDefault<scalar>("resetFieldsAtOutputUntilTime",0.0);
 
+}
+
+
+const bool& uspField::resetFieldsAtOutput() const
+{
+    return resetFieldsAtOutput_;
+}
+
+
+const scalar& uspField::resetFieldsAtOutputUntilTime() const
+{
+    return resetFieldsAtOutputUntilTime_;
 }
 
 

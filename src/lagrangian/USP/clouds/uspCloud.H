@@ -53,7 +53,6 @@ SourceFiles
 #include "uspAllConfigurations.H"
 #include "uspFieldProperties.H"
 #include "uspFaceTracker.H"
-#include "uspControllers.H"
 #include "uspDynamicLoadBalancing.H"
 #include "uspDynamicAdapter.H"
 #include "uspHybridDecomposition.H"
@@ -197,9 +196,6 @@ private:
 
         //- Random number generator
         Random rndGen_;
-
-        //- Controllers
-        uspControllers controllers_;
 
         //- load balancing
         uspDynamicLoadBalancing dynamicLoadBalancing_;
@@ -512,9 +508,6 @@ public:
 
         inline const uspFieldProperties& fields() const;
         inline uspFieldProperties& fields();
-
-        inline const uspControllers& controllers() const;
-        inline uspControllers& controllers();
 
         inline const uspDynamicLoadBalancing& dynamicLoadBalancing() const;
         inline uspDynamicLoadBalancing& dynamicLoadBalancing();

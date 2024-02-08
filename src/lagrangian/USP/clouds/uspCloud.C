@@ -443,7 +443,6 @@ Foam::uspCloud::uspCloud
     constProps_(),
     rndGen_(label(clock::getTime()) + 7183*Pstream::myProcNo()),
     //rndGen_(1.0),
-    controllers_(t, mesh, *this),
     dynamicLoadBalancing_(t, *this),
     dynamicAdapter_(particleProperties_, mesh_, *this),
     fields_(t, mesh, *this),
@@ -714,7 +713,6 @@ Foam::uspCloud::uspCloud
     cellMeas_.createFields();
     fields_.createFields();
     boundaries_.setInitialConfig();
-    controllers_.initialConfig();
 
 }
 
@@ -758,9 +756,6 @@ Foam::labelList Foam::uspCloud::getTypeIDs(const dictionary& dict) const
 
 void Foam::uspCloud::evolve()
 {
-    boundaries_.updateTimeInfo();
-    fields_.updateTimeInfo();
-    controllers_.updateTimeInfo();
 
     uspParcel::trackingData td(*this);
 
@@ -771,7 +766,6 @@ void Foam::uspCloud::evolve()
         this->dumpParticlePositions();
     }
 
-    controllers_.controlBeforeMove();
     boundaries_.controlBeforeMove();
 
     // Move the particles ballistically with their current velocities
@@ -796,7 +790,6 @@ void Foam::uspCloud::evolve()
         buildCellOccupancy();
     }
 
-    controllers_.controlBeforeCollisions();
     boundaries_.controlBeforeCollisions();
 
     // Calculate new velocities via stochastic collisions, stochastic relaxations or hybrid collision/relaxations
@@ -816,7 +809,6 @@ void Foam::uspCloud::evolve()
     // Update cell occupancy (reactions may have changed it)
     buildCellOccupancy();
 
-    controllers_.controlAfterCollisions();
     boundaries_.controlAfterCollisions();
 
     reactions_.outputData();
@@ -826,10 +818,6 @@ void Foam::uspCloud::evolve()
     fields_.calculateFields();
     fields_.writeFields();
 
-    controllers_.calculateProps();
-    controllers_.outputResults();
-
-    boundaries_.calculateProps();
     boundaries_.outputResults();
 
     if (collisionModel_ == hybridCollModel_)

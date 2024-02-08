@@ -117,10 +117,6 @@ Foam::autoPtr<Foam::uspGeneralBoundary> Foam::uspGeneralBoundary::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::uspGeneralBoundary::updateTime()
-{}
-
-
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
     const scalar& transT,

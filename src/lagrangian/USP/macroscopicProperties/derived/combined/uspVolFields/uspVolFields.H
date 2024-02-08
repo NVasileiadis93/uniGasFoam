@@ -70,13 +70,15 @@ class uspVolFields
     // Private data
 
         dictionary propsDict_;
-
+        
         //- Wall unit vectors - temporary storage, should be done in
         //  boundaries/patch
         List<vectorField> n_;
         List<vectorField> t1_;
         List<vectorField> t2_;
 
+        bool resetFieldsAtOutput_;
+        scalar resetFieldsAtOutputUntilTime_;
         label sampleInterval_;
         label sampleCounter_;
         scalar mfpReferenceTemperature_;

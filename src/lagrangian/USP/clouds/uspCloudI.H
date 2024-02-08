@@ -220,18 +220,6 @@ inline Foam::uspFieldProperties& Foam::uspCloud::fields()
 }
 
 
-inline const Foam::uspControllers& Foam::uspCloud::controllers() const
-{
-    return controllers_;
-}
-
-
-inline Foam::uspControllers& Foam::uspCloud::controllers()
-{
-    return controllers_;
-}
-
-
 inline const Foam::uspFaceTracker& Foam::uspCloud::tracker() const
 {
     return trackingInfo_;

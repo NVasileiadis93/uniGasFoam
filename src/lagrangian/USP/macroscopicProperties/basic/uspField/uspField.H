@@ -40,7 +40,6 @@ SourceFiles
 #include "vector.H"
 #include "Random.H"
 #include "uspParcel.H"
-#include "timeDataMeas.H"
 #include "writeTimeData.H"
 
 #include "runTimeSelectionTables.H"
@@ -66,7 +65,9 @@ protected:
         //- Time properties dictionary
         dictionary timeDict_;
 
-        timeDataMeas timeVel_;
+        bool resetFieldsAtOutput_;
+
+        scalar resetFieldsAtOutputUntilTime_;
 
         fileName casePath_;
 
@@ -122,7 +123,9 @@ public:
 
     // Member Functions
 
-        void updateTime();
+        const bool& resetFieldsAtOutput() const;
+
+        const scalar& resetFieldsAtOutputUntilTime() const;
 
         const fileName& casePath() const;
         fileName& casePath();

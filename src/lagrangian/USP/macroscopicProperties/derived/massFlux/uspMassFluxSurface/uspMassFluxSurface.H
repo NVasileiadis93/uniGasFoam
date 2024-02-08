@@ -92,14 +92,14 @@ class uspMassFluxSurface
 
         scalar molsZone_;
         scalar massZone_;
-        vector momentumZone_;
+        scalar momentumZone_;
         scalar averagingCounter_;
         label timeIndex_;
 
         scalarField molFluxZone_;
         scalarField massFluxZone_;
         scalarField massFlowZone_;
-        vectorField momentumFlowZone_;
+        scalarField momentumFlowZone_;
 
         bool averagingAcrossManyRuns_;
 

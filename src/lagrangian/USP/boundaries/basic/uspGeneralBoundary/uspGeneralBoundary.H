@@ -125,8 +125,6 @@ public:
 
     // Member Functions
 
-        virtual void updateTime();
-
         //- Create an initial configuration
         virtual void initialConfiguration() = 0;
 

@@ -57,13 +57,13 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
     fluxDirection_(propsDict_.get<vector>("fluxDirection")),
     molsZone_(0.0),
     massZone_(0.0),
-    momentumZone_(vector::zero),
+    momentumZone_(0.0),
     averagingCounter_(0.0),
     timeIndex_(0),
     molFluxZone_(1, 0.0),
     massFluxZone_(1, 0.0),
     massFlowZone_(1, 0.0),
-    momentumFlowZone_(1, vector::zero),
+    momentumFlowZone_(1, 0.0),
     averagingAcrossManyRuns_
     (
         propsDict_.getOrDefault<bool>("averagingAcrossManyRuns", false)
@@ -80,9 +80,7 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
         read();
     }
 
-
     // select face zone
-
     const faceZoneMesh& faceZones = mesh_.faceZones();
 
     regionId_ = faceZones.findZoneID(faceZoneName_);
@@ -184,15 +182,14 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
     }
     else
     {
-        forAll(faces, f)
+        for (const label faceI : faces)
         {
-            const label faceI = faces[f];
-
             zoneSurfaceArea_ += mag(mesh_.faceAreas()[faceI]);
         }
     }
 
     Info << "zoneSurfaceArea_ = " << zoneSurfaceArea_ << endl;
+
 }
 
 
@@ -217,7 +214,6 @@ void Foam::uspMassFluxSurface::read()
     dict.readIfPresent("molsZone", molsZone_);
     dict.readIfPresent("massZone", massZone_);
     dict.readIfPresent("momentumZone", momentumZone_);
-
     dict.readIfPresent("averagingCounter", averagingCounter_);
 
 }
@@ -244,7 +240,6 @@ void Foam::uspMassFluxSurface::write()
         dict.add("molsZone", molsZone_);
         dict.add("massZone", massZone_);
         dict.add("momentumZone", momentumZone_);
-
         dict.add("averagingCounter", averagingCounter_);
 
         dict.regIOobject::writeObject
@@ -276,13 +271,14 @@ void Foam::uspMassFluxSurface::calculateField()
 
         scalar molFlux = 0.0;
         scalar massFlux = 0.0;
-        vector momentumFlux = vector::zero;
+        scalar momentumFlux = 0.0;
 
         const faceZoneMesh& faceZones = mesh_.faceZones();
         const labelList& faces = faceZones[regionId_];
 
         for (const label faceI : faces)
         {
+
             vector nF = mesh_.faceAreas()[faceI]/mag(mesh_.faceAreas()[faceI]);
 
             forAll(molIdFlux, id)
@@ -291,22 +287,19 @@ void Foam::uspMassFluxSurface::calculateField()
                 {
 
                     //fix for non-uniform cell weighting
-                    label faceNeighbour = mesh_.faceNeighbour()[faceI];
+                    label faceOwner= mesh_.owner()[faceI];
 
-                    scalar CWF = cloud_.cellWF(faceNeighbour);
-                    scalar RWF =
-                        cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
+                    const scalar& nParticle = cloud_.nParticle();
+                    const scalar& CWF = cloud_.cellWF(faceOwner);
+                    const scalar& RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-                    molFlux +=
-                        (molIdFlux[id][faceI]*cloud_.nParticle()*CWF*RWF*nF)
-                      & fluxDirection_;
-                    massFlux +=
-                        (massIdFlux[id][faceI]*cloud_.nParticle()*CWF*RWF*nF)
-                      & fluxDirection_;
-                    momentumFlux +=
-                        (momentumIdFlux[id][faceI]*cloud_.nParticle()*CWF*RWF);
+                    molFlux += (molIdFlux[id][faceI]*nParticle*CWF*RWF*nF) & fluxDirection_;
+                    massFlux += (massIdFlux[id][faceI]*nParticle*CWF*RWF*nF) & fluxDirection_;
+                    momentumFlux += (momentumIdFlux[id][faceI]*nParticle*CWF*RWF) & fluxDirection_;
+
                 }
             }
+
         }
 
         molsZone_ += molFlux;
@@ -321,18 +314,20 @@ void Foam::uspMassFluxSurface::calculateField()
     // Average measurement and calculate properties
     if (runTime.writeTime())
     {
+        
         scalar molsZone = molsZone_;
         scalar massZone = massZone_;
-        vector momentumZone = momentumZone_;
+        scalar momentumZone = momentumZone_;
 
         if (Pstream::parRun())
         {
             reduce(molsZone, sumOp<scalar>());
             reduce(massZone, sumOp<scalar>());
-            reduce(momentumZone, sumOp<vector>());
+            reduce(momentumZone, sumOp<scalar>());
         }
 
-        scalar averagingTime = averagingCounter_*timeVel_.mdTimeInterval().deltaT();
+        scalar deltaT = mesh_.time().deltaTValue();
+        scalar averagingTime = averagingCounter_*deltaT;
 
         if (zoneSurfaceArea_ > 0.0)
         {
@@ -346,15 +341,15 @@ void Foam::uspMassFluxSurface::calculateField()
             molFluxZone_[timeIndex_] = 0.0;
             massFluxZone_[timeIndex_] = 0.0;
             massFlowZone_[timeIndex_] = 0.0;
-            momentumFlowZone_[timeIndex_] = vector::zero;
+            momentumFlowZone_[timeIndex_] = 0.0;
         }
 
-        if (timeVel_.resetFieldsAtOutput() && (mesh_.time().value() < timeVel_.resetFieldsAtOutputUntilTime()+0.5*mesh_.time().deltaTValue()))
+        if (resetFieldsAtOutput() && (mesh_.time().value() < resetFieldsAtOutputUntilTime()+0.5*deltaT))
         {
+            averagingCounter_ = 0;
             molsZone_ = 0.0;
             massZone_ = 0.0;
-            momentumZone_ = vector::zero;
-            averagingCounter_ = 0.0;
+            momentumZone_ = 0.0;
         }
 
         if (averagingAcrossManyRuns_)
@@ -364,6 +359,7 @@ void Foam::uspMassFluxSurface::calculateField()
 
         ++timeIndex_;
     }
+
 }
 
 

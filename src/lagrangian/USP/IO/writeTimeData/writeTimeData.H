@@ -61,8 +61,6 @@ class writeTimeData
 {
     // Private data
 
-
-
 public:
 
     // Constructors
@@ -160,9 +158,6 @@ public:
             const vectorField& xData,
             const tensorField& yData
         );
-
-
-
 
         // WITH APPEND POSSIBLE
 
@@ -317,8 +312,6 @@ public:
             const List<tensorField>& data,
             const word& option
         );
-
-
 
 
         ~writeTimeData();

@@ -112,50 +112,18 @@ boundaries/derived/cyclicBoundaries/uspReflectiveParticleMembranePatch/uspReflec
 
 
 /* MACROSCOPIC PROPERTIES */
-macroscopicProperties/derived/combined/uspBinsMethod/uspBinsMethod.C
-macroscopicProperties/derived/combined/uspZone/uspZone.C
 macroscopicProperties/derived/combined/uspVolFields/uspVolFields.C
-macroscopicProperties/derived/velocity/uspVelocityDistributionZone/uspVelocityDistributionZone.C
-macroscopicProperties/derived/velocity/uspSpeedDistributionZone/uspSpeedDistributionZone.C
 macroscopicProperties/derived/massFlux/uspMassFluxSurface/uspMassFluxSurface.C
 
 
-/* CONTROLLERS*/
-controllers/basic/uspControllers/uspControllers.C
-controllers/basic/uspControllerBase/uspControllerBase.C
-controllers/basic/uspStateController/uspStateController.C
-controllers/basic/uspFluxController/uspFluxController.C
-
-controllers/derived/density/densityController/densityController.C
-controllers/derived/temperature/temperatureController/temperatureController.C
-controllers/derived/others/gravitationalAccelerationController/gravitationalAccelerationController.C
-
 /* LOAD BALANCING */
 dynamicLoadBalancing/uspDynamicLoadBalancing.C
-
 
 /* SUB MODELS */
 submodels/cloudFunctionObjects/uspCloudFunctionObjects.C
 submodels/faceTracker/uspFaceTrackerFO.C
 
-
-/* LEGACY */
-LEGACY/timeDataMeas/timeDataMeas.C
-LEGACY/timeInterval/timeInterval.C
-LEGACY/writeTimeData/writeTimeData.C
-LEGACY/timeData/timeData.C
-LEGACY/binModel/binModel.C
-LEGACY/distribution/distribution.C
-LEGACY/distribution/distributionIO.C
-LEGACY/binModel/derived/cylinderBin/cylinderBin.C
-LEGACY/binModel/derived/sphericalBins/sphericalBins.C
-LEGACY/binModel/derived/cuboidBinII/cuboidBinII.C
-LEGACY/binModel/derived/simpleBins/simpleBins.C
-LEGACY/binModel/derived/cuboidBin/cuboidBin.C
-LEGACY/binModel/derived/radialBinsNormalised/radialBinsNormalised.C
-LEGACY/binModel/derived/angularBins/angularBins.C
-LEGACY/binModel/derived/radialBins/radialBins.C
-LEGACY/binModel/derived/multiZoneBins/multiZoneBins.C
-LEGACY/binModel/derived/uniformBins/uniformBins.C
+/* INPOUT OUTPOUT */
+IO/writeTimeData/writeTimeData.C
 
 LIB = $(FOAM_USER_LIBBIN)/libUSP

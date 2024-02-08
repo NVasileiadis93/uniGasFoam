@@ -122,9 +122,6 @@ public:
 
         void calculateProps();
 
-        //- Update time information
-        void updateTimeInfo();
-
         void outputResults();
 
         void checkPatchBoundaryModels(const polyMesh& mesh);

@@ -94,15 +94,11 @@ public:
 
     // Member Functions
 
-
-        void updateTimeInfo();
-
         void createFields();
 
         void calculateFields();
 
         void writeFields();
-
 
         inline List<autoPtr<uspField>>& fields();
         inline const List<autoPtr<uspField>>& fields() const;
