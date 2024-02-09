@@ -51,18 +51,9 @@ Foam::uspCLLWallFieldPatch::uspCLLWallFieldPatch
 :
     uspPatchBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    normalAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("normalAccommodationCoefficient")
-    ),
-    tangentialAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("tangentialAccommodationCoefficient")
-    ),
-    rotationalEnergyAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("rotationalEnergyAccommodationCoefficient")
-    ),
+    normalAccommCoeff_(propsDict_.get<scalar>("normalAccommCoeff")),
+    tangentialAccommCoeff_(propsDict_.get<scalar>("tangentialAccommCoeff")),
+    rotEnergyAccommCoeff_(propsDict_.get<scalar>("rotEnergyAccommCoeff")),
     boundaryT_
     (
         IOobject
@@ -91,8 +82,6 @@ Foam::uspCLLWallFieldPatch::uspCLLWallFieldPatch
     writeInTimeDir_ = false;
     writeInCase_ = false;
     measurePropertiesAtWall_ = true;
-
-    setProperties();
 }
 
 
@@ -100,15 +89,10 @@ Foam::uspCLLWallFieldPatch::uspCLLWallFieldPatch
 
 void Foam::uspCLLWallFieldPatch::initialConfiguration()
 {
-    if
-    (
-        (normalAccommodationCoefficient_ < VSMALL)
-     && (tangentialAccommodationCoefficient_ < VSMALL)
-    )
+    if ((normalAccommCoeff_ < VSMALL) && (tangentialAccommCoeff_ < VSMALL))
     {
-        measurePropertiesAtWall_ = false;
-
         // Reduces to a specular wall, so no need to measure properties
+        measurePropertiesAtWall_ = false;
     }
 }
 
@@ -182,11 +166,9 @@ void Foam::uspCLLWallFieldPatch::controlParticle
 
     label vibrationalDof = ccp.vibrationalDoF();
 
-    const scalar alphaT =
-        tangentialAccommodationCoefficient_
-       *(2.0 - tangentialAccommodationCoefficient_);
+    const scalar alphaT = tangentialAccommCoeff_*(2.0 - tangentialAccommCoeff_);
 
-    const scalar alphaN = normalAccommodationCoefficient_;
+    const scalar alphaN = normalAccommCoeff_;
 
     scalar mostProbableVelocity = sqrt(2.0*physicoChemical::k.value()*T/mass);
 
@@ -255,7 +237,7 @@ void Foam::uspCLLWallFieldPatch::controlParticle
     vector uWallTangential2 = (uw & tw2) * tw2;
 
     vector UNormal =
-        ((U & nw) * nw) + uWallNormal*normalAccommodationCoefficient_;
+        ((U & nw) * nw) + uWallNormal*normalAccommCoeff_;
     vector UTangential1 = (U & tw1) * tw1 + uWallTangential1*alphaT;
     vector UTangential2 = (U & tw2) * tw2 + uWallTangential2*alphaT;
 
@@ -264,14 +246,14 @@ void Foam::uspCLLWallFieldPatch::controlParticle
     scalar om =
         sqrt
         (
-            ERot*(1.0 - rotationalEnergyAccommodationCoefficient_)
+            ERot*(1.0 - rotEnergyAccommCoeff_)
            /(physicoChemical::k.value()*T)
         );
 
     scalar rRot =
         sqrt
         (
-           -rotationalEnergyAccommodationCoefficient_
+           -rotEnergyAccommCoeff_
            *(
                 log(max(1.0 - rndGen.sample01<scalar>(), VSMALL))
             )
@@ -311,15 +293,6 @@ void Foam::uspCLLWallFieldPatch::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspPatchBoundary::updateProperties(dict);
-
-    propsDict_ = dict.subDict(typeName + "Properties");
-
-    setProperties();
 }
-
-
-void Foam::uspCLLWallFieldPatch::setProperties()
-{}
-
 
 // ************************************************************************* //

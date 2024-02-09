@@ -49,13 +49,19 @@ Foam::uspVolFields::uspVolFields
 :
     uspField(t, mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    fieldName_(propsDict_.get<word>("field")),
+    typeIds_(cloud_.getTypeIDs(propsDict_)),
+    densityOnly_(propsDict_.getOrDefault<bool>("densityOnly",false)),
+    measureHeatFluxShearStress_(propsDict_.getOrDefault<bool>("measureHeatFluxShearStress",false)),
+    measureMeanFreePath_(propsDict_.getOrDefault<bool>("measureMeanFreePath",false)),
+    measureErrors_(propsDict_.getOrDefault<bool>("measureErrors",false)),
+    averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
+    mfpReferenceTemperature_(propsDict_.getOrDefault<scalar>("mfpReferenceTemperature",273.0)),
+    sampleCounter_(0),
+    nTimeSteps_(0),
     n_(),
     t1_(),
     t2_(),
-    sampleInterval_(1),
-    sampleCounter_(0),
-    mfpReferenceTemperature_(273.0),
-    fieldName_(propsDict_.get<word>("field")),
     uspRhoN_
     (
         IOobject
@@ -407,8 +413,6 @@ Foam::uspVolFields::uspVolFields
         mesh_,
         dimensionedTensor(dimPressure, Zero)
     ),
-    nTimeSteps_(0),
-    typeIds_(),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNInstantaneous_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -461,18 +465,11 @@ Foam::uspVolFields::uspVolFields
     vibrationalEBF_(),
     electronicEBF_(),
     speciesRhoNBF_(),
-    mccSpeciesBF_(),
-    averagingAcrossManyRuns_(false),
-    measureMeanFreePath_(false),
-    measureErrors_(false),
-    densityOnly_(false),
-    measureHeatFluxShearStress_(false)
+    mccSpeciesBF_()
 {
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
 
     // Note; outer list is typeIds, inner list is number of cells on the
     // mesh
-
     nGroundElectronicLevel_.setSize(typeIds_.size());
 
     for (auto& l : nGroundElectronicLevel_)
@@ -605,74 +602,12 @@ Foam::uspVolFields::uspVolFields
         }
     }
 
-    sampleInterval_ =
-        propsDict_.readIfPresent<label>("sampleInterval", sampleInterval_);
-
-    if (propsDict_.readIfPresent<bool>("measureErrors", measureErrors_))
+    // read in stored data from dictionary
+    if (averagingAcrossManyRuns_)
     {
-        if (measureErrors_)
-        {
-            Info<< "measureErrors initiated" << endl;
-        }
+        readIn();
     }
 
-    if (propsDict_.readIfPresent<bool>("densityOnly", densityOnly_))
-    {
-        if (densityOnly_)
-        {
-            Info<< "densityOnly initiated" << endl;
-        }
-    }
-
-    if
-    (
-        propsDict_.readIfPresent<bool>
-        (
-            "measureHeatFluxShearStress",
-            measureHeatFluxShearStress_
-        )
-    )
-    {
-        if (measureHeatFluxShearStress_)
-        {
-            Info<< "measureHeatFluxShearStress initiated" << endl;
-        }
-    }
-
-    if
-    (
-        propsDict_.readIfPresent<bool>
-        (
-            "measureMeanFreePath",
-            measureMeanFreePath_
-        )
-    )
-    {
-        if (measureMeanFreePath_)
-        {
-            Info<< "measureMeanFreePath initiated" << endl;
-
-            mfpReferenceTemperature_ =
-                propsDict_.get<scalar>("mfpReferenceTemperature");
-        }
-    }
-
-    if
-    (
-        propsDict_.readIfPresent<bool>
-        (
-            "averagingAcrossManyRuns",
-            averagingAcrossManyRuns_
-        )
-    )
-    {
-        // read in stored data from dictionary
-        if (averagingAcrossManyRuns_)
-        {
-            Info<< "averagingAcrossManyRuns initiated." << nl << endl;
-            readIn();
-        }
-    }
 }
 
 
@@ -1833,7 +1768,7 @@ void Foam::uspVolFields::calculateField()
         }
 
         // Reset
-        if (resetFieldsAtOutput() && (mesh_.time().value() < resetFieldsAtOutputUntilTime()+0.5*deltaT))
+        if (resetFieldsAtOutput_ && (mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT))
         {
 
             nTimeSteps_ = 0;
@@ -1931,9 +1866,10 @@ void Foam::uspVolFields::writeField()
 
 void Foam::uspVolFields::updateProperties(const dictionary& dict)
 {
+    
     // The main properties should be updated first
     uspField::updateProperties(dict);
-
+    
     propsDict_ = dict.subDict(typeName + "Properties");
 
     propsDict_.readIfPresent("measureErrors", measureErrors_);
@@ -1948,11 +1884,7 @@ void Foam::uspVolFields::updateProperties(const dictionary& dict)
         Info<< nl << "densityOnly initiated." << nl << endl;
     }
 
-    propsDict_.readIfPresent
-    (
-        "measureHeatFluxShearStress",
-        measureHeatFluxShearStress_
-    );
+    propsDict_.readIfPresent("measureHeatFluxShearStress",measureHeatFluxShearStress_);
     if (measureHeatFluxShearStress_)
     {
         Info << "measureHeatFluxShearStress initiated." << endl;
@@ -1962,21 +1894,14 @@ void Foam::uspVolFields::updateProperties(const dictionary& dict)
     if (measureMeanFreePath_)
     {
         Info << "measureMeanFreePath initiated." << endl;
-
-        mfpReferenceTemperature_ =
-            propsDict_.get<scalar>("mfpReferenceTemperature");
+        mfpReferenceTemperature_ = propsDict_.get<scalar>("mfpReferenceTemperature");
     }
 
-    propsDict_.readIfPresent
-    (
-        "averagingAcrossManyRuns",
-        averagingAcrossManyRuns_
-    );
+    propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);
     if (averagingAcrossManyRuns_)
     {
         Info << "averagingAcrossManyRuns initiated." << endl;
     }
+
 }
-
-
 // ************************************************************************* //

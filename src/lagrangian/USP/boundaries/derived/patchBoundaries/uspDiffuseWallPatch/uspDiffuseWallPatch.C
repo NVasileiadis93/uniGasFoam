@@ -50,13 +50,13 @@ Foam::uspDiffuseWallPatch::uspDiffuseWallPatch
 )
 :
     uspPatchBoundary(mesh, cloud, dict),
-    propsDict_(dict.subDict(typeName + "Properties"))
+    propsDict_(dict.subDict(typeName + "Properties")),
+    temperature_(propsDict_.get<scalar>("temperature")),
+    velocity_(propsDict_.get<vector>("velocity"))
 {
     writeInTimeDir_ = false;
     writeInCase_ = false;
     measurePropertiesAtWall_ = true;
-
-    setProperties();
 }
 
 
@@ -96,16 +96,11 @@ void Foam::uspDiffuseWallPatch::updateProperties(const dictionary& dict)
     uspPatchBoundary::updateProperties(dict);
 
     propsDict_ = dict.subDict(typeName + "Properties");
-
-    setProperties();
-}
-
-
-void Foam::uspDiffuseWallPatch::setProperties()
-{
-    velocity_ = propsDict_.get<vector>("velocity");
+    
     temperature_ = propsDict_.get<scalar>("temperature");
-}
 
+    velocity_ = propsDict_.get<vector>("velocity");
+
+}
 
 // ************************************************************************* //

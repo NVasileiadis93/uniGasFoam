@@ -25,14 +25,31 @@ Class
     uspMixedDiffuseSpecularWallFieldPatch
 
 Description
-    Wall interaction setting microscopic velocity to a random one
-    drawn from a Maxwellian distribution corresponding to a specified
-    temperature for a specified fraction of collisions, and reversing
-    the wall-normal component of the particle velocity for the
-    remainder.
+    Wall interaction that performs a diffuse reflection or a specular
+    reflection depending on the accommodation factor compared to a randomly
+    generated number.
+
+    Use in the boundariesDict file.
 
     FIELD VERSION: require boundaryU and boundaryT fields to be defined in
     your time directory.
+
+Usage
+
+    Example of the boundary condition specification:
+    \verbatim
+    patchBoundaryProperties
+    {
+        patch               wall;
+    }
+
+    boundaryModel   uspMixedDiffuseSpecularWallFieldPatch;
+
+    uspMixedDiffuseSpecularWallFieldPatchProperties
+    {
+        diffuseFraction     0.9;
+    }
+    \endverbatim
 
 SourceFiles
     uspMixedDiffuseSpecularWallFieldPatch.C
@@ -62,15 +79,14 @@ class uspMixedDiffuseSpecularWallFieldPatch
 
         dictionary propsDict_;
 
+        //- Fraction of wall interactions that are diffuse
+        scalar diffuseFraction_;
+
         //- Boundary temperature
         volScalarField boundaryT_;
 
         //- Boundary velocity
         volVectorField boundaryU_;
-
-        //- Fraction of wall interactions that are diffuse
-        scalar diffuseFraction_;
-
 
 public:
 

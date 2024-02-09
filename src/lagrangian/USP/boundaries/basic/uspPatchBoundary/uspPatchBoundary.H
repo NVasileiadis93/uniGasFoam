@@ -71,12 +71,6 @@ protected:
         //- Cells corresponding to the boundary faces
         labelList cells_;
 
-        //- Set all the properties below from model if required
-
-        scalar density_;
-        vector velocity_;
-        scalar temperature_;
-
         bool measurePropertiesAtWall_;
 
         //- Measured fields at the patch
@@ -165,23 +159,11 @@ public:
             const fileName& timePath
         ) = 0;
 
-
         virtual const labelList& controlPatch() const;
 
         //- Return the adjacent cells
         virtual const labelList& controlZone() const;
 
-
-        // Return the targeted fields
-
-            virtual scalar density() const;
-            virtual scalar& density();
-
-            virtual const vector& velocity() const;
-            virtual vector& velocity();
-
-            virtual scalar temperature() const;
-            virtual scalar& temperature();
 };
 
 

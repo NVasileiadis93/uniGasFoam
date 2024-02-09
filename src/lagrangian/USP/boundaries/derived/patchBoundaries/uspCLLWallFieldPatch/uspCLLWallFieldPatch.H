@@ -25,12 +25,29 @@ Class
     uspCLLWallFieldPatch
 
 Description
-    Wall interaction setting microscopic velocity to a random one
-    drawn from a Maxwellian distribution corresponding to a specified
-    temperature
+    Wall interaction based on the Cercignani-Lampis-Lord model
 
-    SINGLE VALUE: temperature and velocity required in boundariesDict
+    FIELD VERSION: require boundaryU and boundaryT fields to be defined in
+    your time directory.
 
+Usage
+
+    Example of the boundary condition specification:
+    \verbatim
+    patchBoundaryProperties
+    {
+        patch       wall;
+    }
+
+    boundaryModel   uspCLLWallFieldPatch;
+
+    uspCLLWallFieldPatchProperties
+    {
+        normalAccommCoeff       0.9;
+        tangentialAccommCoeff   0.9;
+        rotEnergyAccommCoeff    0.9;
+    }
+    \endverbatim
 
 SourceFiles
     uspCLLWallFieldPatch.C
@@ -64,11 +81,11 @@ class uspCLLWallFieldPatch
 
         void setProperties();
 
-        scalar normalAccommodationCoefficient_;
+        scalar normalAccommCoeff_;
 
-        scalar tangentialAccommodationCoefficient_;
+        scalar tangentialAccommCoeff_;
 
-        scalar rotationalEnergyAccommodationCoefficient_;
+        scalar rotEnergyAccommCoeff_;
 
         //- Boundary temperature
         volScalarField boundaryT_;

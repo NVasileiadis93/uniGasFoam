@@ -45,28 +45,16 @@ Foam::uspCLLWallPatch::uspCLLWallPatch
 :
     uspPatchBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    normalAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("normalAccommodationCoefficient")
-    ),
-    tangentialAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("tangentialAccommodationCoefficient")
-    ),
-    rotationalEnergyAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("rotationalEnergyAccommodationCoefficient")
-    ),
-    vibrationalEnergyAccommodationCoefficient_
-    (
-        propsDict_.get<scalar>("vibrationalEnergyAccommodationCoefficient")
-    )
+    normalAccommCoeff_(propsDict_.get<scalar>("normalAccommCoeff")),
+    tangentialAccommCoeff_(propsDict_.get<scalar>("tangentialAccommCoeff")),
+    rotEnergyAccommCoeff_(propsDict_.get<scalar>("rotEnergyAccommCoeff")),
+    temperature_(propsDict_.get<scalar>("temperature")),
+    velocity_(propsDict_.get<vector>("velocity"))
 {
     writeInTimeDir_ = false;
     writeInCase_ = false;
     measurePropertiesAtWall_ = true;
-
-    setProperties();
+    Info << temperature_ << " " << velocity_.x() << endl;
 }
 
 
@@ -74,11 +62,7 @@ Foam::uspCLLWallPatch::uspCLLWallPatch
 
 void Foam::uspCLLWallPatch::initialConfiguration()
 {
-    if
-    (
-        (normalAccommodationCoefficient_ < VSMALL)
-     && (tangentialAccommodationCoefficient_ < VSMALL)
-    )
+    if ((normalAccommCoeff_ < VSMALL) && (tangentialAccommCoeff_ < VSMALL))
     {
         // reduces to a specular wall, so no need to measure properties
         measurePropertiesAtWall_ = false;
@@ -145,13 +129,11 @@ void Foam::uspCLLWallPatch::controlParticle
 
     label rotationalDof = cloud_.constProps(typeId).rotationalDoF();
 
-    const scalar alphaT =
-        tangentialAccommodationCoefficient_
-       *(2.0 - tangentialAccommodationCoefficient_);
+    const scalar alphaT = tangentialAccommCoeff_*(2.0 - tangentialAccommCoeff_);
 
-    const scalar alphaN = normalAccommodationCoefficient_;
+    const scalar alphaN = normalAccommCoeff_;
 
-    const scalar alphaR = rotationalEnergyAccommodationCoefficient_;
+    const scalar alphaR = rotEnergyAccommCoeff_;
 
     scalar mostProbableVelocity = sqrt(2.0*physicoChemical::k.value()*T/mass);
 
@@ -284,16 +266,13 @@ void Foam::uspCLLWallPatch::updateProperties(const dictionary& dict)
     uspPatchBoundary::updateProperties(dict);
 
     propsDict_ = dict.subDict(typeName + "Properties");
-
-    setProperties();
-}
-
-
-void Foam::uspCLLWallPatch::setProperties()
-{
+    
     velocity_ = propsDict_.get<vector>("velocity");
+    
     temperature_ = propsDict_.get<scalar>("temperature");
-}
 
+    Info << temperature_ << " " << velocity_.x() << endl;
+
+}
 
 // ************************************************************************* //

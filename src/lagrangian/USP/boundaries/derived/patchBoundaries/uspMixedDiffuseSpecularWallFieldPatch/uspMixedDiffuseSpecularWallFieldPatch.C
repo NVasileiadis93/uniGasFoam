@@ -52,6 +52,7 @@ uspMixedDiffuseSpecularWallFieldPatch
 :
     uspPatchBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    diffuseFraction_(propsDict_.get<scalar>("diffuseFraction")),
     boundaryT_
     (
         IOobject
@@ -75,8 +76,7 @@ uspMixedDiffuseSpecularWallFieldPatch
             IOobject::AUTO_WRITE
         ),
         mesh_
-    ),
-    diffuseFraction_(propsDict_.get<scalar>("diffuseFraction"))
+    )
 {
     writeInTimeDir_ = false;
     writeInCase_ = false;

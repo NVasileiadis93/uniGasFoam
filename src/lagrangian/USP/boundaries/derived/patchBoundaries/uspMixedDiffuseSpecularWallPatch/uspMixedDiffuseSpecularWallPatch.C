@@ -51,13 +51,13 @@ Foam::uspMixedDiffuseSpecularWallPatch::uspMixedDiffuseSpecularWallPatch
 :
     uspPatchBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    diffuseFraction_(propsDict_.get<scalar>("diffuseFraction"))
+    diffuseFraction_(propsDict_.get<scalar>("diffuseFraction")),
+    temperature_(propsDict_.get<scalar>("temperature")),
+    velocity_(propsDict_.get<vector>("velocity"))
 {
     writeInTimeDir_ = false;
     writeInCase_ = false;
     measurePropertiesAtWall_ = true;
-
-    setProperties();
 }
 
 
@@ -110,15 +110,12 @@ void Foam::uspMixedDiffuseSpecularWallPatch::updateProperties
     // The main properties should be updated first
     uspPatchBoundary::updateProperties(dict);
 
-    setProperties();
-}
+    propsDict_ = dict.subDict(typeName + "Properties");
 
-
-void Foam::uspMixedDiffuseSpecularWallPatch::setProperties()
-{
-    velocity_ = propsDict_.get<vector>("velocity");
     temperature_ = propsDict_.get<scalar>("temperature");
-}
 
+    velocity_ = propsDict_.get<vector>("velocity");
+
+}
 
 // ************************************************************************* //

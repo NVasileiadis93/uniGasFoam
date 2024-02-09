@@ -50,9 +50,6 @@ Foam::uspPatchBoundary::uspPatchBoundary
     patchSurfaceArea_(Zero),
     totalPatchSurfaceArea_(Zero),
     cells_(),
-    density_(Zero),
-    velocity_(Zero),
-    temperature_(Zero),
     measurePropertiesAtWall_(false),
     preIE_(Zero),
     preIMom_(Zero)
@@ -413,42 +410,5 @@ const Foam::labelList& Foam::uspPatchBoundary::controlZone() const
 {
     return cells_;
 }
-
-
-Foam::scalar Foam::uspPatchBoundary::density() const
-{
-    return density_;
-}
-
-
-Foam::scalar& Foam::uspPatchBoundary::density()
-{
-    return density_;
-}
-
-
-const Foam::vector& Foam::uspPatchBoundary::velocity() const
-{
-    return velocity_;
-}
-
-
-Foam::vector& Foam::uspPatchBoundary::velocity()
-{
-    return velocity_;
-}
-
-
-Foam::scalar Foam::uspPatchBoundary::temperature() const
-{
-    return temperature_;
-}
-
-
-Foam::scalar& Foam::uspPatchBoundary::temperature()
-{
-    return temperature_;
-}
-
 
 // ************************************************************************* //

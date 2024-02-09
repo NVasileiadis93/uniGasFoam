@@ -77,19 +77,14 @@ class uspMassFluxSurface
         dictionary propsDict_;
 
         word fieldName_;
-
-        label regionId_;
-        label sampleInterval_;
-        label sampleCounter_;
-        word faceZoneName_;
-
-        scalar zoneSurfaceArea_;
-
-        //- Parcel IDs
         labelList typeIds_;
-
+        word faceZoneName_;        
         vector fluxDirection_;
+        bool averagingAcrossManyRuns_;
 
+        label sampleCounter_;
+        label regionId_;
+        scalar zoneSurfaceArea_;
         scalar molsZone_;
         scalar massZone_;
         scalar momentumZone_;
@@ -101,14 +96,14 @@ class uspMassFluxSurface
         scalarField massFlowZone_;
         scalarField momentumFlowZone_;
 
-        bool averagingAcrossManyRuns_;
+        
 
 
     // Private Member Functions
 
-        void read();
+        void readIn();
 
-        void write();
+        void writeOut();
 
 
  public:
@@ -144,6 +139,7 @@ class uspMassFluxSurface
         virtual void writeField();
 
         virtual void updateProperties(const dictionary& dict);
+
 };
 
 

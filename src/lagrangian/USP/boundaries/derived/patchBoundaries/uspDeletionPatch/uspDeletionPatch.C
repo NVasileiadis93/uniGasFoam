@@ -45,14 +45,17 @@ Foam::uspDeletionPatch::uspDeletionPatch
 :
     uspPatchBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    allSpecies_(false),
+    allSpecies_(propsDict_.getOrDefault<bool>("allSpecies",false)),
     typeIds_()
 {
     measurePropertiesAtWall_ = false;
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    if (!allSpecies_)
+    {
+        typeIds_ = cloud_.getTypeIDs(propsDict_);
+    }
 }
 
 
@@ -89,18 +92,15 @@ void Foam::uspDeletionPatch::updateProperties(const dictionary& dict)
     // the main properties should be updated first
     uspPatchBoundary::updateProperties(dict);
 
-    setProperties();
-}
+    propsDict_ = dict.subDict(typeName + "Properties");
 
-
-void Foam::uspDeletionPatch::setProperties()
-{
     propsDict_.readIfPresent("allSpecies", allSpecies_);
 
     if (!allSpecies_)
     {
         typeIds_ = cloud_.getTypeIDs(propsDict_);
     }
+
 }
 
 

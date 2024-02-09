@@ -65,6 +65,8 @@ protected:
         //- Time properties dictionary
         dictionary timeDict_;
 
+        label sampleInterval_;
+
         bool resetFieldsAtOutput_;
 
         scalar resetFieldsAtOutputUntilTime_;
@@ -122,6 +124,8 @@ public:
 
 
     // Member Functions
+
+        const label& sampleInterval() const;
 
         const bool& resetFieldsAtOutput() const;
 

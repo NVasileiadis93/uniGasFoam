@@ -27,10 +27,28 @@ Class
 Description
     Wall interaction setting microscopic velocity to a random one
     drawn from a Maxwellian distribution corresponding to a specified
-    temperature
+    temperature and velocity
+
+    Use in the boundariesDict file.
+
+Usage
+
+    Example of the boundary condition specification:
+    \verbatim
+    patchBoundaryProperties
+    {
+        patch           wall;
+    }
+
+    boundaryModel   uspDiffuseWallFieldPatch;
+
+    uspDiffuseWallFieldPatchProperties
+    {
+    }
+    \endverbatim
 
     FIELD VERSION: require boundaryU and boundaryT fields to be defined in
-    your time directory.
+    time directory.
 
 SourceFiles
     uspDiffuseWallFieldPatch.C

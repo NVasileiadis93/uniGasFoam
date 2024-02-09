@@ -47,8 +47,9 @@ uspField::uspField
     mesh_(refCast<const fvMesh>(mesh)),
     cloud_(cloud),
     timeDict_(dict.subDict("timeProperties")),
-    resetFieldsAtOutput_(timeDict_.getOrDefault<scalar>("resetFieldsAtOutput",true)),
-    resetFieldsAtOutputUntilTime_(timeDict_.getOrDefault<scalar>("resetFieldsAtOutputUntilTime",0.0)),
+    sampleInterval_(timeDict_.getOrDefault<label>("sampleInterval",1)),
+    resetFieldsAtOutput_(timeDict_.getOrDefault<bool>("resetAtOutput",true)),
+    resetFieldsAtOutputUntilTime_(timeDict_.getOrDefault<scalar>("resetAtOutputUntilTime",0.0)),
     casePath_(t.path()/"fieldMeasurements"),
     timePath_()
 {
@@ -95,10 +96,17 @@ void uspField::updateProperties(const dictionary& dict)
 
     timeDict_ = dict.subDict("timeProperties");
 
-    resetFieldsAtOutput_ = timeDict_.getOrDefault<scalar>("resetFieldsAtOutput",true);
+    timeDict_.readIfPresent("sampleInterval", sampleInterval_);
 
-    resetFieldsAtOutputUntilTime_ = timeDict_.getOrDefault<scalar>("resetFieldsAtOutputUntilTime",0.0);
+    timeDict_.readIfPresent("resetAtOutput", resetFieldsAtOutput_);
 
+    timeDict_.readIfPresent("resetAtOutputUntilTime", resetFieldsAtOutputUntilTime_);
+
+}
+
+const label& uspField::sampleInterval() const
+{
+    return sampleInterval_;
 }
 
 

@@ -45,19 +45,18 @@ Usage
     \verbatim
     patchBoundaryProperties
     {
-        patchName                           wall;
+        patch       wall;
     }
 
     boundaryModel   uspCLLWallPatch;
 
     uspCLLWallPatchProperties
     {
-        temperature                                 300;
-        velocity                                    (0 0 0);
-        normalAccommodationCoefficient              0.9;
-        tangentialAccommodationCoefficient          0.9;
-        rotationalEnergyAccommodationCoefficient    0.9;
-        vibrationalEnergyAccommodationCoefficient   0.9;
+        normalAccommCoeff       0.9;
+        tangentialAccommCoeff   0.9;
+        rotEnergyAccommCoeff    0.9;
+        temperature             300;
+        velocity                (0 0 0);
     }
     \endverbatim
 
@@ -90,16 +89,17 @@ class uspCLLWallPatch
 
         dictionary propsDict_;
 
-        scalar normalAccommodationCoefficient_;
+        scalar normalAccommCoeff_;
 
-        scalar tangentialAccommodationCoefficient_;
+        scalar tangentialAccommCoeff_;
 
-        scalar rotationalEnergyAccommodationCoefficient_;
+        scalar rotEnergyAccommCoeff_;
 
-        scalar vibrationalEnergyAccommodationCoefficient_;
+        scalar vibEnergyAccommCoeff_;
 
-        void setProperties();
+        scalar temperature_;
 
+        vector velocity_;
 
 public:
 

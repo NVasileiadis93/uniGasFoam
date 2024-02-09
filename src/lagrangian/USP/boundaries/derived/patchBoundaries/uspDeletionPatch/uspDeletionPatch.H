@@ -83,9 +83,6 @@ class uspDeletionPatch
 
     // Private Member Functions
 
-        void setProperties();
-
-
 public:
 
     //- Runtime type information

@@ -37,7 +37,7 @@ Usage
     \verbatim
     patchBoundaryProperties
     {
-        patchName                           wall;
+        patch           wall;
     }
 
     boundaryModel   uspDiffuseWallPatch;
@@ -79,8 +79,9 @@ class uspDiffuseWallPatch
 
         dictionary propsDict_;
 
-        void setProperties();
+        scalar temperature_;
 
+        vector velocity_;
 
 public:
 

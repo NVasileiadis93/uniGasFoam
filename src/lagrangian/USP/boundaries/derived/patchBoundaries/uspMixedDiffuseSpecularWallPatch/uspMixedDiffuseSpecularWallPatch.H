@@ -37,7 +37,7 @@ Usage
     \verbatim
     patchBoundaryProperties
     {
-        patchName                           wall;
+        patch               wall;
     }
 
     boundaryModel   uspMixedDiffuseSpecularWallPatch;
@@ -81,8 +81,9 @@ class uspMixedDiffuseSpecularWallPatch
         //- Fraction of wall interactions that are diffuse
         scalar diffuseFraction_;
 
-        void setProperties();
+        scalar temperature_;
 
+        vector velocity_;
 
 public:
 

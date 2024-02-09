@@ -48,13 +48,13 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
     uspField(t, mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
     fieldName_(propsDict_.get<word>("field")),
-    regionId_(-1),
-    sampleInterval_(propsDict_.getOrDefault<label>("sampleInterval", 1)),
-    sampleCounter_(0),
-    faceZoneName_(propsDict_.get<word>("faceZone")),
-    zoneSurfaceArea_(0.0),
-    typeIds_(),
+    typeIds_(cloud_.getTypeIDs(propsDict_)),
+    faceZoneName_(propsDict_.get<word>("faceZone")),        
     fluxDirection_(propsDict_.get<vector>("fluxDirection")),
+    averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
+    sampleCounter_(0),
+    regionId_(-1),
+    zoneSurfaceArea_(0.0),
     molsZone_(0.0),
     massZone_(0.0),
     momentumZone_(0.0),
@@ -63,21 +63,14 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
     molFluxZone_(1, 0.0),
     massFluxZone_(1, 0.0),
     massFlowZone_(1, 0.0),
-    momentumFlowZone_(1, 0.0),
-    averagingAcrossManyRuns_
-    (
-        propsDict_.getOrDefault<bool>("averagingAcrossManyRuns", false)
-    )
+    momentumFlowZone_(1, 0.0)
 {
-    // choose molecule ids to sample
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
 
     // Read stored data from dictionary
     if (averagingAcrossManyRuns_)
     {
         Info << nl << "Averaging across many runs initiated." << nl << endl;
-
-        read();
+        readIn();
     }
 
     // select face zone
@@ -195,7 +188,7 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::uspMassFluxSurface::read()
+void Foam::uspMassFluxSurface::readIn()
 {
     localIOdictionary dict
     (
@@ -219,7 +212,7 @@ void Foam::uspMassFluxSurface::read()
 }
 
 
-void Foam::uspMassFluxSurface::write()
+void Foam::uspMassFluxSurface::writeOut()
 {
     if (mesh_.time().writeTime())
     {
@@ -344,7 +337,7 @@ void Foam::uspMassFluxSurface::calculateField()
             momentumFlowZone_[timeIndex_] = 0.0;
         }
 
-        if (resetFieldsAtOutput() && (mesh_.time().value() < resetFieldsAtOutputUntilTime()+0.5*deltaT))
+        if (resetFieldsAtOutput_ && (mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT))
         {
             averagingCounter_ = 0;
             molsZone_ = 0.0;
@@ -354,7 +347,7 @@ void Foam::uspMassFluxSurface::calculateField()
 
         if (averagingAcrossManyRuns_)
         {
-            write();
+            writeOut();
         }
 
         ++timeIndex_;
@@ -422,7 +415,13 @@ void Foam::uspMassFluxSurface::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspField::updateProperties(dict);
+
+    propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);
+
+    if (averagingAcrossManyRuns_)
+    {
+        Info << "averagingAcrossManyRuns initiated." << endl;
+    }
+
 }
-
-
 // ************************************************************************* //

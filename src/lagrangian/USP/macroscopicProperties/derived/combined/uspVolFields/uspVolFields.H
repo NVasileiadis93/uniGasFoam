@@ -70,19 +70,22 @@ class uspVolFields
     // Private data
 
         dictionary propsDict_;
-        
-        //- Wall unit vectors - temporary storage, should be done in
-        //  boundaries/patch
+        word fieldName_;
+        labelList typeIds_;
+        bool densityOnly_;
+        bool measureHeatFluxShearStress_;
+        bool measureMeanFreePath_;
+        bool measureErrors_;
+        bool averagingAcrossManyRuns_;
+        scalar mfpReferenceTemperature_;
+
+        label sampleCounter_;
+        label nTimeSteps_;
+        //- Wall unit vectors - temporary storage, should be done in boundaries/patch
         List<vectorField> n_;
         List<vectorField> t1_;
         List<vectorField> t2_;
 
-        bool resetFieldsAtOutput_;
-        scalar resetFieldsAtOutputUntilTime_;
-        label sampleInterval_;
-        label sampleCounter_;
-        scalar mfpReferenceTemperature_;
-        word fieldName_;
         volScalarField uspRhoN_;
         volScalarField uspRhoNMean_;
         volScalarField rhoN_;
@@ -110,8 +113,6 @@ class uspVolFields
         volVectorField heatFluxVector_;
         volTensorField pressureTensor_;
         volTensorField shearStressTensor_;
-        label nTimeSteps_;
-        labelList typeIds_;
         scalarField rhoNMean_;
         scalarField rhoNInstantaneous_;
         scalarField rhoNMeanXnParticle_;
@@ -171,12 +172,6 @@ class uspVolFields
         List<List<scalarField>> speciesRhoNBF_;
         List<List<scalarField>> mccSpeciesBF_;
 
-        bool averagingAcrossManyRuns_;
-        bool measureMeanFreePath_;
-        bool measureErrors_;
-        bool densityOnly_;
-        bool measureHeatFluxShearStress_;
-
     // Private Member Functions
 
         void readIn();
@@ -216,6 +211,7 @@ public:
         virtual void writeField();
 
         virtual void updateProperties(const dictionary& dict);
+
 };
 
 
