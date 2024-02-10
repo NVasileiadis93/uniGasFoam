@@ -1508,7 +1508,7 @@ void Foam::uspVolFields::calculateField()
                         MFP_[cell] = GREAT;
                     }
 
-                    if (MCR_[cell] > VSMALL && MCT_[cell] > VSMALL)
+                    if (MCR_[cell] > VSMALL)
                     {
                         MCT_[cell] = 1.0/MCR_[cell];
                         dtMCT_[cell] = deltaT/MCT_[cell];
