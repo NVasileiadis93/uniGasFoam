@@ -53,6 +53,7 @@ Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::uspChapmanEnskogFreeStreamInfl
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    numberDensities_(),
     inletTransT_(),
     inletRotT_(),
     inletVibT_(),
@@ -60,7 +61,7 @@ Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::uspChapmanEnskogFreeStreamInfl
     inletVelocities_(),
     inletHeatFluxes_(),
     inletStresses_(),
-    numberDensities_(),
+    boundaryNumberDensity_(),
     boundaryTransT_
     (
         IOobject
@@ -144,84 +145,15 @@ Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::uspChapmanEnskogFreeStreamInfl
             IOobject::AUTO_WRITE
         ),
         mesh_
-    ),
-    boundaryNumberDensity_()
+    )
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::initialConfiguration()
-{}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::calculateProperties()
-{}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsBeforeMove()
-{
-    computeParcelsToInsert
-    (
-        inletTransT_,
-        inletVelocities_,
-        inletHeatFluxes_,
-        inletStresses_,
-        numberDensities_
-    );
-
-    insertParcels
-    (
-        inletTransT_,
-        inletRotT_,
-        inletVibT_,
-        inletElecT_,
-        inletVelocities_,
-        inletHeatFluxes_,
-        inletStresses_,
-        numberDensities_
-    );
-}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsBeforeCollisions()
-{}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsAfterCollisions()
-{}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::output
-(
-    const fileName& fixedPathName,
-    const fileName& timePath
-)
-{}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::updateProperties
-(
-    const dictionary& dict
-)
-{
-    // The main properties should be updated first
-    uspGeneralBoundary::updateProperties(dict);
-}
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::setProperties()
-{
-    // Read in the type ids
+    // Get type IDs
     typeIds_ = cloud_.getTypeIDs(propsDict_);
 
     // Set the accumulator
-
     accumulatedParcelsToInsert_.setSize(typeIds_.size());
 
     forAll(accumulatedParcelsToInsert_, m)
@@ -229,40 +161,7 @@ void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::setProperties()
         accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
     }
 
-    inletTransT_.setSize(faces_.size());
-    inletRotT_.setSize(faces_.size());
-    inletVibT_.setSize(faces_.size());
-    inletElecT_.setSize(faces_.size());
-
-    forAll(inletTransT_, f)
-    {
-        inletTransT_[f] = boundaryTransT_.boundaryField()[patchId_][f];
-        inletRotT_[f] = boundaryRotT_.boundaryField()[patchId_][f];
-        inletVibT_[f] = boundaryVibT_.boundaryField()[patchId_][f];
-        inletElecT_[f] = boundaryElecT_.boundaryField()[patchId_][f];
-    }
-
-    inletVelocities_.setSize(faces_.size(), Zero);
-
-    forAll(inletVelocities_, f)
-    {
-        inletVelocities_[f] = boundaryU_.boundaryField()[patchId_][f];
-    }
-
-    inletHeatFluxes_.setSize(faces_.size(), Zero);
-
-    forAll(inletHeatFluxes_, f)
-    {
-        inletHeatFluxes_[f] = boundaryHeatFlux_.boundaryField()[patchId_][f];
-    }
-
-    inletStresses_.setSize(faces_.size(), Zero);
-
-    forAll(inletStresses_, f)
-    {
-        inletStresses_[f] = boundaryStress_.boundaryField()[patchId_][f];
-    }
-
+    // Set macro properties
     boundaryNumberDensity_.setSize(typeIds_.size());
 
     forAll(boundaryNumberDensity_, i)
@@ -300,7 +199,102 @@ void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::setProperties()
                 boundaryNumberDensity_[i]->boundaryField()[patchId_][f];
         }
     }
+
+    inletTransT_.setSize(faces_.size());
+    inletRotT_.setSize(faces_.size());
+    inletVibT_.setSize(faces_.size());
+    inletElecT_.setSize(faces_.size());
+
+    forAll(inletTransT_, f)
+    {
+        inletTransT_[f] = boundaryTransT_.boundaryField()[patchId_][f];
+        inletRotT_[f] = boundaryRotT_.boundaryField()[patchId_][f];
+        inletVibT_[f] = boundaryVibT_.boundaryField()[patchId_][f];
+        inletElecT_[f] = boundaryElecT_.boundaryField()[patchId_][f];
+    }
+
+    inletVelocities_.setSize(faces_.size(), Zero);
+
+    forAll(inletVelocities_, f)
+    {
+        inletVelocities_[f] = boundaryU_.boundaryField()[patchId_][f];
+    }
+
+    inletHeatFluxes_.setSize(faces_.size(), Zero);
+
+    forAll(inletHeatFluxes_, f)
+    {
+        inletHeatFluxes_[f] = boundaryHeatFlux_.boundaryField()[patchId_][f];
+    }
+
+    inletStresses_.setSize(faces_.size(), Zero);
+
+    forAll(inletStresses_, f)
+    {
+        inletStresses_[f] = boundaryStress_.boundaryField()[patchId_][f];
+    }
+
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::initialConfiguration()
+{}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::calculateProperties()
+{}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsBeforeMove()
+{
+    computeParcelsToInsert
+    (
+        numberDensities_,
+        inletTransT_,
+        inletVelocities_,
+        inletHeatFluxes_,
+        inletStresses_
+    );
+
+    insertParcels
+    (
+        numberDensities_,
+        inletTransT_,
+        inletRotT_,
+        inletVibT_,
+        inletElecT_,
+        inletVelocities_,
+        inletHeatFluxes_,
+        inletStresses_
+    );
+}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsBeforeCollisions()
+{}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::controlParcelsAfterCollisions()
+{}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::output
+(
+    const fileName& fixedPathName,
+    const fileName& timePath
+)
+{}
+
+
+void Foam::uspChapmanEnskogFreeStreamInflowFieldPatch::updateProperties
+(
+    const dictionary& dict
+)
+{
+    // The main properties should be updated first
+    uspGeneralBoundary::updateProperties(dict);
+}
 
 // ************************************************************************* //

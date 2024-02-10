@@ -22,11 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uspLiouFangPressureOutlet
+    Foam::uspLiouFangPressureInletPatch
 
 Description
     This class provides functions to implement an implicit treatment for low
-    speed outflow boundaries. The local mean flow velocity, temperature, and
+    speed inflow boundaries. The local mean flow velocity, temperature, and
     density are used to determine the number of molecules entering the
     computational domain and their corresponding velocities at every sample
     average step.
@@ -38,99 +38,74 @@ Description
     110-128, 2000.
 
 Usage
-    \table
-        Property         | Description           | Required  | Default
-        typeIds          | List of species       | yes       |
-        outletPressure   | outlet pressure [Pa]  | yes       |
-        moleFractions    | Mole fractions        | yes       |
-    \endtable
 
     Example of the boundary condition specification:
     \verbatim
     generalBoundaryProperties
     {
-        patchName   outlet;
+        patch      inlet;
     }
 
-    boundaryModel   uspLiouFangPressureOutlet;
+    boundaryModel   uspLiouFangPressureInletPatch;
 
-    uspLiouFangPressureOutletProperties
+    uspLiouFangPressureInletPatchProperties
     {
-        outletPressure       252000;
-        typeIds             (N2);
-        moleFractions
-        {
-            N2      1.0;
-        }
+        typeIds             (Ar);
+        moleFractions       {Ar     1.0;}
+        inletPressure       252000;
+        inletTemperature    300;
     }
     \endverbatim
 
 SourceFiles
-    uspLiouFangPressureOutlet.C
+    uspLiouFangPressureInletPatch.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uspLiouFangPressureOutlet_H
-#define uspLiouFangPressureOutlet_H
+#ifndef uspLiouFangPressureInletPatch_H
+#define uspLiouFangPressureInletPatch_H
 
 #include "uspGeneralBoundary.H"
+#include "polyMesh.H"
+#include "uspCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
-                 Class uspLiouFangPressureOutlet Declaration
+                  Class uspLiouFangPressureInletPatch Declaration
 \*---------------------------------------------------------------------------*/
 
-class uspLiouFangPressureOutlet
+class uspLiouFangPressureInletPatch
 :
     public uspGeneralBoundary
 {
     // Private data
 
         dictionary propsDict_;
-        
-        scalar outletPressure_;
-        scalar nTimeSteps_;
-        vectorField UMean_;
-        vectorField outletVelocity_;
-        vectorField UCollected_;
-        List<scalarField> totalVibrationalEnergy_;
-        List<scalarField> vibT_;
-        List<scalarField> vDof_;
-        List<scalarField> nTotalParcelsSpecies_;
+
+        scalar inletNumberDensity_;
+
         scalarField moleFractions_;
-        scalarField cellVolume_;
-        scalarField outletNumberDensity_;
-        scalarField outletMassDensity_;
-        scalarField outletTemperature_;
-        vectorField totalMomentum_;
-        scalarField totalMass_;
-        scalarField totalMassDensity_;
-        scalarField totalNumberDensity_;
-        scalarField totalRotationalEnergy_;
-        scalarField totalRotationalDof_;
-        scalarField nTotalParcels_;
-        scalarField nTotalParcelsInt_;
-        vectorField velSqrMean_;
-        vectorField velMeanSqr_;
-        vectorField totalVelSqrMean_;
-        vectorField totalVelMeanSqr_;
 
+        scalar inletPressure_;
 
-    // Private Member Functions
+        scalar inletTemperature_;
 
-        void setProperties();
+        vectorField inletVelocity_;
 
+        scalar theta_;
+
+        vectorField previousInletVelocity_;
 
 public:
 
     //- Runtime type information
-    TypeName("uspLiouFangPressureOutlet");
+    TypeName("uspLiouFangPressureInletPatch");
 
     //- Construct from components
-    uspLiouFangPressureOutlet
+    uspLiouFangPressureInletPatch
     (
         const polyMesh& mesh,
         uspCloud& cloud,
@@ -138,7 +113,7 @@ public:
     );
 
     //- Destructor
-    virtual ~uspLiouFangPressureOutlet() = default;
+    virtual ~uspLiouFangPressureInletPatch() = default;
 
 
     // Member Functions

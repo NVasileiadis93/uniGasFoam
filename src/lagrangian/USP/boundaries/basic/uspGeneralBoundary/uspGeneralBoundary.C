@@ -50,14 +50,6 @@ Foam::uspGeneralBoundary::uspGeneralBoundary
     faces_(),
     patchSurfaceArea_(0.0),
     cells_(),
-    density_(0.0),
-    velocity_(Zero),
-    translationalTemperature_(0.0),
-    rotationalTemperature_(0.0),
-    vibrationalTemperature_(0.0),
-    electronicTemperature_(0.0),
-    heatFlux_(Zero),
-    stress_(Zero),
     accumulatedParcelsToInsert_()
 {
     const polyPatch& patch = mesh.boundaryMesh()[patchId_];
@@ -119,9 +111,9 @@ Foam::autoPtr<Foam::uspGeneralBoundary> Foam::uspGeneralBoundary::New
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
+    const scalarList& numDen,
     const scalar& transT,
-    const vector& velocity,
-    const scalarList& numDen
+    const vector& velocity
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -175,11 +167,11 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
+    const scalarList& numDen,
     const scalar& transT,
     const vector& velocity,
     const vector& heatFlux,
-    const tensor& stress,
-    const scalarList& numDen
+    const tensor& stress
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -245,9 +237,9 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
+    const List<scalarField>& numDen,
     const scalarField& transT,
-    const vectorField& velocity,
-    const List<scalarField>& numDen
+    const vectorField& velocity
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -302,11 +294,11 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
+    const List<scalarField>& numDen,
     const scalarField& transT,
     const vectorField& velocity,
     const vectorField& heatFlux,
-    const tensorField& stress,
-    const List<scalarField>& numDen
+    const tensorField& stress
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -373,10 +365,10 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
-    const scalar& transT,
-    const vectorField& velocity,
     const scalar& numDen,
-    const scalarField& molFractions
+    const scalarField& molFractions,
+    const scalar& transT,
+    const vectorField& velocity
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -431,10 +423,10 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
-    const scalarField& transT,
-    const vectorField& velocity,
     const scalarField& numDen,
-    const scalarField& molFractions
+    const scalarField& molFractions,
+    const scalarField& transT,
+    const vectorField& velocity
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -487,9 +479,9 @@ void Foam::uspGeneralBoundary::computeParcelsToInsert
 
 void Foam::uspGeneralBoundary::computeParcelsToInsert
 (
+    const List<scalarField>& numDen,
     const scalar& transT,
-    const vectorField& velocity,
-    const List<scalarField>& numDen
+    const vectorField& velocity
 )
 {
     const scalar& deltaT = mesh_.time().deltaTValue();
@@ -773,15 +765,14 @@ void Foam::uspGeneralBoundary::insertParcels
 
 void Foam::uspGeneralBoundary::insertParcels
 (
+    const scalarList& numDen,
     const scalar& transT,
     const scalar& rotT,
     const scalar& vibT,
     const scalar& elecT,
     const vector& velocity,
     const vector& heatFlux,
-    const tensor& stress,
-    const scalarList& numDen
-
+    const tensor& stress
 )
 {
     Random& rndGen = cloud_.rndGen();
@@ -1252,14 +1243,14 @@ void Foam::uspGeneralBoundary::insertParcels
 
 void Foam::uspGeneralBoundary::insertParcels
 (
+    const List<scalarField>& numDen,
     const scalarField& transT,
     const scalarField& rotT,
     const scalarField& vibT,
     const scalarField& elecT,
     const vectorField& velocity,
     const vectorField& heatFlux,
-    const tensorField& stress,
-    const List<scalarField>& numDen
+    const tensorField& stress
 )
 {
     Random& rndGen = cloud_.rndGen();
@@ -2000,77 +1991,6 @@ const Foam::labelList& Foam::uspGeneralBoundary::controlPatch() const
 const Foam::labelList& Foam::uspGeneralBoundary::controlZone() const
 {
     return cells_;
-}
-
-
-Foam::scalar Foam::uspGeneralBoundary::density() const
-{
-    return density_;
-}
-
-
-Foam::scalar& Foam::uspGeneralBoundary::density()
-{
-    return density_;
-}
-
-
-const Foam::vector& Foam::uspGeneralBoundary::velocity() const
-{
-    return velocity_;
-}
-
-
-Foam::vector& Foam::uspGeneralBoundary::velocity()
-{
-    return velocity_;
-}
-
-
-Foam::scalar Foam::uspGeneralBoundary::translationalTemperature() const
-{
-    return translationalTemperature_;
-}
-
-
-Foam::scalar& Foam::uspGeneralBoundary::translationalTemperature()
-{
-    return translationalTemperature_;
-}
-
-
-Foam::scalar Foam::uspGeneralBoundary::rotationalTemperature() const
-{
-    return rotationalTemperature_;
-}
-
-
-Foam::scalar& Foam::uspGeneralBoundary::rotationalTemperature()
-{
-    return rotationalTemperature_;
-}
-
-Foam::scalar Foam::uspGeneralBoundary::vibrationalTemperature() const
-{
-    return vibrationalTemperature_;
-}
-
-
-Foam::scalar& Foam::uspGeneralBoundary::vibrationalTemperature()
-{
-    return vibrationalTemperature_;
-}
-
-
-Foam::scalar Foam::uspGeneralBoundary::electronicTemperature() const
-{
-    return electronicTemperature_;
-}
-
-
-Foam::scalar& Foam::uspGeneralBoundary::electronicTemperature()
-{
-    return electronicTemperature_;
 }
 
 

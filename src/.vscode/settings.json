@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "uspChapmanEnskogFreeStreamInflowPatch.C": "cpp",
+        "uspLiouFangPressureInlet.C": "cpp",
+        "uspLiouFangPressureOutlet.C": "cpp",
+        "uspMassFlowRateInlet.C": "cpp"
+    }
+}

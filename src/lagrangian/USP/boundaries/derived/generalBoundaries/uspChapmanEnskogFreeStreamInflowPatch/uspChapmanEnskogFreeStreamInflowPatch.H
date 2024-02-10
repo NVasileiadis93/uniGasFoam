@@ -32,26 +32,12 @@ Description
 
     Use in the boundariesDict file, in conjuction with a deletion patch.
 
-    Reference:
-        G.A. Bird,  "Molecular Gas Dynamics and the Direct Simulation of Gas Flows", Oxford Science Publications, 1994 (page 82).
-
 Usage
-    \table
-        Property                 | Description                   | Required  | Default
-        typeIds                  | List of species               | yes       |
-        translationalTemperature | Translational temperature [K] | yes       |
-        rotationalTemperature    | Rotational temperature [K]    | yes       |
-        vibrationalTemperature   | Vibrational temperature [K]   | yes       |
-        electronicTemperature    | Electronic temperature [K]    | yes       |
-        velocity                 | Inlet velocity [m/s]          | yes       |
-        numberDensities          | Number density list [#/m^3]   | yes       |
-    \endtable
-
     Example of the boundary condition specification:
     \verbatim
     generalBoundaryProperties
     {
-        patchName                           flow;
+        patch       flow;
     }
 
     boundaryModel   uspChapmanEnskogFreeStreamInflowPatch;
@@ -59,19 +45,16 @@ Usage
     uspChapmanEnskogFreeStreamInflowPatchProperties
     {
         typeIds                     (Ar);
-        translationalTemperature    100;
-        rotationalTemperature       100;
-        vibrationalTemperature      100;
-        electronicTemperature       100;
-        velocity                    (1000 0 0);
-        heatFlux                    (50 0 0);
+        numberDensities             {Ar     1.0e21;}
+        translationalTemperature    300;
+        rotationalTemperature       300;
+        vibrationalTemperature      300;
+        electronicTemperature       300;
+        velocity                    (100 0 0);
+        heatFlux                    (0 0 0);
         stress                      (0.2 0 0.1
                                      0 0.1 0.3
                                      0.1 0.3 -0.3);
-        numberDensities
-        {
-            Ar          1.0e21;
-        }
     }
     \endverbatim
 
@@ -101,8 +84,20 @@ class uspChapmanEnskogFreeStreamInflowPatch
     // Private data
 
         dictionary propsDict_;
-        void setProperties();
 
+        scalar translationalTemperature_;
+    
+        scalar rotationalTemperature_;
+    
+        scalar vibrationalTemperature_;
+    
+        scalar electronicTemperature_;
+    
+        vector velocity_;
+
+        vector heatFlux_;
+    
+        tensor stress_;
 
 public:
 

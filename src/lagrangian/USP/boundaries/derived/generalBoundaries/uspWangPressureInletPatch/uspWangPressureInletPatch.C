@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "uspWangPressureInlet.H"
+#include "uspWangPressureInletPatch.H"
 #include "uspCloud.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,12 +33,12 @@ using namespace Foam::constant::mathematical;
 
 namespace Foam
 {
-defineTypeNameAndDebug(uspWangPressureInlet, 0);
+defineTypeNameAndDebug(uspWangPressureInletPatch, 0);
 
 addToRunTimeSelectionTable
 (
     uspGeneralBoundary,
-    uspWangPressureInlet,
+    uspWangPressureInletPatch,
     dictionary
 );
 }
@@ -46,7 +46,7 @@ addToRunTimeSelectionTable
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::uspWangPressureInlet::uspWangPressureInlet
+Foam::uspWangPressureInletPatch::uspWangPressureInletPatch
 (
     const polyMesh& mesh,
     uspCloud& cloud,
@@ -55,10 +55,10 @@ Foam::uspWangPressureInlet::uspWangPressureInlet
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    inletNumberDensity_(),
     moleFractions_(),
-    inletPressure_(),
-    inletTemperature_(),
-    n_(),
+    inletPressure_(propsDict_.get<scalar>("inletPressure")),
+    inletTemperature_(propsDict_.get<scalar>("inletTemperature")),
     cellVolume_(faces_.size(), scalar(00)),
     inletVelocity_(faces_.size(), Zero),
     totalMomentum_(faces_.size(), Zero),
@@ -76,13 +76,34 @@ Foam::uspWangPressureInlet::uspWangPressureInlet
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
+
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
+    }
+
+    // Read in the mole fraction per specie
+    const dictionary& moleFractionsDict(propsDict_.subDict("moleFractions"));
+
+    moleFractions_.clear();
+
+    moleFractions_.setSize(typeIds_.size(), Zero);
+
+    forAll(moleFractions_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
+    }
 
     // Calculate required number density at inlet boundary
-    // equation 32, Liou and Fang (2000)
-    n_ = inletPressure_ / (physicoChemical::k.value()*inletTemperature_);
+    inletNumberDensity_ = inletPressure_ / (physicoChemical::k.value()*inletTemperature_);
 
-     // get volume of each boundary cell
+    // get volume of each boundary cell
     forAll(cellVolume_, c)
     {
         cellVolume_[c] = mesh_.cellVolumes()[cells_[c]];
@@ -92,15 +113,15 @@ Foam::uspWangPressureInlet::uspWangPressureInlet
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::uspWangPressureInlet::initialConfiguration()
+void Foam::uspWangPressureInletPatch::initialConfiguration()
 {}
 
 
-void Foam::uspWangPressureInlet::calculateProperties()
+void Foam::uspWangPressureInletPatch::calculateProperties()
 {}
 
 
-void Foam::uspWangPressureInlet::controlParcelsBeforeMove()
+void Foam::uspWangPressureInletPatch::controlParcelsBeforeMove()
 {
     insertParcels
     (
@@ -110,11 +131,11 @@ void Foam::uspWangPressureInlet::controlParcelsBeforeMove()
 }
 
 
-void Foam::uspWangPressureInlet::controlParcelsBeforeCollisions()
+void Foam::uspWangPressureInletPatch::controlParcelsBeforeCollisions()
 {}
 
 
-void Foam::uspWangPressureInlet::controlParcelsAfterCollisions()
+void Foam::uspWangPressureInletPatch::controlParcelsAfterCollisions()
 {
     nTimeSteps_ += 1.0;
 
@@ -250,15 +271,15 @@ void Foam::uspWangPressureInlet::controlParcelsAfterCollisions()
     // Compute number of parcels to insert
     computeParcelsToInsert
     (
+        inletNumberDensity_,
+        moleFractions_,
         inletTemperature_,
-        inletVelocity_,
-        n_,
-        moleFractions_
+        inletVelocity_
     );
 }
 
 
-void Foam::uspWangPressureInlet::output
+void Foam::uspWangPressureInletPatch::output
 (
     const fileName& fixedPathName,
     const fileName& timePath
@@ -266,48 +287,10 @@ void Foam::uspWangPressureInlet::output
 {}
 
 
-void Foam::uspWangPressureInlet::updateProperties(const dictionary& dict)
+void Foam::uspWangPressureInletPatch::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
-
-    setProperties();
 }
-
-
-void Foam::uspWangPressureInlet::setProperties()
-{
-    inletPressure_ = propsDict_.get<scalar>("inletPressure");
-
-    inletTemperature_ = propsDict_.get<scalar>("inletTemperature");
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // Read in the mole fraction per specie
-
-    const dictionary& moleFractionsDict(propsDict_.subDict("moleFractions"));
-
-    moleFractions_.clear();
-
-    moleFractions_.setSize(typeIds_.size(), Zero);
-
-    forAll(moleFractions_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
-    }
-
-    // Set the accumulator
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
-    }
-}
-
-
 
 // ************************************************************************* //

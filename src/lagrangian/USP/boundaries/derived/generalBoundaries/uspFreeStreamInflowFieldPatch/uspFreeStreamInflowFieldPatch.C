@@ -53,12 +53,13 @@ Foam::uspFreeStreamInflowFieldPatch::uspFreeStreamInflowFieldPatch
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    numberDensities_(),
     inletTransT_(),
     inletRotT_(),
     inletVibT_(),
     inletElecT_(),
     inletVelocities_(),
-    numberDensities_(),
+    boundaryNumberDensity_(),
     boundaryTransT_
     (
         IOobject
@@ -118,79 +119,15 @@ Foam::uspFreeStreamInflowFieldPatch::uspFreeStreamInflowFieldPatch
             IOobject::AUTO_WRITE
         ),
         mesh_
-    ),
-    boundaryNumberDensity_()
+    )
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::uspFreeStreamInflowFieldPatch::initialConfiguration()
-{}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::calculateProperties()
-{}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::controlParcelsBeforeMove()
-{
-    computeParcelsToInsert
-    (
-        inletTransT_,
-        inletVelocities_,
-        numberDensities_
-    );
-
-    insertParcels
-    (
-        inletTransT_,
-        inletRotT_,
-        inletVibT_,
-        inletElecT_,
-        inletVelocities_
-    );
-}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::controlParcelsBeforeCollisions()
-{}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::controlParcelsAfterCollisions()
-{}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::output
-(
-    const fileName& fixedPathName,
-    const fileName& timePath
-)
-{}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::updateProperties
-(
-    const dictionary& dict
-)
-{
-    // The main properties should be updated first
-    uspGeneralBoundary::updateProperties(dict);
-}
-
-
-void Foam::uspFreeStreamInflowFieldPatch::setProperties()
-{
-    // Read in the type ids
+    // Get type IDs
     typeIds_ = cloud_.getTypeIDs(propsDict_);
 
     // Set the accumulator
-
     accumulatedParcelsToInsert_.setSize(typeIds_.size());
 
     forAll(accumulatedParcelsToInsert_, m)
@@ -198,28 +135,9 @@ void Foam::uspFreeStreamInflowFieldPatch::setProperties()
         accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
     }
 
-    inletTransT_.setSize(faces_.size());
-    inletRotT_.setSize(faces_.size());
-    inletVibT_.setSize(faces_.size());
-    inletElecT_.setSize(faces_.size());
-
-    forAll(inletTransT_, f)
-    {
-        inletTransT_[f] = boundaryTransT_.boundaryField()[patchId_][f];
-        inletRotT_[f] = boundaryRotT_.boundaryField()[patchId_][f];
-        inletVibT_[f] = boundaryVibT_.boundaryField()[patchId_][f];
-        inletElecT_[f] = boundaryElecT_.boundaryField()[patchId_][f];
-    }
-
-    inletVelocities_.setSize(faces_.size(), Zero);
-
-    forAll(inletVelocities_, f)
-    {
-        inletVelocities_[f] = boundaryU_.boundaryField()[patchId_][f];
-    }
-
     boundaryNumberDensity_.setSize(typeIds_.size());
 
+    // Set properties
     forAll(boundaryNumberDensity_, i)
     {
         const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
@@ -255,7 +173,82 @@ void Foam::uspFreeStreamInflowFieldPatch::setProperties()
                 boundaryNumberDensity_[i]->boundaryField()[patchId_][f];
         }
     }
+
+    inletTransT_.setSize(faces_.size());
+    inletRotT_.setSize(faces_.size());
+    inletVibT_.setSize(faces_.size());
+    inletElecT_.setSize(faces_.size());
+
+    forAll(inletTransT_, f)
+    {
+        inletTransT_[f] = boundaryTransT_.boundaryField()[patchId_][f];
+        inletRotT_[f] = boundaryRotT_.boundaryField()[patchId_][f];
+        inletVibT_[f] = boundaryVibT_.boundaryField()[patchId_][f];
+        inletElecT_[f] = boundaryElecT_.boundaryField()[patchId_][f];
+    }
+
+    inletVelocities_.setSize(faces_.size(), Zero);
+
+    forAll(inletVelocities_, f)
+    {
+        inletVelocities_[f] = boundaryU_.boundaryField()[patchId_][f];
+    }
+
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::uspFreeStreamInflowFieldPatch::initialConfiguration()
+{}
+
+
+void Foam::uspFreeStreamInflowFieldPatch::calculateProperties()
+{}
+
+
+void Foam::uspFreeStreamInflowFieldPatch::controlParcelsBeforeMove()
+{
+    computeParcelsToInsert
+    (
+        numberDensities_,
+        inletTransT_,
+        inletVelocities_
+    );
+
+    insertParcels
+    (
+        inletTransT_,
+        inletRotT_,
+        inletVibT_,
+        inletElecT_,
+        inletVelocities_
+    );
+}
+
+
+void Foam::uspFreeStreamInflowFieldPatch::controlParcelsBeforeCollisions()
+{}
+
+
+void Foam::uspFreeStreamInflowFieldPatch::controlParcelsAfterCollisions()
+{}
+
+
+void Foam::uspFreeStreamInflowFieldPatch::output
+(
+    const fileName& fixedPathName,
+    const fileName& timePath
+)
+{}
+
+void Foam::uspFreeStreamInflowFieldPatch::updateProperties
+(
+    const dictionary& dict
+)
+{
+    // The main properties should be updated first
+    uspGeneralBoundary::updateProperties(dict);
+}
 
 // ************************************************************************* //

@@ -24,7 +24,7 @@ License
 
 \*--------------------------------------------------------------------------*/
 
-#include "uspLiouFangPressureOutlet.H"
+#include "uspLiouFangPressureOutletPatch.H"
 #include "uspCloud.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -34,11 +34,11 @@ using namespace Foam::constant::mathematical;
 
 namespace Foam
 {
-defineTypeNameAndDebug(uspLiouFangPressureOutlet, 0);
+defineTypeNameAndDebug(uspLiouFangPressureOutletPatch, 0);
 addToRunTimeSelectionTable
 (
     uspGeneralBoundary,
-    uspLiouFangPressureOutlet,
+    uspLiouFangPressureOutletPatch,
     dictionary
 );
 }
@@ -46,7 +46,7 @@ addToRunTimeSelectionTable
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::uspLiouFangPressureOutlet::uspLiouFangPressureOutlet
+Foam::uspLiouFangPressureOutletPatch::uspLiouFangPressureOutletPatch
 (
     const polyMesh& mesh,
     uspCloud& cloud,
@@ -55,8 +55,8 @@ Foam::uspLiouFangPressureOutlet::uspLiouFangPressureOutlet
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    outletPressure_(),
-    nTimeSteps_(scalar(0.0)),
+    outletPressure_(propsDict_.get<scalar>("outletPressure")),
+    nTimeSteps_(0),
     UMean_(faces_.size(), Zero),
     outletVelocity_(faces_.size(), Zero),
     UCollected_(faces_.size(), Zero),
@@ -85,11 +85,54 @@ Foam::uspLiouFangPressureOutlet::uspLiouFangPressureOutlet
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
 
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
+    }
+
+    // read in the mole fraction per specie
+    const dictionary& moleFractionsDict(propsDict_.subDict("moleFractions"));
+
+    moleFractions_.clear();
+
+    moleFractions_.setSize(typeIds_.size(), 0.0);
+
+    forAll(moleFractions_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
+    }
+
+    vibT_.setSize(typeIds_.size());
+
+    forAll(vibT_, m)
+    {
+        vibT_[m].setSize(faces_.size(), 0.0);
+    }
+
+    vDof_.setSize(typeIds_.size());
+
+    forAll(vDof_, m)
+    {
+        vDof_[m].setSize(faces_.size(), 0.0);
+    }
+
+    nTotalParcelsSpecies_.setSize(typeIds_.size());
+
+    forAll(nTotalParcelsSpecies_, m)
+    {
+        nTotalParcelsSpecies_[m].setSize(faces_.size(), 0.0);
+    }
+
+    //get volume of each boundary cell
     forAll(cellVolume_, c)
     {
-        //get volume of each boundary cell
         cellVolume_[c] = mesh_.cellVolumes()[cells_[c]];
     }
 }
@@ -97,15 +140,15 @@ Foam::uspLiouFangPressureOutlet::uspLiouFangPressureOutlet
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::uspLiouFangPressureOutlet::initialConfiguration()
+void Foam::uspLiouFangPressureOutletPatch::initialConfiguration()
 {}
 
 
-void Foam::uspLiouFangPressureOutlet::calculateProperties()
+void Foam::uspLiouFangPressureOutletPatch::calculateProperties()
 {}
 
 
-void Foam::uspLiouFangPressureOutlet::controlParcelsBeforeMove()
+void Foam::uspLiouFangPressureOutletPatch::controlParcelsBeforeMove()
 {
     insertParcels
     (
@@ -115,14 +158,14 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsBeforeMove()
 }
 
 
-void Foam::uspLiouFangPressureOutlet::controlParcelsBeforeCollisions()
+void Foam::uspLiouFangPressureOutletPatch::controlParcelsBeforeCollisions()
 {}
 
 
-void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
+void Foam::uspLiouFangPressureOutletPatch::controlParcelsAfterCollisions()
 {
-    nTimeSteps_ += 1.0;
 
+    nTimeSteps_ ++;
     scalar molecularMass = 0.0;
     scalar molarcontantPressureSpecificHeat = 0.0;
     scalar molarcontantVolumeSpecificHeat = 0.0;
@@ -245,10 +288,7 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
                 translationalTemperature[c] = 300.00;
             }
 
-            pressure[c] =
-                numberDensity[c]
-               *physicoChemical::k.value()
-               *translationalTemperature[c];
+            pressure[c] = numberDensity[c]*physicoChemical::k.value()*translationalTemperature[c];
 
             speedOfSound[c] =
                 sqrt(gamma*gasConstant*translationalTemperature[c]);
@@ -259,11 +299,8 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
 
             if (nTimeSteps_ > 0)
             {
-                massDensityCorrection[c] =
-                    (outletPressure_ - pressure[c])
-                   /(speedOfSound[c]*speedOfSound[c]);
-                outletMassDensity_[c] =
-                    massDensity[c] + massDensityCorrection[c];
+                massDensityCorrection[c] = (outletPressure_ - pressure[c])/(speedOfSound[c]*speedOfSound[c]);
+                outletMassDensity_[c] = massDensity[c] + massDensityCorrection[c];
             }
             else
             {
@@ -273,8 +310,7 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
             // Liou and Fang, 2000, equation 26 STEP 1
             outletNumberDensity_[c] = outletMassDensity_[c]/molecularMass;
 
-            outletTemperature_[c] =
-                outletPressure_/(gasConstant*outletMassDensity_[c]);
+            outletTemperature_[c] = outletPressure_/(gasConstant*outletMassDensity_[c]);
 
             if (totalMass_[c] > 0)
             {
@@ -288,9 +324,7 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
             //velocity correction for each boundary cellI
             if (nTimeSteps_ > 0)
             {
-                velocityCorrection[c] =
-                    (pressure[c] - outletPressure_)
-                   /(massDensity[c]*speedOfSound[c]);
+                velocityCorrection[c] = (pressure[c] - outletPressure_)/(massDensity[c]*speedOfSound[c]);
                 outletVelocity_[c] += velocityCorrection[c]*n;
             }
 
@@ -300,15 +334,15 @@ void Foam::uspLiouFangPressureOutlet::controlParcelsAfterCollisions()
     // Compute number of parcels to insert
     computeParcelsToInsert
     (
-        outletTemperature_,
-        outletVelocity_,
         outletNumberDensity_,
-        moleFractions_
+        moleFractions_,
+        outletTemperature_,
+        outletVelocity_
     );
 }
 
 
-void Foam::uspLiouFangPressureOutlet::output
+void Foam::uspLiouFangPressureOutletPatch::output
 (
     const fileName& fixedPathName,
     const fileName& timePath
@@ -316,66 +350,10 @@ void Foam::uspLiouFangPressureOutlet::output
 {}
 
 
-void Foam::uspLiouFangPressureOutlet::updateProperties(const dictionary& dict)
+void Foam::uspLiouFangPressureOutletPatch::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
-
-    setProperties();
 }
-
-
-void Foam::uspLiouFangPressureOutlet::setProperties()
-{
-    outletPressure_ = propsDict_.get<scalar>("outletPressure");
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // read in the mole fraction per specie
-
-    const dictionary& moleFractionsDict(propsDict_.subDict("moleFractions"));
-
-    moleFractions_.clear();
-
-    moleFractions_.setSize(typeIds_.size(), 0.0);
-
-    forAll(moleFractions_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
-    }
-
-    // set the accumulator
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
-    }
-
-    vibT_.setSize(typeIds_.size());
-
-    forAll(vibT_, m)
-    {
-        vibT_[m].setSize(faces_.size(), 0.0);
-    }
-
-    vDof_.setSize(typeIds_.size());
-
-    forAll(vDof_, m)
-    {
-        vDof_[m].setSize(faces_.size(), 0.0);
-    }
-
-    nTotalParcelsSpecies_.setSize(typeIds_.size());
-
-    forAll(nTotalParcelsSpecies_, m)
-    {
-        nTotalParcelsSpecies_[m].setSize(faces_.size(), 0.0);
-    }
-}
-
 
 // ************************************************************************* //

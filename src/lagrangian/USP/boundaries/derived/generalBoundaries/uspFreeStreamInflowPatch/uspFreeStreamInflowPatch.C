@@ -55,12 +55,43 @@ Foam::uspFreeStreamInflowPatch::uspFreeStreamInflowPatch
 )
 :
     uspGeneralBoundary(mesh, cloud, dict),
-    propsDict_(dict.subDict(typeName + "Properties"))
+    propsDict_(dict.subDict(typeName + "Properties")),
+    translationalTemperature_(propsDict_.get<scalar>("translationalTemperature")),
+    rotationalTemperature_(propsDict_.get<scalar>("rotationalTemperature")),
+    vibrationalTemperature_(propsDict_.get<scalar>("vibrationalTemperature")),
+    electronicTemperature_(propsDict_.get<scalar>("electronicTemperature")),
+    velocity_(propsDict_.get<vector>("velocity"))
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
+
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), Zero);
+    }
+
+    // Read in the number density per specie
+    const dictionary& numberDensitiesDict
+    (
+        propsDict_.subDict("numberDensities")
+    );
+
+    numberDensities_.clear();
+
+    numberDensities_.setSize(typeIds_.size(), Zero);
+
+    forAll(numberDensities_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        numberDensities_[i] = numberDensitiesDict.get<scalar>(moleculeName);
+    }
+
 }
 
 
@@ -78,9 +109,9 @@ void Foam::uspFreeStreamInflowPatch::controlParcelsBeforeMove()
 {
     computeParcelsToInsert
     (
+        numberDensities_,
         translationalTemperature_,
-        velocity_,
-        numberDensities_
+        velocity_
     );
 
     insertParcels
@@ -115,46 +146,5 @@ void Foam::uspFreeStreamInflowPatch::updateProperties(const dictionary& dict)
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
 }
-
-
-void Foam::uspFreeStreamInflowPatch::setProperties()
-{
-    velocity_ = propsDict_.get<vector>("velocity");
-    translationalTemperature_ =
-    propsDict_.get<scalar>("translationalTemperature");
-    rotationalTemperature_ = propsDict_.get<scalar>("rotationalTemperature");
-    vibrationalTemperature_ = propsDict_.get<scalar>("vibrationalTemperature");
-    electronicTemperature_ = propsDict_.get<scalar>("electronicTemperature");
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // Read in the mass density per specie
-
-    const dictionary& numberDensitiesDict
-    (
-        propsDict_.subDict("numberDensities")
-    );
-
-    numberDensities_.clear();
-
-    numberDensities_.setSize(typeIds_.size(), Zero);
-
-    forAll(numberDensities_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        numberDensities_[i] = numberDensitiesDict.get<scalar>(moleculeName);
-    }
-
-    // Set the accumulator
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), Zero);
-    }
-}
-
 
 // ************************************************************************* //

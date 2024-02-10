@@ -22,104 +22,100 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uspLiouFangTotalPressureInlet
+    Foam::uspLiouFangPressureOutletPatch
 
 Description
     This class provides functions to implement an implicit treatment for low
-    speed inflow boundaries. The local mean flow velocity, temperature, and
+    speed outflow boundaries. The local mean flow velocity, temperature, and
     density are used to determine the number of molecules entering the
     computational domain and their corresponding velocities at every sample
     average step.
 
     Use in the boundariesDict file, in conjuction with a deletion patch.
 
-    Reference: W.W. Liou and Y.C. Fang. "Implicit Boundary Conditions for Direct Simulation Monte Carlo Method in MEMS Flow Predictions", CMES 1(4), 110-128, 2000.
+    Reference: W.W. Liou and Y.C. Fang. "Implicit Boundary Conditions for Direct
+    Simulation Monte Carlo Method in MEMS Flow Predictions", CMES 1(4),
+    110-128, 2000.
 
 Usage
-    \table
-        Property         | Description           | Required  | Default
-        typeIds          | List of species       | yes       |
-        inletPressure    | Inlet pressure [Pa]   | yes       |
-        inletTemperature | Inlet temperature [K] | yes       |
-        moleFractions    | Mole fractions        | yes       |
-    \endtable
-
     Example of the boundary condition specification:
     \verbatim
     generalBoundaryProperties
     {
-        patchName   inlet;
+        patch       outlet;
     }
 
-    boundaryModel   uspLiouFangTotalPressureInlet;
+    boundaryModel   uspLiouFangPressureOutletPatch;
 
-    uspLiouFangTotalPressureInletProperties
+    uspLiouFangPressureOutletPatchProperties
     {
-        totalPressure       252000;
-        totalTemperature    300;
-        typeIds             (N2);
-        moleFractions
-        {
-            N2      1.0;
-        }
+        typeIds             (Ar);
+        moleFractions       {Ar     1.0;}
+        outletPressure      100000;
     }
     \endverbatim
 
 SourceFiles
-    uspLiouFangTotalPressureInlet.C
+    uspLiouFangPressureOutletPatch.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uspLiouFangTotalPressureInlet_H
-#define uspLiouFangTotalPressureInlet_H
+#ifndef uspLiouFangPressureOutletPatch_H
+#define uspLiouFangPressureOutletPatch_H
 
 #include "uspGeneralBoundary.H"
-#include "polyMesh.H"
-#include "uspCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
-                  Class uspLiouFangTotalPressureInlet Declaration
+                 Class uspLiouFangPressureOutletPatch Declaration
 \*---------------------------------------------------------------------------*/
 
-class uspLiouFangTotalPressureInlet
+class uspLiouFangPressureOutletPatch
 :
     public uspGeneralBoundary
 {
     // Private data
 
         dictionary propsDict_;
+        
+        scalar outletPressure_;
 
-        label step_;
-        scalar theta_;
-        scalar totalPressure_;
-        scalar totalTemperature_;
-        scalar molecularMass_;
-        scalar gamma_;
+        label nTimeSteps_;
+        vectorField UMean_;
+        vectorField outletVelocity_;
+        vectorField UCollected_;
+        List<scalarField> totalVibrationalEnergy_;
+        List<scalarField> vibT_;
+        List<scalarField> vDof_;
+        List<scalarField> nTotalParcelsSpecies_;
         scalarField moleFractions_;
-        scalarField inletPressure_;
-        scalarField inletNumberDensity_;
-        scalarField inletTemperature_;
-        vectorField inletVelocity_;
-        scalarField previousInletPressure_;   
-        scalarField previousInletTemperature_;     
-        vectorField previousInletVelocity_;
-
-    // Private Member Functions
-
-        void setProperties();
-
+        scalarField cellVolume_;
+        scalarField outletNumberDensity_;
+        scalarField outletMassDensity_;
+        scalarField outletTemperature_;
+        vectorField totalMomentum_;
+        scalarField totalMass_;
+        scalarField totalMassDensity_;
+        scalarField totalNumberDensity_;
+        scalarField totalRotationalEnergy_;
+        scalarField totalRotationalDof_;
+        scalarField nTotalParcels_;
+        scalarField nTotalParcelsInt_;
+        vectorField velSqrMean_;
+        vectorField velMeanSqr_;
+        vectorField totalVelSqrMean_;
+        vectorField totalVelMeanSqr_;
 
 public:
 
     //- Runtime type information
-    TypeName("uspLiouFangTotalPressureInlet");
+    TypeName("uspLiouFangPressureOutletPatch");
 
     //- Construct from components
-    uspLiouFangTotalPressureInlet
+    uspLiouFangPressureOutletPatch
     (
         const polyMesh& mesh,
         uspCloud& cloud,
@@ -127,7 +123,7 @@ public:
     );
 
     //- Destructor
-    virtual ~uspLiouFangTotalPressureInlet() = default;
+    virtual ~uspLiouFangPressureOutletPatch() = default;
 
 
     // Member Functions

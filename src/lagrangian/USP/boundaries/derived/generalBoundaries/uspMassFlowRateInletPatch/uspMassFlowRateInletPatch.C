@@ -24,7 +24,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "uspMassFlowRateInlet.H"
+#include "uspMassFlowRateInletPatch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -33,12 +33,12 @@ using namespace Foam::constant::mathematical;
 
 namespace Foam
 {
-defineTypeNameAndDebug(uspMassFlowRateInlet, 0);
+defineTypeNameAndDebug(uspMassFlowRateInletPatch, 0);
 
 addToRunTimeSelectionTable
 (
     uspGeneralBoundary,
-    uspMassFlowRateInlet,
+    uspMassFlowRateInletPatch,
     dictionary
 );
 }
@@ -46,7 +46,7 @@ addToRunTimeSelectionTable
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::uspMassFlowRateInlet::uspMassFlowRateInlet
+Foam::uspMassFlowRateInletPatch::uspMassFlowRateInletPatch
 (
     const polyMesh& mesh,
     uspCloud& cloud,
@@ -55,41 +55,79 @@ Foam::uspMassFlowRateInlet::uspMassFlowRateInlet
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
-    theta_(1.0),
-    inletTemperature_(),
-    massFlowRate_(),
     moleFractions_(),
+    massFlowRate_(propsDict_.get<scalar>("massFlowRate")),
+    inletTemperature_(propsDict_.get<scalar>("inletTemperature")),
+    initialVelocity_(propsDict_.get<vector>("initialVelocity")),
+    theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
     moleFlowRate_(),
     parcelsIn_(),
     parcelsOut_(),
     parcelsToInsert_(),
-    n_(),
-    initialVelocity_(),
+    inletNumberDensity_(),
     inletVelocity_(faces_.size(), Zero),
     previousInletVelocity_(faces_.size(), Zero)
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
+
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
+    }
+
+    // read in the mole fraction per specie
+    const dictionary& moleFractionsDict = propsDict_.subDict("moleFractions");
+
+    moleFractions_.clear();
+
+    moleFractions_.setSize(typeIds_.size(), 0.0);
+
+    forAll(moleFractions_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
+    }
+
+    inletNumberDensity_.setSize(typeIds_.size());
+
+    forAll(inletNumberDensity_, m)
+    {
+        inletNumberDensity_[m].setSize(faces_.size(), 0.0);
+    }
+
+    moleFlowRate_.setSize(typeIds_.size()); 
+    
+    parcelsIn_.setSize(typeIds_.size());
+    
+    parcelsOut_.setSize(typeIds_.size());
+    
+    parcelsToInsert_.setSize(typeIds_.size());
 
     //sorts issues with the velocity pointing out of the mesh
     inletVelocity_ = initialVelocity_;
+
     previousInletVelocity_ = initialVelocity_;
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::uspMassFlowRateInlet::initialConfiguration()
+void Foam::uspMassFlowRateInletPatch::initialConfiguration()
 {}
 
 
-void Foam::uspMassFlowRateInlet::calculateProperties()
+void Foam::uspMassFlowRateInletPatch::calculateProperties()
 {}
 
 
-void Foam::uspMassFlowRateInlet::controlParcelsBeforeMove()
+void Foam::uspMassFlowRateInletPatch::controlParcelsBeforeMove()
 {
 
     previousInletVelocity_ = inletVelocity_;
@@ -101,20 +139,14 @@ void Foam::uspMassFlowRateInlet::controlParcelsBeforeMove()
         inletVelocity_
     );
 
-    
-
 }
 
 
-void Foam::uspMassFlowRateInlet::controlParcelsBeforeCollisions()
-{
+void Foam::uspMassFlowRateInletPatch::controlParcelsBeforeCollisions()
+{}
 
 
-
-}
-
-
-void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
+void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
 {
 
     const scalar deltaT = mesh_.time().deltaTValue();
@@ -139,7 +171,7 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
 
     forAll(moleFractions_, iD)
     {
-        n_[iD] = 0.0;
+        inletNumberDensity_[iD] = 0.0;
         parcelsOut_[iD] = 0.0;
         moleFlowRate_[iD] = moleFractions_[iD]*(massFlowRate_ / totalMass);
     }
@@ -172,7 +204,7 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
             scalar CWF = cloud_.cellWF(cellI);
             scalar RWF = cloud_.axiRWF(p->position());
 
-            n_[iD][c] += 1;
+            inletNumberDensity_[iD][c] += 1;
             momentum[c] += pMass*CWF*RWF*p->U();
             mass[c] += pMass*CWF*RWF;
 
@@ -181,10 +213,13 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
         if (mass[c] > VSMALL)
         {
             newInletVelocity_[c] = momentum[c]/mass[c];
+            inletVelocity_[c] = theta_*newInletVelocity_[c] + (1.0-theta_)*previousInletVelocity_[c];
         }
-
-        inletVelocity_[c] = theta_*newInletVelocity_[c] + (1.0-theta_)*previousInletVelocity_[c];
-
+        else
+        {
+            inletVelocity_[c] = previousInletVelocity_[c];
+        }
+        
         const vector& sF = mesh_.faceAreas()[faceI];
         const scalar fA = mag(sF);    
 
@@ -198,7 +233,7 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
 
             scalar CWF = cloud_.cellWF(cellI);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
-            n_[iD][c] = n_[iD][c]*nParticle*CWF*RWF/mesh_.V()[cellI] ;
+            inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*nParticle*CWF*RWF/mesh_.V()[cellI] ;
 
         }
 
@@ -242,14 +277,13 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
 
             parcelsToInsert_ += 
             (
-                fA*n_[iD][c]*deltaT*mostProbableSpeed
+                fA*inletNumberDensity_[iD][c]*deltaT*mostProbableSpeed
                *(
                     exp(-sqr(sCosTheta))
                   + sqrt(pi)*sCosTheta*(1 + erf(sCosTheta))
                 )
             )
            /(2.0*sqrt(pi)*nParticle*CWF*RWF);
-
 
         }
 
@@ -265,25 +299,23 @@ void Foam::uspMassFlowRateInlet::controlParcelsAfterCollisions()
 
     forAll(cells_, c)
     {
-
         forAll(moleFractions_, iD)
         {
-            n_[iD][c] = n_[iD][c]*(parcelsIn_[iD]/parcelsToInsert_[iD]);
+            inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*(parcelsIn_[iD]/parcelsToInsert_[iD]);
         }
-    
     }
 
     computeParcelsToInsert
     (
+        inletNumberDensity_,
         inletTemperature_,
-        inletVelocity_,
-        n_
+        inletVelocity_
     );
 
 }
 
 
-void Foam::uspMassFlowRateInlet::output
+void Foam::uspMassFlowRateInletPatch::output
 (
     const fileName& fixedPathName,
     const fileName& timePath
@@ -291,63 +323,10 @@ void Foam::uspMassFlowRateInlet::output
 {}
 
 
-void Foam::uspMassFlowRateInlet::updateProperties(const dictionary& dict)
+void Foam::uspMassFlowRateInletPatch::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
-
-    setProperties();
 }
-
-
-void Foam::uspMassFlowRateInlet::setProperties()
-{
-
-    propsDict_.readIfPresent<scalar>("theta", theta_);
-
-    massFlowRate_ = propsDict_.get<scalar>("massFlowRate");
-
-    inletTemperature_ = propsDict_.get<scalar>("inletTemperature");
-
-    initialVelocity_ = propsDict_.get<vector>("initialVelocity");
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // read in the mole fraction per specie
-
-    const dictionary& moleFractionsDict = propsDict_.subDict("moleFractions");
-
-    moleFractions_.clear();
-
-    moleFractions_.setSize(typeIds_.size(), 0.0);
-
-    forAll(moleFractions_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
-    }
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
-    }
-
-    n_.setSize(typeIds_.size());
-
-    forAll(n_, m)
-    {
-        n_[m].setSize(faces_.size(), 0.0);
-    }
-
-    moleFlowRate_.setSize(typeIds_.size()); 
-    parcelsIn_.setSize(typeIds_.size());
-    parcelsOut_.setSize(typeIds_.size());
-    parcelsToInsert_.setSize(typeIds_.size());
-    
-}
-
 
 // ************************************************************************* //

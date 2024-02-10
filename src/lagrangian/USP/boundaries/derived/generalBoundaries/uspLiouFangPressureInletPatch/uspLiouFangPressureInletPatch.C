@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "uspLiouFangPressureInlet.H"
+#include "uspLiouFangPressureInletPatch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,19 +32,19 @@ using namespace Foam::constant::mathematical;
 
 namespace Foam
 {
-defineTypeNameAndDebug(uspLiouFangPressureInlet, 0);
+defineTypeNameAndDebug(uspLiouFangPressureInletPatch, 0);
 
 addToRunTimeSelectionTable
 (
     uspGeneralBoundary,
-    uspLiouFangPressureInlet,
+    uspLiouFangPressureInletPatch,
     dictionary
 );
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-uspLiouFangPressureInlet::uspLiouFangPressureInlet
+uspLiouFangPressureInletPatch::uspLiouFangPressureInletPatch
 (
     const polyMesh& mesh,
     uspCloud& cloud,
@@ -53,34 +53,64 @@ uspLiouFangPressureInlet::uspLiouFangPressureInlet
 :
     uspGeneralBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
+    inletNumberDensity_(),
     moleFractions_(),
+    inletPressure_(propsDict_.get<scalar>("inletPressure")),
+    inletTemperature_(propsDict_.get<scalar>("inletTemperature")),
     inletVelocity_(faces_.size(), Zero),
-    previousInletVelocity_(faces_.size(), Zero),
-    inletPressure_(),
-    inletTemperature_(),
-    theta_(),
-    n_()
+    theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
+    previousInletVelocity_(faces_.size(), Zero)
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    if (0.0 > theta_ || theta_ > 1.0)
+    {
+        FatalErrorInFunction
+            << "Theta must be a value between 0 and 1 " << nl << "in: "
+            << mesh_.time().system()/uspBoundaries::dictName
+            << exit(FatalError);
+    }
 
-    n_ = inletPressure_ / (physicoChemical::k.value()*inletTemperature_);
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
+
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
+    }
+
+    // Read in the mole fraction per specie
+    const dictionary& moleFractionsDict(propsDict_.subDict("moleFractions"));
+
+    moleFractions_.clear();
+
+    moleFractions_.setSize(typeIds_.size(), 0.0);
+
+    forAll(moleFractions_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
+    }
+
+    inletNumberDensity_ = inletPressure_ / (physicoChemical::k.value()*inletTemperature_);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void uspLiouFangPressureInlet::initialConfiguration()
+void uspLiouFangPressureInletPatch::initialConfiguration()
 {}
 
 
-void uspLiouFangPressureInlet::calculateProperties()
+void uspLiouFangPressureInletPatch::calculateProperties()
 {}
 
 
-void uspLiouFangPressureInlet::controlParcelsBeforeMove()
+void uspLiouFangPressureInletPatch::controlParcelsBeforeMove()
 {
     insertParcels
     (
@@ -92,16 +122,15 @@ void uspLiouFangPressureInlet::controlParcelsBeforeMove()
 }
 
 
-void uspLiouFangPressureInlet::controlParcelsBeforeCollisions()
+void uspLiouFangPressureInletPatch::controlParcelsBeforeCollisions()
 {}
 
 
-void uspLiouFangPressureInlet::controlParcelsAfterCollisions()
+void uspLiouFangPressureInletPatch::controlParcelsAfterCollisions()
 {
     vectorField momentum(faces_.size(), Zero);
     vectorField newInletVelocity(faces_.size(), Zero);
     scalarField mass(faces_.size(), scalar(0));
-
 
     const List<DynamicList<uspParcel*>>& cellOccupancy =
         cloud_.cellOccupancy();
@@ -130,23 +159,20 @@ void uspLiouFangPressureInlet::controlParcelsAfterCollisions()
             newInletVelocity[c] = momentum[c]/mass[c];
         }
         
-        inletVelocity_[c] =
-            theta_*newInletVelocity[c]
-          + (1.0 - theta_)*previousInletVelocity_[c];
+        inletVelocity_[c] = theta_*newInletVelocity[c] + (1.0 - theta_)*previousInletVelocity_[c];
     }
 
     // Compute number of parcels to insert
     computeParcelsToInsert
     (
+        inletNumberDensity_,
+        moleFractions_,
         inletTemperature_,
-        inletVelocity_,
-        n_,
-        moleFractions_
+        inletVelocity_
     );
 }
 
-
-void uspLiouFangPressureInlet::output
+void uspLiouFangPressureInletPatch::output
 (
     const fileName& fixedPathName,
     const fileName& timePath
@@ -154,59 +180,10 @@ void uspLiouFangPressureInlet::output
 {}
 
 
-void uspLiouFangPressureInlet::updateProperties(const dictionary& dict)
+void uspLiouFangPressureInletPatch::updateProperties(const dictionary& dict)
 {
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
-
-    setProperties();
-}
-
-
-void uspLiouFangPressureInlet::setProperties()
-{
-    inletPressure_ = propsDict_.get<scalar>("inletPressure");
-
-    inletTemperature_ = propsDict_.get<scalar>("inletTemperature");
-
-    theta_ = propsDict_.get<scalar>("theta");
-
-    if (0.0 > theta_ || theta_ > 1.0)
-    {
-        FatalErrorInFunction
-            << "Theta must be a value between 0 and 1 " << nl << "in: "
-            << mesh_.time().system()/uspBoundaries::dictName
-            << exit(FatalError);
-    }
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // Read in the mole fraction per specie
-
-    const dictionary& moleFractionsDict
-    (
-        propsDict_.subDict("moleFractions")
-    );
-
-    moleFractions_.clear();
-
-    moleFractions_.setSize(typeIds_.size(), 0.0);
-
-    forAll(moleFractions_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        moleFractions_[i] = moleFractionsDict.get<scalar>(moleculeName);
-    }
-
-    // Set the accumulator
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), 0.0);
-    }
 }
 
 } // End namespace Foam

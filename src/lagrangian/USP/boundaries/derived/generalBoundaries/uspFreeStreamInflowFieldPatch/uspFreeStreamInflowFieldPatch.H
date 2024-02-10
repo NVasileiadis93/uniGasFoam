@@ -25,6 +25,31 @@ Class
     Foam::uspFreeStreamInflowFieldPatch
 
 Description
+    This class provides functions to insert the correct number density,
+    velocity, and temperature at a freestream inlet characterized by the
+    Maxwell distribtution. 
+    
+    Use in the boundariesDict file, in conjuction with a deletion patch.
+
+    FIELD VERSION: require numberDensity_Ar, boundaryTransT, boundaryRotT, 
+    boundaryVibT, boundaryElecT and boundaryU fields to be defined in
+    your time directory.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    generalBoundaryProperties
+    {
+        patch       flow;
+    }
+
+    boundaryModel   uspFreeStreamInflowFieldPatch;
+
+    uspFreeStreamInflowFieldPatchProperties
+    {
+        typeIds     (Ar);
+    }
+    \endverbatim
 
 SourceFiles
     uspFreeStreamInflowFieldPatch.C
@@ -55,6 +80,9 @@ class uspFreeStreamInflowFieldPatch
 
         dictionary propsDict_;
 
+        // List of (one value) mass densities corresponding to the type Ids
+        List<scalarField> numberDensities_;
+
         // Translational temperature
         scalarField inletTransT_;
 
@@ -69,8 +97,8 @@ class uspFreeStreamInflowFieldPatch
 
         vectorField inletVelocities_;
 
-        // List of (one value) mass densities corresponding to the type Ids
-        List<scalarField> numberDensities_;
+        //- List of boundary number densities (one entry for each species)
+        List<autoPtr<volScalarField>> boundaryNumberDensity_;
 
         //- Boundary temperatures
         volScalarField boundaryTransT_;
@@ -83,15 +111,6 @@ class uspFreeStreamInflowFieldPatch
 
         //- Boundary velocity
         volVectorField boundaryU_;
-
-        //- List of inlet densities (one entry for each species)
-        List<autoPtr<volScalarField>> boundaryNumberDensity_;
-
-
-    // Private Member Functions
-
-        void setProperties();
-
 
 public:
 

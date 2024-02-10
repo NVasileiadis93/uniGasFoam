@@ -41,14 +41,6 @@ addToRunTimeSelectionTable
 );
 }
 
-void Foam::uspReflectiveParticleMembranePatch::readProperties()
-{
-    p_ = propsDict_.get<scalar>("reflectionProbability");
-    velocity_ = propsDict_.get<vector>("velocity");
-    temperature_ = propsDict_.get<scalar>("temperature");
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::uspReflectiveParticleMembranePatch::uspReflectiveParticleMembranePatch
@@ -61,8 +53,8 @@ Foam::uspReflectiveParticleMembranePatch::uspReflectiveParticleMembranePatch
     uspCyclicBoundary(mesh, cloud, dict),
     propsDict_(dict.subDict(typeName + "Properties")),
     p_(propsDict_.get<scalar>("reflectionProbability")),
-    velocity_(propsDict_.get<vector>("velocity")),
     temperature_(propsDict_.get<scalar>("temperature")),
+    velocity_(propsDict_.get<vector>("velocity")),
     nReflections_(0),
     nRejections_(0)
 {
@@ -262,8 +254,6 @@ void Foam::uspReflectiveParticleMembranePatch::updateProperties
 {
     // the main properties should be updated first
     uspCyclicBoundary::updateProperties(dict);
-
-    readProperties();
 }
 
 

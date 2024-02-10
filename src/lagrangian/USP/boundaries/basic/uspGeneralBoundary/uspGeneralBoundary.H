@@ -71,14 +71,6 @@ protected:
         labelList cells_;
 
         // Set all the properties below from model if required
-        scalar density_;
-        vector velocity_;
-        scalar translationalTemperature_;
-        scalar rotationalTemperature_;
-        scalar vibrationalTemperature_;
-        scalar electronicTemperature_;
-        vector heatFlux_;
-        tensor stress_;
         List<scalarField> accumulatedParcelsToInsert_;
 
 
@@ -146,63 +138,63 @@ public:
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
+            const scalarList& numDen,
             const scalar& transT,
-            const vector& velocity,
-            const scalarList& numDen
+            const vector& velocity
         );
 
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
+            const scalarList& numDen,
             const scalar& transT,
             const vector& velocity,
             const vector& heatFlux,
-            const tensor& stress,
-            const scalarList& numDen
+            const tensor& stress
         );
 
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
+            const List<scalarField>& numDen,
             const scalarField& transT,
-            const vectorField& velocity,
-            const List<scalarField>& numDen
+            const vectorField& velocity
         );
 
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
+            const List<scalarField>& numDen,
             const scalarField& transT,
             const vectorField& velocity,
             const vectorField& heatFlux,
-            const tensorField& stress,
-            const List<scalarField>& numDen
+            const tensorField& stress
         );
                
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
-            const scalar& transT,
-            const vectorField& velocity,
             const scalar& numDen,
-            const scalarField& molFractions
+            const scalarField& molFractions,
+            const scalar& transT,
+            const vectorField& velocity
         );
         
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
-            const scalarField& transT,
-            const vectorField& velocity,
             const scalarField& numDen,
-            const scalarField& molFractions
+            const scalarField& molFractions,
+            const scalarField& transT,
+            const vectorField& velocity
         );
       
         //- Calculate how many parcels to insert
         virtual void computeParcelsToInsert
         (
+            const List<scalarField>& numDen,
             const scalar& transT,
-            const vectorField& velocity,
-            const List<scalarField>& numDen
+            const vectorField& velocity
         );
 
         //- Insert parcels
@@ -218,14 +210,14 @@ public:
         //- Insert parcels
         virtual void insertParcels
         (
+            const scalarList& numDen,
             const scalar& transT,
             const scalar& rotT,
             const scalar& vibT,
             const scalar& elecT,
             const vector& velocity,
             const vector& heatFlux,
-            const tensor& stress,
-            const scalarList& numDen
+            const tensor& stress
         );
 
         //- Insert parcels
@@ -241,14 +233,14 @@ public:
         //- Insert parcels
         virtual void insertParcels
         (
+            const List<scalarField>& numDen,
             const scalarField& transT,
             const scalarField& rotT,
             const scalarField& vibT,
             const scalarField& elecT,
             const vectorField& velocity,
             const vectorField& heatFlux,
-            const tensorField& stress,
-            const List<scalarField>& numDen
+            const tensorField& stress
         );
 
         //- Insert parcels
@@ -272,26 +264,6 @@ public:
             //- Return the adjacent cells
             virtual const labelList& controlZone() const;
 
-
-            // Return the targeted fields
-
-            virtual scalar density() const;
-            virtual scalar& density();
-
-            virtual const vector& velocity() const;
-            virtual vector& velocity();
-
-            virtual scalar translationalTemperature() const;
-            virtual scalar& translationalTemperature();
-
-            virtual scalar rotationalTemperature() const;
-            virtual scalar& rotationalTemperature();
-
-            virtual scalar vibrationalTemperature() const;
-            virtual scalar& vibrationalTemperature();
-
-            virtual scalar electronicTemperature() const;
-            virtual scalar& electronicTemperature();
 };
 
 

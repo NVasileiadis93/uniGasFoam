@@ -55,12 +55,42 @@ Foam::uspChapmanEnskogFreeStreamInflowPatch::uspChapmanEnskogFreeStreamInflowPat
 )
 :
     uspGeneralBoundary(mesh, cloud, dict),
-    propsDict_(dict.subDict(typeName + "Properties"))
+    propsDict_(dict.subDict(typeName + "Properties")),
+    translationalTemperature_(propsDict_.get<scalar>("translationalTemperature")),
+    rotationalTemperature_(propsDict_.get<scalar>("rotationalTemperature")),
+    vibrationalTemperature_(propsDict_.get<scalar>("vibrationalTemperature")),
+    electronicTemperature_(propsDict_.get<scalar>("electronicTemperature")),
+    velocity_(propsDict_.get<vector>("velocity")),
+    heatFlux_(propsDict_.get<vector>("heatFlux")),
+    stress_(propsDict_.get<tensor>("stress"))
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
 
-    setProperties();
+    // Get type IDs
+    typeIds_ = cloud_.getTypeIDs(propsDict_);
+
+    // Set the accumulator
+    accumulatedParcelsToInsert_.setSize(typeIds_.size());
+
+    forAll(accumulatedParcelsToInsert_, m)
+    {
+        accumulatedParcelsToInsert_[m].setSize(faces_.size(), Zero);
+    }
+
+    // Read in the number density per specie
+    const dictionary& numberDensitiesDict(propsDict_.subDict("numberDensities"));
+
+    numberDensities_.clear();
+
+    numberDensities_.setSize(typeIds_.size(), Zero);
+
+    forAll(numberDensities_, i)
+    {
+        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
+        numberDensities_[i] = numberDensitiesDict.get<scalar>(moleculeName);
+    }
+
 }
 
 
@@ -78,23 +108,23 @@ void Foam::uspChapmanEnskogFreeStreamInflowPatch::controlParcelsBeforeMove()
 {
     computeParcelsToInsert
     (
+        numberDensities_,
         translationalTemperature_,
         velocity_,
         heatFlux_,
-        stress_,
-        numberDensities_
+        stress_
     );
 
     insertParcels
     (
+        numberDensities_,
         translationalTemperature_,
         rotationalTemperature_,
         vibrationalTemperature_,
         electronicTemperature_,
         velocity_,
         heatFlux_,
-        stress_,
-        numberDensities_
+        stress_
     );
 }
 
@@ -120,48 +150,5 @@ void Foam::uspChapmanEnskogFreeStreamInflowPatch::updateProperties(const diction
     // The main properties should be updated first
     uspGeneralBoundary::updateProperties(dict);
 }
-
-
-void Foam::uspChapmanEnskogFreeStreamInflowPatch::setProperties()
-{
-    velocity_ = propsDict_.get<vector>("velocity");
-    translationalTemperature_ =
-    propsDict_.get<scalar>("translationalTemperature");
-    rotationalTemperature_ = propsDict_.get<scalar>("rotationalTemperature");
-    vibrationalTemperature_ = propsDict_.get<scalar>("vibrationalTemperature");
-    electronicTemperature_ = propsDict_.get<scalar>("electronicTemperature");
-    heatFlux_ = propsDict_.get<vector>("heatFlux");
-    stress_ = propsDict_.get<tensor>("stress");
-
-    // Read in the type ids
-    typeIds_ = cloud_.getTypeIDs(propsDict_);
-
-    // Read in the mass density per specie
-
-    const dictionary& numberDensitiesDict
-    (
-        propsDict_.subDict("numberDensities")
-    );
-
-    numberDensities_.clear();
-
-    numberDensities_.setSize(typeIds_.size(), Zero);
-
-    forAll(numberDensities_, i)
-    {
-        const word& moleculeName = cloud_.typeIdList()[typeIds_[i]];
-        numberDensities_[i] = numberDensitiesDict.get<scalar>(moleculeName);
-    }
-
-    // Set the accumulator
-
-    accumulatedParcelsToInsert_.setSize(typeIds_.size());
-
-    forAll(accumulatedParcelsToInsert_, m)
-    {
-        accumulatedParcelsToInsert_[m].setSize(faces_.size(), Zero);
-    }
-}
-
 
 // ************************************************************************* //

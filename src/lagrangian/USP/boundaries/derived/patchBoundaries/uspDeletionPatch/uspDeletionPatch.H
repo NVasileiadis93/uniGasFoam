@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspDeletionPatch
+    Foam::uspDeletionPatch
 
 Description
 
@@ -37,7 +37,7 @@ Usage
     \verbatim
     patchBoundaryProperties
     {
-        patchName                           outlet;
+        patch       outlet;
     }
 
     boundaryModel   uspDeletionPatch;

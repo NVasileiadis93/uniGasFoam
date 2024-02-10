@@ -25,6 +25,31 @@ Class
     Foam::uspChapmanEnskogFreeStreamInflowFieldPatch
 
 Description
+    This class provides functions to insert the correct number density,
+    velocity, and temperature at a freestream inlet characterized by the
+    Chapman-Enskog distribtution.
+
+    Use in the boundariesDict file, in conjuction with a deletion patch.
+
+    FIELD VERSION: require numberDensity_Ar, boundaryTransT, boundaryRotT, 
+    boundaryVibT, boundaryElecT, boundaryU, boundaryHeatFlux and
+    boundaryStress fields to be defined in your time directory.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    generalBoundaryProperties
+    {
+        patch       flow;
+    }
+
+    boundaryModel   uspChapmanEnskogFreeStreamInflowFieldPatch;
+
+    uspChapmanEnskogFreeStreamInflowFieldPatchProperties
+    {
+        typeIds     (Ar);
+    }
+    \endverbatim
 
 SourceFiles
     uspChapmanEnskogFreeStreamInflowFieldPatch.C
@@ -56,6 +81,9 @@ class uspChapmanEnskogFreeStreamInflowFieldPatch
 
         dictionary propsDict_;
 
+        // List of (one value) mass densities corresponding to the type Ids
+        List<scalarField> numberDensities_;
+
         // Translational temperature
         scalarField inletTransT_;
 
@@ -77,8 +105,8 @@ class uspChapmanEnskogFreeStreamInflowFieldPatch
         // Inlet stress
         tensorField inletStresses_;
 
-        // List of (one value) mass densities corresponding to the type Ids
-        List<scalarField> numberDensities_;
+        //- List of boundary densities (one entry for each species)
+        List<autoPtr<volScalarField>> boundaryNumberDensity_;
 
         //- Boundary temperatures
         volScalarField boundaryTransT_;
@@ -97,15 +125,6 @@ class uspChapmanEnskogFreeStreamInflowFieldPatch
 
         //- Boundary stresses
         volTensorField boundaryStress_;
-
-        //- List of inlet densities (one entry for each species)
-        List<autoPtr<volScalarField>> boundaryNumberDensity_;
-
-
-    // Private Member Functions
-
-        void setProperties();
-
 
 public:
 

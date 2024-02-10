@@ -59,18 +59,11 @@ class uspReflectiveParticleMembranePatch
         dictionary propsDict_;
 
         scalar p_;
-        vector velocity_;
         scalar temperature_;
+        vector velocity_;
 
         label nReflections_;
         label nRejections_;
-
-
-
-    // Private Member Functions
-
-        void readProperties();
-
 
 public:
 
