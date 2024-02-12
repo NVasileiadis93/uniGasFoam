@@ -72,12 +72,12 @@ class uspVolFields
         dictionary propsDict_;
         word fieldName_;
         labelList typeIds_;
+        scalar Tref_;
         bool densityOnly_;
         bool measureHeatFluxShearStress_;
         bool measureMeanFreePath_;
         bool measureErrors_;
         bool averagingAcrossManyRuns_;
-        scalar mfpReferenceTemperature_;
 
         label sampleCounter_;
         label nTimeSteps_;
@@ -113,6 +113,10 @@ class uspVolFields
         volVectorField heatFluxVector_;
         volTensorField pressureTensor_;
         volTensorField shearStressTensor_;
+        
+        // Cell measurements
+        scalarField binCoeff_;
+        scalarField relCoeff_;
         scalarField rhoNMean_;
         scalarField rhoNInstantaneous_;
         scalarField rhoNMeanXnParticle_;
@@ -154,7 +158,6 @@ class uspVolFields
 
 
         // boundary measurements
-
         List<scalarField> rhoNBF_;
         List<scalarField> rhoMBF_;
         List<scalarField> linearKEBF_;

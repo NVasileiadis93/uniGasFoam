@@ -28,6 +28,18 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+inline const List<scalarField>& cellMeasurements::binCoeff() const
+{
+    return binCoeff_;
+}
+
+
+inline const List<scalarField>& cellMeasurements::relCoeff() const
+{
+    return relCoeff_;
+}
+
+
 inline const List<scalarField>& cellMeasurements::rhoNMean() const
 {
     return rhoNMean_;

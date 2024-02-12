@@ -49,6 +49,8 @@ Foam::cellMeasurements::cellMeasurements
     mesh_(refCast<const fvMesh>(mesh)),
     cloud_(cloud),
     typeIds_(),
+    binCoeff_(),
+    relCoeff_(),
     rhoNMean_(),
     rhoNInstantaneous_(),
     rhoNMeanXnParticle_(),
@@ -97,6 +99,18 @@ void Foam::cellMeasurements::createFields()
     forAll(typeIds_, iD)
     {
         typeIds_[iD] = iD;
+    }
+
+    binCoeff_.setSize(cloud_.typeIdList().size());
+    for (auto& f : binCoeff_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
+    }
+
+    relCoeff_.setSize(cloud_.typeIdList().size());
+    for (auto& f : relCoeff_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
     }
 
     rhoNMean_.setSize(cloud_.typeIdList().size());
@@ -321,7 +335,7 @@ void Foam::cellMeasurements::createFields()
 }
 
 
-void Foam::cellMeasurements::clean(const bool& cleanColls)
+void Foam::cellMeasurements::clean()
 {
     // Clean geometric fields
     forAll(typeIds_, iD)
@@ -330,6 +344,8 @@ void Foam::cellMeasurements::clean(const bool& cleanColls)
         forAll(mesh_.cells(), cell)
         {
 
+            binCoeff_[iD][cell] = 0.0;
+            relCoeff_[iD][cell] = 0.0;
             rhoNMean_[iD][cell] = 0.0;
             rhoNInstantaneous_[iD][cell] =  0.0;
             rhoNMeanXnParticle_[iD][cell] =  0.0;
@@ -360,11 +376,8 @@ void Foam::cellMeasurements::clean(const bool& cleanColls)
 
             momentumMean_[iD][cell] =  vector::zero;
             momentumMeanXnParticle_[iD][cell] = vector::zero;
-            if (cleanColls)
-            {
-                nColls_[cell] =  0.0;
-            }
-            
+            nColls_[cell] =  0.0;
+
             electronicETotal_[iD][cell] = 0.0;
             mccSpecies_[iD][cell] = 0.0;
             nParcels_[iD][cell] = 0.0;
@@ -386,8 +399,29 @@ void Foam::cellMeasurements::clean(const bool& cleanColls)
 void Foam::cellMeasurements::calculateFields()
 {
 
+    const scalar deltaT = mesh_.time().deltaTValue();
     const scalar nParticle = cloud_.nParticle();
 
+    // Calaculate USP and DSMC coefficients
+    forAll(mesh_.cells(), cell)
+    {
+        if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
+        {
+            forAll(typeIds_, iD)
+            {
+                binCoeff_[iD][cell] += deltaT;
+            }       
+        }
+        else
+        {
+            forAll(typeIds_, iD)
+            {
+                relCoeff_[iD][cell] += deltaT;
+            }
+        }
+    }
+
+    // Calculate parcel properties sums
     forAllConstIters(cloud_, iter)
     {
         const uspParcel& p = iter();
@@ -425,7 +459,7 @@ void Foam::cellMeasurements::calculateFields()
                     *cloud_.constProps(p.typeId()).thetaV()[i];
                 }
             }
-
+     
             rhoNMean_[iD][cell] += 1.0;
             rhoNInstantaneous_[iD][cell] += 1.0;
             rhoMMean_[iD][cell] += mass;

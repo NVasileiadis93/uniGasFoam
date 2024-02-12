@@ -70,6 +70,10 @@ class cellMeasurements
 
         labelList typeIds_;
 
+        List<scalarField>  binCoeff_;
+
+        List<scalarField>  relCoeff_;
+
         List<scalarField> rhoNMean_;
 
         List<scalarField> rhoNInstantaneous_;
@@ -171,7 +175,11 @@ public:
 
         void calculateFields();
 
-        void clean(const bool& cleanColls);
+        void clean();
+
+        inline const List<scalarField>& relCoeff() const;
+
+        inline const List<scalarField>& binCoeff() const;
 
         inline const List<scalarField>& rhoNMean() const;
 

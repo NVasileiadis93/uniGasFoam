@@ -361,6 +361,7 @@ Foam::uspCloud::uspCloud
 :
     CloudWithModels<uspParcel>(mesh, cloudName, false),
     collisionModel_(),
+    relaxationModelName_(),
     solutionDimensions_(),
     typeIdList_(particleProperties_.lookup("typeIdList")),
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
@@ -597,6 +598,7 @@ Foam::uspCloud::uspCloud
         else if (collisionModel_ == relaxationCollModel_)
         {
             Info << "Simulation collision model is: relaxation" << nl << endl;
+            relaxationModelName_ = particleProperties_.getOrDefault<word>("relaxationModel","");
             relaxationModel_ =relaxationModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
@@ -605,6 +607,7 @@ Foam::uspCloud::uspCloud
             binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
             binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_->initialConfiguration();
+            relaxationModelName_ = particleProperties_.getOrDefault<word>("relaxationModel","");
             relaxationModel_ =relaxationModel::New(particleProperties_, mesh_, *this);
             hybridDecomposition_ = uspHybridDecomposition::New(particleProperties_, mesh_, *this);
         }
@@ -675,12 +678,14 @@ Foam::uspCloud::uspCloud
         else if (collisionModel_ == relaxationCollModel_)
         {
             Info << "Simulation collision model is: relaxation" << nl << endl;
+            relaxationModelName_ = particleProperties_.getOrDefault<word>("relaxationModel","");
             cellCollisionModel_ = relCollModel_;
             relaxationModel_ = relaxationModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
             Info << "Simulation collision model is: hybrid" << nl << endl;
+            relaxationModelName_ = particleProperties_.getOrDefault<word>("relaxationModel","");
             cellCollisionModel_ = relCollModel_;
             binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
             binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
@@ -792,6 +797,9 @@ void Foam::uspCloud::evolve()
 
     boundaries_.controlBeforeCollisions();
 
+    cellMeas_.calculateFields();
+    fields_.calculateFields();
+    
     // Calculate new velocities via stochastic collisions, stochastic relaxations or hybrid collision/relaxations
     if (collisionModel_ == binaryCollModel_ || 
         collisionModel_ == hybridCollModel_)
@@ -801,9 +809,7 @@ void Foam::uspCloud::evolve()
     if (collisionModel_ == relaxationCollModel_ || 
         collisionModel_ == hybridCollModel_)
     {
-        cellMeas_.calculateFields();
         relaxations();
-        cellMeas_.clean(false);
     }
 
     // Update cell occupancy (reactions may have changed it)
@@ -813,9 +819,8 @@ void Foam::uspCloud::evolve()
 
     reactions_.outputData();
 
-    cellMeas_.calculateFields();
-
-    fields_.calculateFields();
+    //cellMeas_.calculateFields();
+    //fields_.calculateFields();
     fields_.writeFields();
 
     boundaries_.outputResults();
@@ -834,7 +839,7 @@ void Foam::uspCloud::evolve()
 
     trackingInfo_.clean();
     boundaryMeas_.clean();
-    cellMeas_.clean(true);
+    cellMeas_.clean();
 
     functions_.postEvolve();
 }

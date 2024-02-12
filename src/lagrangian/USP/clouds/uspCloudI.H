@@ -40,6 +40,11 @@ inline Foam::label Foam::uspCloud::relCollModel() const
     return relCollModel_;
 }
 
+inline Foam::word Foam::uspCloud::relaxationModelName() const
+{
+    return relaxationModelName_;
+}
+
 inline Foam::boolVector Foam::uspCloud::solutionDimensions() const
 {
     return solutionDimensions_;

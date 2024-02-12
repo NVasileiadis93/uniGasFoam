@@ -51,12 +51,12 @@ Foam::uspVolFields::uspVolFields
     propsDict_(dict.subDict(typeName + "Properties")),
     fieldName_(propsDict_.get<word>("field")),
     typeIds_(cloud_.getTypeIDs(propsDict_)),
+    Tref_(propsDict_.get<scalar>("Tref")),
     densityOnly_(propsDict_.getOrDefault<bool>("densityOnly",false)),
     measureHeatFluxShearStress_(propsDict_.getOrDefault<bool>("measureHeatFluxShearStress",false)),
     measureMeanFreePath_(propsDict_.getOrDefault<bool>("measureMeanFreePath",false)),
     measureErrors_(propsDict_.getOrDefault<bool>("measureErrors",false)),
     averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
-    mfpReferenceTemperature_(propsDict_.getOrDefault<scalar>("mfpReferenceTemperature",273.0)),
     sampleCounter_(0),
     nTimeSteps_(0),
     n_(),
@@ -413,6 +413,8 @@ Foam::uspVolFields::uspVolFields
         mesh_,
         dimensionedTensor(dimPressure, Zero)
     ),
+    binCoeff_(mesh_.nCells(), 0.0),
+    relCoeff_(mesh_.nCells(), 0.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNInstantaneous_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -630,6 +632,8 @@ void Foam::uspVolFields::readIn()
     );
 
     dict.readIfPresent("nTimeSteps", nTimeSteps_);
+    dict.readIfPresent("binCoeff", binCoeff_);
+    dict.readIfPresent("relCoeff", relCoeff_);
     dict.readIfPresent("rhoNMean", rhoNMean_);
     dict.readIfPresent("rhoNInstantaneous", rhoNInstantaneous_);
     dict.readIfPresent("rhoNMeanXnParticle", rhoNMeanXnParticle_);
@@ -703,6 +707,8 @@ void Foam::uspVolFields::writeOut()
         );
 
         dict.add("nTimeSteps", nTimeSteps_);
+        dict.add("binCoeff", binCoeff_);
+        dict.add("relCoeff", relCoeff_);
         dict.add("rhoNMean", rhoNMean_);
         dict.add("rhoNInstantaneous", rhoNInstantaneous_);
         dict.add("rhoNMeanXnParticle", rhoNMeanXnParticle_);
@@ -859,7 +865,9 @@ void Foam::uspVolFields::calculateField()
                 if (iD != -1)
                 {
 
-                    rhoNMean_+= cm.rhoNMean()[iD];
+                    binCoeff_ += cm.binCoeff()[iD];
+                    relCoeff_ += cm.relCoeff()[iD];
+                    rhoNMean_ += cm.rhoNMean()[iD];
                     rhoNInstantaneous_ += cm.rhoNInstantaneous()[iD];
                     rhoMMean_ += cm.rhoMMean()[iD];
                     linearKEMean_ += cm.linearKEMean()[iD];
@@ -972,8 +980,7 @@ void Foam::uspVolFields::calculateField()
                 }
                 else
                 {
-                     // not zero so that weighted decomposition still works
-                    uspRhoNMean_[cell] = 0.001;
+                    uspRhoNMean_[cell] = 0.0;
                     rhoN_[cell] = 0.0;
                     rhoM_[cell] = 0.0;
                 }
@@ -984,20 +991,20 @@ void Foam::uspVolFields::calculateField()
                 }
                 else
                 {
-                    uspRhoN_[cell] = 0.001;
+                    uspRhoN_[cell] = 0.0;
                 }
             }
         }
         else
         {
 
-            scalarField vibT(mesh_.nCells(), scalar(0.0));
-            scalarField Cp(mesh_.nCells(), scalar(0.0));
-            scalarField Cv(mesh_.nCells(), scalar(0.0));
-            scalarField molecularMass(mesh_.nCells(), scalar(0.0));
-            scalarField Cv_p(mesh_.nCells(), scalar(0.0));
-            scalarField totalvDof(mesh_.nCells(), scalar(0.0));
-            scalarField totalvDofOverall(mesh_.nCells(), scalar(0.0));
+            scalarField vibT(mesh_.nCells(), 0.0);
+            scalarField Cp(mesh_.nCells(), 0.0);
+            scalarField Cv(mesh_.nCells(), 0.0);
+            scalarField molecularMass(mesh_.nCells(), 0.0);
+            scalarField Cv_p(mesh_.nCells(), 0.0);
+            scalarField totalvDof(mesh_.nCells(), 0.0);
+            scalarField totalvDofOverall(mesh_.nCells(), 0.0);
 
             forAll(rhoNMean_, cell)
             {
@@ -1242,10 +1249,6 @@ void Foam::uspVolFields::calculateField()
                 if (measureHeatFluxShearStress_)
                 {
 
-                    scalar pSum;
-                    scalar tau;
-                    scalar Prandtl;
-
                     if (rhoNMean_[cell] > VSMALL)
                     {
 
@@ -1338,13 +1341,43 @@ void Foam::uspVolFields::calculateField()
                             pressureTensor_[cell].zy()*UMean_[cell].y() -
                             pressureTensor_[cell].zz()*UMean_[cell].z();
 
-                        //Only works for single species
-                        scalar tau = -0.5*log(1.0-nColls_[cell]/rhoNMean_[cell]);
-                        scalar Prandtl = (5.0+nRotDof)/(7.5+nRotDof);
+                        // Rescale non-conserved quantities for USP scheme
+                        // Currently only works for single species
+                        if (cloud_.relaxationModelName() == "unifiedShakhov")
+                        {
+                            scalar Prandtl = 0.0;
+                            scalar viscosity = 0.0;
+                            if (translationalT_[cell] > VSMALL)
+                            {
+                                forAll(typeIds_, iD)
+                                {
 
-                        heatFluxVector_[cell] /= (1.0 - Prandtl*tau);
-                        pressureTensor_[cell] /= (1.0 - tau);
-                        shearStressTensor_[cell] /= (1.0 - tau);
+                                    const scalar& mass = cloud_.constProps(iD).mass();
+                                    const scalar& omega = cloud_.constProps(iD).omega();
+                                    const scalar& a = cloud_.constProps(iD).alpha();
+                                    const scalar& d = cloud_.constProps(iD).d();
+                                    const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
+
+                                    scalar speciesViscRef = 
+                                        1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
+                                        /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
+                                        
+                                    viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
+
+                                    Prandtl += nParcels_[iD][cell]*(5+rotDoF)/(7.5+rotDoF);
+
+                                }
+                                viscosity /= rhoNMean_[cell];
+                                Prandtl /= rhoNMean_[cell]; 
+                            
+                                scalar tau = 0.5*p_[cell]/viscosity*deltaT;
+
+                                heatFluxVector_[cell] = (binCoeff_[cell]*heatFluxVector_[cell]+relCoeff_[cell]*heatFluxVector_[cell]/(1.0 + Prandtl*tau))/(binCoeff_[cell]+relCoeff_[cell]);
+                                pressureTensor_[cell] = (binCoeff_[cell]*pressureTensor_[cell]+relCoeff_[cell]*pressureTensor_[cell]/(1.0 + tau))/(binCoeff_[cell]+relCoeff_[cell]);
+                                shearStressTensor_[cell] = (binCoeff_[cell]*shearStressTensor_[cell]+relCoeff_[cell]*shearStressTensor_[cell]/(1.0 + tau))/(binCoeff_[cell]+relCoeff_[cell]);
+                            
+                            }
+                        }
 
                     }
                     else
@@ -1450,7 +1483,7 @@ void Foam::uspVolFields::calculateField()
                                         pi*dPQ*dPQ*nDensQ
                                        *pow
                                         (
-                                            mfpReferenceTemperature_
+                                            Tref_
                                            /translationalT_[cell],
                                             omegaPQ - 0.5
                                         )
@@ -1463,13 +1496,13 @@ void Foam::uspVolFields::calculateField()
                                    *pow
                                     (
                                         translationalT_[cell]
-                                       /mfpReferenceTemperature_,
+                                       /Tref_,
                                         1.0 - omegaPQ
                                     )
                                    *sqrt
                                     (
                                         2.0*physicoChemical::k.value()
-                                       *mfpReferenceTemperature_/reducedMass
+                                       *Tref_/reducedMass
                                     )
                                 ); // //Bird, eq (4.74)
                             }
@@ -1775,33 +1808,35 @@ void Foam::uspVolFields::calculateField()
 
             forAll(rhoNMean_, cell)
             {
-                rhoNMean_[cell] = scalar(0.0);
-                rhoMMean_[cell] = scalar(0.0);
-                linearKEMean_[cell] = scalar(0.0);
+                binCoeff_[cell] = 0.0;
+                relCoeff_[cell] = 0.0;
+                rhoNMean_[cell] = 0.0;
+                rhoMMean_[cell] = 0.0;
+                linearKEMean_[cell] = 0.0;
                 momentumMean_[cell] = vector::zero;
-                rotationalEMean_[cell] = scalar(0.0);
-                rotationalDofMean_[cell] = scalar(0.0);
-                rhoNMeanInt_[cell] = scalar(0.0);
-                molsElec_[cell] = scalar(0.0),
-                nColls_[cell] = scalar(0.0);
-                muu_[cell] = scalar(0.0);
-                muv_[cell] = scalar(0.0);
-                muw_[cell] = scalar(0.0);
-                mvv_[cell] = scalar(0.0);
-                mvw_[cell] = scalar(0.0);
-                mww_[cell] = scalar(0.0);
-                mcc_[cell] = scalar(0.0);
-                mccu_[cell] = scalar(0.0);
-                mccv_[cell] = scalar(0.0);
-                mccw_[cell] = scalar(0.0);
-                eu_[cell] = scalar(0.0);
-                ev_[cell] = scalar(0.0);
-                ew_[cell] = scalar(0.0);
-                e_[cell] = scalar(0.0);
-                rhoNMeanXnParticle_[cell] = scalar(0.0);
-                rhoMMeanXnParticle_[cell] = scalar(0.0);
+                rotationalEMean_[cell] = 0.0;
+                rotationalDofMean_[cell] = 0.0;
+                rhoNMeanInt_[cell] = 0.0;
+                molsElec_[cell] = 0.0,
+                nColls_[cell] = 0.0;
+                muu_[cell] = 0.0;
+                muv_[cell] = 0.0;
+                muw_[cell] = 0.0;
+                mvv_[cell] = 0.0;
+                mvw_[cell] = 0.0;
+                mww_[cell] = 0.0;
+                mcc_[cell] = 0.0;
+                mccu_[cell] = 0.0;
+                mccv_[cell] = 0.0;
+                mccw_[cell] = 0.0;
+                eu_[cell] = 0.0;
+                ev_[cell] = 0.0;
+                ew_[cell] = 0.0;
+                e_[cell] = 0.0;
+                rhoNMeanXnParticle_[cell] = 0.0;
+                rhoMMeanXnParticle_[cell] = 0.0;
                 momentumMeanXnParticle_[cell] = vector::zero;
-                linearKEMeanXnParticle_[cell] = scalar(0.0);
+                linearKEMeanXnParticle_[cell] = 0.0;
             }
 
             forAll(electronicETotal_, iD)
@@ -1872,6 +1907,8 @@ void Foam::uspVolFields::updateProperties(const dictionary& dict)
     
     propsDict_ = dict.subDict(typeName + "Properties");
 
+    propsDict_.readIfPresent("Tref", Tref_);
+
     propsDict_.readIfPresent("measureErrors", measureErrors_);
     if (measureErrors_)
     {
@@ -1894,7 +1931,6 @@ void Foam::uspVolFields::updateProperties(const dictionary& dict)
     if (measureMeanFreePath_)
     {
         Info << "measureMeanFreePath initiated." << endl;
-        mfpReferenceTemperature_ = propsDict_.get<scalar>("mfpReferenceTemperature");
     }
 
     propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);

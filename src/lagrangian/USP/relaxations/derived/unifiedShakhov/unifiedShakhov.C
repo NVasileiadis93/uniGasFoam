@@ -743,9 +743,6 @@ void Foam::unifiedShakhov::calculateProperties()
         // Relaxation frequency !!!Check mixtures and vibrational-electronic DoF
         Prandtl_[cell] = 0.0;
         scalar viscosity = 0.0;
-        List<scalar> speciesVisc(typeIds_.size(), Zero);
-        List<scalar> speciesPrandtl(typeIds_.size(), Zero);
-
         if (translationalT_[cell] > VSMALL)
         {
             forAll(typeIds_, iD)
@@ -760,12 +757,10 @@ void Foam::unifiedShakhov::calculateProperties()
                 scalar speciesViscRef = 
                     1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
                     /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
-            
-                speciesVisc[iD] = speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
-                viscosity += nParcels_[iD][cell]*speciesVisc[iD];
+                    
+                viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
 
-                speciesPrandtl[iD] += (5+rotDoF)/(7.5+rotDoF);
-                Prandtl_[cell] += nParcels_[iD][cell]*speciesPrandtl[iD];
+                Prandtl_[cell] += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
 
             }
             viscosity /= rhoNMean_[cell];
@@ -1042,10 +1037,13 @@ void Foam::unifiedShakhov::conserveMomentumAndEnergy
           - rhoMMeanXnParticle_[cell]*(postUMean & postUMean)
         );
 
-    forAll(cellParcels, i)
+    if (postTranslationalT > VSMALL)
     {
-            uspParcel& p = *cellParcels[i];
-            p.U() = UMean_[cell] + (p.U()-postUMean)*sqrt(translationalT_[cell]/postTranslationalT);
+        forAll(cellParcels, i)
+        {
+                uspParcel& p = *cellParcels[i];
+                p.U() = UMean_[cell] + (p.U()-postUMean)*sqrt(translationalT_[cell]/postTranslationalT);
+        }
     }
 
 }
@@ -1065,9 +1063,13 @@ Foam::vector Foam::unifiedShakhov::samplePostRelaxationVelocity
 {
 
     scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
-    scalar tao = 0.5*rF*cloud_.mesh().time().deltaTValue();
-    scalar coeffQ = 2.0*(1.0-Pr*tao*(1.0+2.0/(exp(2.0*tao)-1.0)));
-    scalar coeffS = (1.0-tao*(1.0+2.0/(exp(2.0*tao)-1.0)));
+    scalar tau = 0.5*rF*cloud_.mesh().time().deltaTValue();
+    //scalar coeffQ = 2.0*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+    //scalar coeffS = (1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+
+    scalar factor = exp(-0.1/(2.0*tau));
+    scalar coeffQ = 2.0*(factor*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0))) + (1.0-factor)*(exp(2.0*(1.0-Pr)*tau)-1.0)/(exp(2.0*tau)-1.0));
+    scalar coeffS = factor*(1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
 
     vector v;
     scalar prob;

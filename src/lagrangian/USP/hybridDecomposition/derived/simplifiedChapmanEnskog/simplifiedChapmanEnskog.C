@@ -272,9 +272,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
     if (timeSteps_ == decomposeInterval_)
     {
 
-        scalar pSum;
-        scalar tau;
-        scalar Prandtl;
+        const scalar& deltaT = cloud_.mesh().time().deltaTValue();
 
         // computing internal fields
         forAll(rhoNMean_, cell)
@@ -390,21 +388,40 @@ void Foam::simplifiedChapmanEnskog::decompose()
                     pressureTensor_[cell].zy()*UMean_[cell].y() -
                     pressureTensor_[cell].zz()*UMean_[cell].z();
 
-                //scale heat flux, pressure tensor and shear stress tensor for USP scheme
-                pSum = 0.0;
-                Prandtl = 0.0;
-                forAll(typeIds_, iD)
+                if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cloud_.relaxationModelName() == "unifiedShakhov")
                 {
-                    const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
-                    pSum += nParcels_[iD][cell];
-                    Prandtl += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
-                }
-                Prandtl /= pSum;
-                tau = -0.5*log(1.0-pSum*nColls_[cell]/sqr(rhoNMean_[cell]));
+                    scalar Prandtl = 0.0;
+                    scalar viscosity = 0.0;
+                    if (translationalT_[cell] > VSMALL)
+                    {
+                        forAll(typeIds_, iD)
+                        {
 
-                heatFluxVector_[cell] /= (1.0 - Prandtl*tau);
-                pressureTensor_[cell] /= (1.0 - tau);
-                shearStressTensor_[cell] /= (1.0 - tau);
+                            const scalar& mass = cloud_.constProps(iD).mass();
+                            const scalar& omega = cloud_.constProps(iD).omega();
+                            const scalar& a = cloud_.constProps(iD).alpha();
+                            const scalar& d = cloud_.constProps(iD).d();
+                            const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
+
+                            scalar speciesViscRef = 
+                                1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
+                                /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
+                                
+                            viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
+
+                            Prandtl += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
+
+                        }
+                        viscosity /= rhoNMean_[cell];
+                        Prandtl /= rhoNMean_[cell]; 
+                    
+                        scalar tau = 0.5*p_[cell]/viscosity*deltaT;
+                    
+                        heatFluxVector_[cell] = heatFluxVector_[cell]/(1.0 + Prandtl*tau);
+                        pressureTensor_[cell] = pressureTensor_[cell]/(1.0 + tau);
+                        shearStressTensor_[cell] = shearStressTensor_[cell]/(1.0 + tau);
+                    }
+                }
 
             }
             else
@@ -449,13 +466,12 @@ void Foam::simplifiedChapmanEnskog::decompose()
 
             if (rhoNMean_[cell] > VSMALL && translationalT_[cell] > VSMALL)
             {
-                scalar avgMass = rhoMMean_[cell]/rhoNMean_[cell];
 
                 scalar u0(
                     cloud_.maxwellianMostProbableSpeed
                     (
                         translationalT_[cell],
-                        avgMass
+                        rhoMMean_[cell]/rhoNMean_[cell]
                     )
                 );
 

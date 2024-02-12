@@ -85,7 +85,7 @@ private:
 
     // Private data
 
-        //- Variables for identifying different collision models
+        //- Variables for identifying different binary/collision collision models
         const label binCollModel_ = 1;
 
         const label relCollModel_ = 0;
@@ -96,8 +96,11 @@ private:
         
         const word hybridCollModel_ = "hybrid";
 
-        //- A variable holding the simulation collision type (usp, skm, hybrid)
+        //- A variable holding the simulation collision type (binary, relaxation, hybrid)
         word collisionModel_;
+
+        //- A variable holding the simulation relaxation scheme (required for fixing USP heat flux vector and pressure tensor)
+        word relaxationModelName_;
 
         // A boolean vector containing the solution dimensions
         boolVector solutionDimensions_;
@@ -291,6 +294,9 @@ public:
 
         //- Return relaxation collision model ID
         inline label relCollModel() const;
+
+        //- Return relaxation collision model name
+        inline word relaxationModelName() const;
 
         //- Return the particle IDs corresponding to the particle names read
         //- from the input dictionary
