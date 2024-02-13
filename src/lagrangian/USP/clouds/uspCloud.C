@@ -824,6 +824,9 @@ void Foam::uspCloud::evolve()
     // Update cell occupancy
     buildCellOccupancy();
 
+    // Perform weighting schemes
+    weighting();
+
     boundaries_.controlBeforeCollisions();
 
     cellMeas_.calculateFields();

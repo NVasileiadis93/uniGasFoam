@@ -281,7 +281,7 @@ void Foam::uspMeshFill::setInitialConfiguration()
 
         } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
     }
-    
+
     // Initialise particles
     forAll(mesh_.cells(), cell)
     {

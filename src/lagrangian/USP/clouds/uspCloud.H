@@ -135,10 +135,10 @@ private:
             label minParticlesPerSubcell_;
 
             //- Maximum allowed cell weight ratio between adjacent cells
-            const scalar maxCellWeightRatio_ = 0.05;
+            const scalar maxCellWeightRatio_ = 0.01;
 
             //- Maximum allowed number of smoothing passes
-            const label maxSmoothingPasses_ = 100;
+            const label maxSmoothingPasses_ = 1000;
 
         // Axisymmetric set-ups
 
