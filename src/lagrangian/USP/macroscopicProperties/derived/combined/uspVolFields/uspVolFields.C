@@ -1150,7 +1150,6 @@ void Foam::uspVolFields::calculateField()
                         }
                     }
 
-
                     totalvDof[cell] += degreesOfFreedomSpecies[iD];
 
                     if
@@ -1343,7 +1342,7 @@ void Foam::uspVolFields::calculateField()
 
                         // Rescale non-conserved quantities for USP scheme
                         // Currently only works for single species
-                        if (cloud_.relaxationModelName() == "unifiedShakhov")
+                        if (cloud_.relaxationCollisionModelName() == "unifiedShakhov")
                         {
                             scalar Prandtl = 0.0;
                             scalar viscosity = 0.0;
@@ -1440,71 +1439,26 @@ void Foam::uspVolFields::calculateField()
 
                         for (qspec=0; qspec<typeIds_.size(); ++qspec)
                         {
-                            scalar dPQ =
-                                0.5
-                               *(
-                                    cloud_.constProps(typeIds_[iD]).d()
-                                  + cloud_.constProps(typeIds_[qspec]).d()
-                                );
+                            scalar dPQ = 0.5*(cloud_.constProps(typeIds_[iD]).d() + cloud_.constProps(typeIds_[qspec]).d());
 
-                            scalar omegaPQ =
-                                0.5
-                               *(
-                                    cloud_.constProps(typeIds_[iD]).omega()
-                                  + cloud_.constProps(typeIds_[qspec]).omega()
-                                );
+                            scalar omegaPQ = 0.5*(cloud_.constProps(typeIds_[iD]).omega() + cloud_.constProps(typeIds_[qspec]).omega());
 
-                            scalar massRatio =
-                                cloud_.constProps(typeIds_[iD]).mass()
-                               /cloud_.constProps(typeIds_[qspec]).mass();
+                            scalar massRatio = cloud_.constProps(typeIds_[iD]).mass()/cloud_.constProps(typeIds_[qspec]).mass();
 
-                            if
-                            (
-                                nParcels_[qspec][cell] > VSMALL
-                             && translationalT_[cell] > VSMALL
-                            )
+                            if (nParcels_[qspec][cell] > VSMALL && translationalT_[cell] > VSMALL)
                             {
-                                scalar nDensQ =
-                                    (nParcelsXnParticle_[qspec][cell])
-                                   /(mesh_.cellVolumes()[cell]*nTimeSteps_);
+                                scalar nDensQ = (nParcelsXnParticle_[qspec][cell])/(mesh_.cellVolumes()[cell]*nTimeSteps_);
 
-                                scalar reducedMass =
-                                (
-                                    cloud_.constProps(typeIds_[iD]).mass()
-                                   *cloud_.constProps(typeIds_[qspec]).mass()
-                                )
-                               /(
-                                    cloud_.constProps(typeIds_[iD]).mass()
-                                  + cloud_.constProps(typeIds_[qspec]).mass()
-                                );
+                                scalar reducedMass = 
+                                    cloud_.constProps(typeIds_[iD]).mass()*cloud_.constProps(typeIds_[qspec]).mass()
+                                    /(cloud_.constProps(typeIds_[iD]).mass() + cloud_.constProps(typeIds_[qspec]).mass());
 
-                                mfp_[iD][cell] +=
-                                    (
-                                        pi*dPQ*dPQ*nDensQ
-                                       *pow
-                                        (
-                                            Tref_
-                                           /translationalT_[cell],
-                                            omegaPQ - 0.5
-                                        )
-                                       *sqrt(1.0 + massRatio)
-                                    ); //Bird, eq (4.76)
+                                //Bird, eq (4.76)
+                                mfp_[iD][cell] += pi*dPQ*dPQ*nDensQ*pow(Tref_/translationalT_[cell],omegaPQ - 0.5)*sqrt(1.0 + massRatio); 
 
+                                // //Bird, eq (4.74)
                                 mcr_[iD][cell] +=
-                                (
-                                    2.0*sqrt(pi)*dPQ*dPQ*nDensQ
-                                   *pow
-                                    (
-                                        translationalT_[cell]
-                                       /Tref_,
-                                        1.0 - omegaPQ
-                                    )
-                                   *sqrt
-                                    (
-                                        2.0*physicoChemical::k.value()
-                                       *Tref_/reducedMass
-                                    )
-                                ); // //Bird, eq (4.74)
+                                    (2.0*sqrt(pi)*dPQ*dPQ*nDensQ*pow(translationalT_[cell]/Tref_,1.0 - omegaPQ)*sqrt(2.0*physicoChemical::k.value()*Tref_/reducedMass)); 
                             }
                         }
 
@@ -1524,9 +1478,7 @@ void Foam::uspVolFields::calculateField()
                     {
                         if (rhoN_[cell] > VSMALL)
                         {
-                            scalar nDensP =
-                                (nParcelsXnParticle_[iD][cell])
-                               /(mesh_.cellVolumes()[cell]*nTimeSteps_);
+                            scalar nDensP = nParcelsXnParticle_[iD][cell]/(mesh_.cellVolumes()[cell]*nTimeSteps_);
 
                             //Bird, eq (4.77)
                             MFP_[cell] += mfp_[iD][cell]*nDensP/rhoN_[cell];

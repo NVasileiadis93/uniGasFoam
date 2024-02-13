@@ -23,19 +23,19 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(relaxationModel, 0);
+    defineTypeNameAndDebug(relaxationCollisionModel, 0);
 
-    defineRunTimeSelectionTable(relaxationModel, dictionary);
+    defineRunTimeSelectionTable(relaxationCollisionModel, dictionary);
 };
 
 
-Foam::relaxationModel::relaxationModel
+Foam::relaxationCollisionModel::relaxationCollisionModel
 (
     const dictionary& dict,
     const polyMesh& mesh,
@@ -49,16 +49,16 @@ Foam::relaxationModel::relaxationModel
 
 }
 
-Foam::autoPtr<Foam::relaxationModel> Foam::relaxationModel::New
+Foam::autoPtr<Foam::relaxationCollisionModel> Foam::relaxationCollisionModel::New
 (
     const dictionary& dict,
     const polyMesh& mesh,
     uspCloud& owner
 )
 {
-    const word modelType(dict.get<word>("relaxationModel"));
+    const word modelType(dict.get<word>("relaxationCollisionModel"));
 
-    Info<< "Selecting relaxationModel " << modelType << endl;
+    Info<< "Selecting relaxationCollisionModel " << modelType << endl;
 
     auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
 
@@ -67,19 +67,19 @@ Foam::autoPtr<Foam::relaxationModel> Foam::relaxationModel::New
         FatalIOErrorInLookup
         (
             dict,
-            "relaxationModel",
+            "relaxationCollisionModel",
             modelType,
             *dictionaryConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<relaxationModel>(cstrIter()(dict, mesh, owner));
+    return autoPtr<relaxationCollisionModel>(cstrIter()(dict, mesh, owner));
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::dictionary& Foam::relaxationModel::dict() const
+const Foam::dictionary& Foam::relaxationCollisionModel::dict() const
 {
     return dict_;
 }

@@ -1,3 +1,11 @@
+Check uspInitialise zoneFil and meshFieldFill for dynamic simulation
+
+
+
+Check what's up with totalvDofBF_
+
+Fix non-surface boundary measurements
+
 Fix mass flow rate with non-uniform cell weighting
 
 Remove heatflux and shear stress cell measurements

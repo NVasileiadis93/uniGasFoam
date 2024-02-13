@@ -47,7 +47,7 @@ SourceFiles
 #include "volFields.H"
 #include "scalarIOField.H"
 #include "binaryCollisionModel.H"
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 
 #include "uspBoundaries.H"
 #include "uspAllConfigurations.H"
@@ -100,7 +100,7 @@ private:
         word collisionModel_;
 
         //- A variable holding the simulation relaxation scheme (required for fixing USP heat flux vector and pressure tensor)
-        word relaxationModelName_;
+        word relaxationCollisionModelName_;
 
         // A boolean vector containing the solution dimensions
         boolVector solutionDimensions_;
@@ -114,6 +114,9 @@ private:
 
         //- Number of real atoms/molecules represented by a parcel
         scalar nParticle_;
+
+        //- Collision reference temperature
+        scalar collTref_;
 
         // dynamic simulation set-ups
 
@@ -132,10 +135,10 @@ private:
             label minParticlesPerSubcell_;
 
             //- Maximum allowed cell weight ratio between adjacent cells
-            scalar maxCellWeightRatio_;
+            const scalar maxCellWeightRatio_ = 0.05;
 
             //- Maximum allowed number of smoothing passes
-            label maxSmoothingPasses_;
+            const label maxSmoothingPasses_ = 100;
 
         // Axisymmetric set-ups
 
@@ -225,10 +228,10 @@ private:
             autoPtr<binaryCollisionPartner> binaryCollisionPartnerModel_;
 
             //- Collision selection routine model
-            autoPtr<relaxationModel> relaxationModel_;
+            autoPtr<relaxationCollisionModel> relaxationCollisionModel_;
 
             //- Hybrid decomposer
-            autoPtr<uspHybridDecomposition> hybridDecomposition_;
+            autoPtr<uspHybridDecomposition> hybridDecompositionModel_;
 
             //- Reactions
             uspReactions reactions_;
@@ -247,6 +250,12 @@ private:
         //- Build the constant properties for all of the species
         void buildConstProps();
 
+        //- Axisymmetric and cell weighting
+        void weighting();
+
+        //- Dynamically adapt the simulation
+        void adaptation();
+
         //- Remove electrons after adding their velocities to a DynamicList
         void removeElectrons();
 
@@ -259,7 +268,7 @@ private:
         //- Relax particles
         void relaxations();
 
-        //- Decompose domain
+        //- Decompose domain in hybrid simulation
         void decomposition();
 
         //- Disallow default bitwise copy construct
@@ -296,7 +305,7 @@ public:
         inline label relCollModel() const;
 
         //- Return relaxation collision model name
-        inline word relaxationModelName() const;
+        inline word relaxationCollisionModelName() const;
 
         //- Return the particle IDs corresponding to the particle names read
         //- from the input dictionary
@@ -310,6 +319,9 @@ public:
 
         //- Return the number of real particles represented by one parcel
         inline scalar nParticle() const;
+
+        //- Return the number of real particles represented by one parcel
+        inline scalar collTref() const;
 
         //- Return the bool to identify if this is an dynamic subcell simulation
         inline bool dynamicAdaptation() const;
@@ -505,37 +517,45 @@ public:
 
     // Sub-models
 
-        //- Return reference to binary elastic collision model
-        inline const binaryCollisionModel& binaryCollision() const;
-        inline binaryCollisionModel& binaryCollision();
-
-        inline const uspBoundaries& boundaries() const;
-        inline uspBoundaries& boundaries();
-
-        inline const uspFieldProperties& fields() const;
-        inline uspFieldProperties& fields();
-
-        inline const uspDynamicLoadBalancing& dynamicLoadBalancing() const;
-        inline uspDynamicLoadBalancing& dynamicLoadBalancing();
-
-        inline const uspHybridDecomposition& hybridDecomposition() const;
-        inline uspHybridDecomposition& hybridDecomposition();
-
+        //- Return reference to dynamic adaptation model
         inline const uspDynamicAdapter& dynamicAdapter() const;
         inline uspDynamicAdapter& dynamicAdapter();
 
+        //- Return reference to field models
+        inline const uspFieldProperties& fields() const;
+        inline uspFieldProperties& fields();
+
+        //- Return reference to boundary models
+        inline const uspBoundaries& boundaries() const;
+        inline uspBoundaries& boundaries();
+
+        //- Return reference to dynamic adaptation model
         inline const uspFaceTracker& tracker() const;
         inline uspFaceTracker& tracker();
 
+        //- Return reference to binary binary collision model
+        inline const binaryCollisionModel& binaryCollision() const;
+        inline binaryCollisionModel& binaryCollision();
+
+        //- Return reference to binary relaxation collision model
+        inline const relaxationCollisionModel& relaxationCollision() const;
+        inline relaxationCollisionModel& relaxationCollision();
+
+        //- Return reference to decomposition model
+        inline const uspHybridDecomposition& hybridDecomposition() const;
+        inline uspHybridDecomposition& hybridDecomposition();
+
+        //- Return reference to reaction models
         inline const uspReactions& reactions() const;
         inline uspReactions& reactions();
 
+        //- Return reference to boundary measurement models
         inline const boundaryMeasurements& boundaryFluxMeasurements() const;
         inline boundaryMeasurements& boundaryFluxMeasurements();
 
+        //- Return reference to cell measurement models
         inline const cellMeasurements& cellPropMeasurements() const;
         inline cellMeasurements& cellPropMeasurements();
-
 
         // Check
 

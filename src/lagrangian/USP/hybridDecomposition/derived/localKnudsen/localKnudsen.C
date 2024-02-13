@@ -47,7 +47,7 @@ Foam::localKnudsen::localKnudsen
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    decomposeInterval_(dict.subDict("decompositionProperties").get<label>("decomposeInterval")),
+    timeInterval_(dict.subDict("decompositionProperties").get<label>("timeInterval")),
     breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
     theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
@@ -273,7 +273,7 @@ void Foam::localKnudsen::decompose()
         
     }
 
-    if (timeSteps_ == decomposeInterval_)
+    if (timeSteps_ == timeInterval_)
     {
 
         // computing internal fields

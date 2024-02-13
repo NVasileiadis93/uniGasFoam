@@ -24,29 +24,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "BGK.H"
+#include "ellipsoidalStatistical.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-defineTypeNameAndDebug(BGK, 0);
+defineTypeNameAndDebug(ellipsoidalStatistical, 0);
 
-addToRunTimeSelectionTable(relaxationModel, BGK, dictionary);
+addToRunTimeSelectionTable(relaxationCollisionModel, ellipsoidalStatistical, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::BGK::BGK
+Foam::ellipsoidalStatistical::ellipsoidalStatistical
 (
     const dictionary& dict,
     const polyMesh& mesh,
     uspCloud& cloud
 )
 :
-    relaxationModel(dict, mesh, cloud),
+    relaxationCollisionModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
     Tref_(propertiesDict_.get<scalar>("Tref")),
     macroInterpolation_(propertiesDict_.getOrDefault<bool>("macroInterpolation", false)),
@@ -225,6 +225,20 @@ Foam::BGK::BGK
         mesh_,
         dimensionedVector(dimVelocity, vector::zero),
         zeroGradientFvPatchScalarField::typeName
+    ),
+    pressureTensor_
+    (
+        IOobject
+        (
+            "pressureTensor",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedTensor(dimPressure, tensor::zero),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
 
@@ -291,7 +305,7 @@ Foam::BGK::BGK
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::BGK::calculateProperties()
+void Foam::ellipsoidalStatistical::calculateProperties()
 {
 
     auto& cm = cloud_.cellPropMeasurements();
@@ -374,11 +388,56 @@ void Foam::BGK::calculateProperties()
                 rhoN_[cell]*physicoChemical::k.value()
                 *translationalT_[cell];
 
+            // Pressure tensor
+            pressureTensor_[cell].xx() = rhoN_[cell]*
+            (
+                muu_[cell]/(rhoNMean_[cell]) -
+                (
+                    (rhoMMean_[cell]/(rhoNMean_[cell]))
+                    *UMean_[cell].x()*UMean_[cell].x()
+                )
+            );
+            pressureTensor_[cell].xy() = rhoN_[cell]*
+            (
+                muv_[cell]/(rhoNMean_[cell]) -
+                ((rhoMMean_[cell]/(rhoNMean_[cell])))
+                *UMean_[cell].x()*UMean_[cell].y()
+
+            );
+            pressureTensor_[cell].xz() = rhoN_[cell]*
+            (
+                muw_[cell]/(rhoNMean_[cell]) -
+                ((rhoMMean_[cell]/(rhoNMean_[cell]))
+                *UMean_[cell].x()*UMean_[cell].z())
+            );
+            pressureTensor_[cell].yx() = pressureTensor_[cell].xy();
+            pressureTensor_[cell].yy() = rhoN_[cell]*
+            (
+                mvv_[cell]/(rhoNMean_[cell]) -
+                ((rhoMMean_[cell]/(rhoNMean_[cell])))
+                *UMean_[cell].y()*UMean_[cell].y()
+            );
+            pressureTensor_[cell].yz() = rhoN_[cell]*
+            (
+                mvw_[cell]/(rhoNMean_[cell]) -
+                ((rhoMMean_[cell]/(rhoNMean_[cell]))
+                *UMean_[cell].y()*UMean_[cell].z())
+            );
+            pressureTensor_[cell].zx() = pressureTensor_[cell].xz();
+            pressureTensor_[cell].zy() = pressureTensor_[cell].yz();
+            pressureTensor_[cell].zz() = rhoN_[cell]*
+            (
+                mww_[cell]/(rhoNMean_[cell]) -
+                ((rhoMMean_[cell]/(rhoNMean_[cell]))
+                *UMean_[cell].z()*UMean_[cell].z())
+            );
+
             // Scale macroscopic properties
             if (rhoNMean_[cell] > 1.0)
             {
                 p_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*p_[cell];
                 translationalT_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*translationalT_[cell];
+                pressureTensor_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*pressureTensor_[cell];
             }
             else
             {
@@ -393,6 +452,7 @@ void Foam::BGK::calculateProperties()
             p_[cell] = 0.0;
             translationalT_[cell] = 0.0;
             UMean_[cell] = vector::zero;
+            pressureTensor_[cell] = tensor::zero;
         }
 
         // Rotational temperature
@@ -601,7 +661,7 @@ void Foam::BGK::calculateProperties()
             viscosity /= rhoNMean_[cell];
             Prandtl_[cell] /= rhoNMean_[cell]; 
 
-            relaxFreq_[cell] = p_[cell]/viscosity;
+            relaxFreq_[cell] = Prandtl_[cell]*p_[cell]/viscosity;
         }
         else
         {
@@ -623,10 +683,11 @@ void Foam::BGK::calculateProperties()
     electronicT_.correctBoundaryConditions();
     overallT_.correctBoundaryConditions();
     UMean_.correctBoundaryConditions();
+    pressureTensor_.correctBoundaryConditions();
 
 }
 
-void Foam::BGK::resetProperties()
+void Foam::ellipsoidalStatistical::resetProperties()
 {
 
     forAll(mesh_.cells(), cell)
@@ -685,7 +746,7 @@ void Foam::BGK::resetProperties()
 
 }
 
-void Foam::BGK::relax()
+void Foam::ellipsoidalStatistical::relax()
 {
 
     const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -700,14 +761,20 @@ void Foam::BGK::relax()
 
 
     // Create macroscopic quantities interpolations
+    autoPtr <Foam::interpolation<scalar>> PrandtlInterp;
+    autoPtr <Foam::interpolation<scalar>> pInterp;
     autoPtr <Foam::interpolation<scalar>> translationalTInterp;
     autoPtr <Foam::interpolation<vector>> UMeanInterp;
+    autoPtr <Foam::interpolation<tensor>> pressureTensorInterp;
 
     if (macroInterpolation_)
     {
         dictionary interpolationDict = mesh_.schemesDict().subDict("interpolationSchemes");
+        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, Prandtl_);
+        pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
         translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
         UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
+        pressureTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, pressureTensor_);
     }
 
     forAll(cellOccupancy, cell)
@@ -744,8 +811,11 @@ void Foam::BGK::relax()
                     parcel.U() = samplePostRelaxationVelocity
                             (
                                 mass,
+                                PrandtlInterp().interpolate(position, cell),
+                                pInterp().interpolate(position, cell),
                                 translationalTInterp().interpolate(position, cell),
-                                UMeanInterp().interpolate(position, cell)
+                                UMeanInterp().interpolate(position, cell),
+                                pressureTensorInterp().interpolate(position, cell)
                             );
                 }
                 else
@@ -753,8 +823,11 @@ void Foam::BGK::relax()
                     parcel.U() = samplePostRelaxationVelocity
                             (
                                 mass,
+                                Prandtl_[cell],
+                                p_[cell],
                                 translationalT_[cell],
-                                UMean_[cell]
+                                UMean_[cell],
+                                pressureTensor_[cell]
                             );                    
                 }
 
@@ -791,7 +864,7 @@ void Foam::BGK::relax()
 
 }
 
-void Foam::BGK::conserveMomentumAndEnergy
+void Foam::ellipsoidalStatistical::conserveMomentumAndEnergy
 (
     const label& cell
 )
@@ -842,24 +915,29 @@ void Foam::BGK::conserveMomentumAndEnergy
 
 }
 
-Foam::vector Foam::BGK::samplePostRelaxationVelocity
+Foam::vector Foam::ellipsoidalStatistical::samplePostRelaxationVelocity
 (   
     const scalar& m,
+    const scalar& Pr,
+    const scalar& p,
     const scalar& T,
-    const vector& U
+    const vector& U,
+    const tensor& pT
 )
 {
 
     scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
 
     vector v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
-
-    return U+u0*v;
+    
+    tensor S = I-0.5*(1-Pr)/Pr*(pT/p-I);
+    
+    return U + u0*(S & v);
 
 }
 
 const Foam::dictionary&
-Foam::BGK::propertiesDict() const
+Foam::ellipsoidalStatistical::propertiesDict() const
 {
     return propertiesDict_;
 }

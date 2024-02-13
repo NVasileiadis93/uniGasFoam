@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    BGK
+    unifiedShakhov
 
 Description
-    Relaxes particles to local Maxwellian distribution
+    Relaxes particles to local Chapman-Enskog distributions
 
 SourceFiles
-    BGK.C
+    unifiedShakhov.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BGK_H
-#define BGK_H
+#ifndef unifiedShakhov_H
+#define unifiedShakhov_H
 
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 #include "vector.H"
 #include "polyMesh.H"
 #include "uspCloud.H"
@@ -50,24 +50,27 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class BGK Declaration
+                        class unifiedShakhov Declaration
 \*---------------------------------------------------------------------------*/
 
-class BGK
+class unifiedShakhov
 :
-    public relaxationModel
+    public relaxationCollisionModel
 {
     // Private data
     
         const dictionary propertiesDict_;
         const scalar Tref_;
+        const scalar theta_;
         const bool macroInterpolation_;
-        
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
+        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
+        boolField maxProbReset_;
+        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -112,16 +115,21 @@ class BGK
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
+        volVectorField heatFluxVector_;
+        volVectorField heatFluxVectorPrevious_;
+        volTensorField pressureTensor_;
+        volTensorField shearStressTensor_;
+        volTensorField shearStressTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("BGK");
+    TypeName("unifiedShakhov");
 
     //- Construct from componentsonst label& cell
-    BGK
+    unifiedShakhov
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -129,7 +137,7 @@ public:
     );
 
     //- Destructor
-    virtual ~BGK() = default;
+    virtual ~unifiedShakhov() = default;
 
     // Member Functions
 
@@ -151,9 +159,15 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
+            const label& cell,
             const scalar& m,
+            const scalar& Pr,
+            const scalar& rF,
+            const scalar& p,
             const scalar& T,
-            const vector& U
+            const vector& U,
+            const vector& q,
+            const tensor& s
         );
 
 };

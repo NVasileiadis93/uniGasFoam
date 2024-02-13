@@ -41,15 +41,18 @@ uspDynamicAdapter::uspDynamicAdapter
     mesh_(mesh),
     cloud_(cloud),
     rndGen_(cloud.rndGen()),
-    timeSteps_(0),
-    nAvTimeSteps_(0),
-    adaptiveSubcells_(false),
-    adaptiveCellWeights_(false),
+    minSubcellLevels_(2),
+    maxSubcellLevels_(5),
+    timeStepAdaptation_(false),
+    cellWeightAdaptation_(false),
+    subcellAdaptation_(false),
     timeInterval_(),
     maxSubcellSizeMFPRatio_(),
     Tref_(),
-    smoothingPasses_(),
-    theta_(),
+    smoothingPasses_(10),
+    theta_(0.8),
+    timeSteps_(0),
+    nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -180,11 +183,14 @@ uspDynamicAdapter::uspDynamicAdapter
 
     if (cloud_.dynamicAdaptation())
     {
-        adaptiveSubcells_ = dict.subDict("dynamicSimulationProperties").get<bool>("adaptiveSubcells");
+        timeStepAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("timeStepAdaptation",false);
+        subcellAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("subcellAdaptation",false);
+        cellWeightAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("cellWeightAdaptation",false);
+        if (subcellAdaptation_)
+        {
+            maxSubcellSizeMFPRatio_ = dict.subDict("dynamicSimulationProperties").get<scalar>("maxSubcellSizeMFPRatio");
+        }
         timeInterval_ = dict.subDict("dynamicSimulationProperties").get<label>("timeInterval");
-        maxSubcellSizeMFPRatio_ = dict.subDict("dynamicSimulationProperties").get<scalar>("maxSubcellSizeMFPRatio");
-        smoothingPasses_ = dict.subDict("dynamicSimulationProperties").getOrDefault<label>("smoothingPasses", 0);
-        theta_ = dict.subDict("dynamicSimulationProperties").getOrDefault<scalar>("theta", 1.0);
         Tref_ = dict.subDict("collisionProperties").get<scalar>("Tref");
     }
 
@@ -196,9 +202,9 @@ uspDynamicAdapter::uspDynamicAdapter
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void uspDynamicAdapter::update()
+void uspDynamicAdapter::calculateProperties()
 {
-
+    
     timeSteps_++;
 
     nAvTimeSteps_++;
@@ -253,71 +259,26 @@ void uspDynamicAdapter::update()
 
                     for (qspec=0; qspec<typeIds_.size(); ++qspec)
                     {
-                        scalar dPQ =
-                            0.5
-                           *(
-                                cloud_.constProps(typeIds_[iD]).d()
-                              + cloud_.constProps(typeIds_[qspec]).d()
-                            );
+                        scalar dPQ = 0.5*(cloud_.constProps(typeIds_[iD]).d() + cloud_.constProps(typeIds_[qspec]).d());
 
-                        scalar omegaPQ =
-                            0.5
-                           *(
-                                cloud_.constProps(typeIds_[iD]).omega()
-                              + cloud_.constProps(typeIds_[qspec]).omega()
-                            );
+                        scalar omegaPQ = 0.5*(cloud_.constProps(typeIds_[iD]).omega() + cloud_.constProps(typeIds_[qspec]).omega());
 
-                        scalar massRatio =
-                            cloud_.constProps(typeIds_[iD]).mass()
-                           /cloud_.constProps(typeIds_[qspec]).mass();
+                        scalar massRatio = cloud_.constProps(typeIds_[iD]).mass()/cloud_.constProps(typeIds_[qspec]).mass();
 
-                        if
-                        (
-                            nParcels_[qspec][cell] > VSMALL
-                         && translationalT_[cell] > VSMALL
-                        )
+                        if (nParcels_[qspec][cell] > VSMALL && translationalT_[cell] > VSMALL)
                         {
-                            scalar nDensQ =
-                                (nParcelsXnParticle_[qspec][cell])
-                               /(meshV[cell]*nAvTimeSteps_);
+                            scalar nDensQ = (nParcelsXnParticle_[qspec][cell])/(meshV[cell]*nAvTimeSteps_);
 
-                            scalar reducedMass =
-                            (
-                                cloud_.constProps(typeIds_[iD]).mass()
-                               *cloud_.constProps(typeIds_[qspec]).mass()
-                            )
-                           /(
-                                cloud_.constProps(typeIds_[iD]).mass()
-                              + cloud_.constProps(typeIds_[qspec]).mass()
-                            );
+                            scalar reducedMass = 
+                                cloud_.constProps(typeIds_[iD]).mass()*cloud_.constProps(typeIds_[qspec]).mass()
+                                /(cloud_.constProps(typeIds_[iD]).mass()+ cloud_.constProps(typeIds_[qspec]).mass());
 
-                            mfp_[iD][cell] +=
-                                (
-                                    pi*dPQ*dPQ*nDensQ
-                                   *pow
-                                    (
-                                        Tref_
-                                       /translationalT_[cell],
-                                        omegaPQ - 0.5
-                                    )
-                                   *sqrt(1.0 + massRatio)
-                                ); //Bird, eq (4.76)
+                            //Bird, eq (4.76)
+                            mfp_[iD][cell] += pi*dPQ*dPQ*nDensQ*pow(Tref_/translationalT_[cell],omegaPQ - 0.5)*sqrt(1.0 + massRatio);
 
+                            // //Bird, eq (4.74)
                             mct_[iD][cell] +=
-                                (
-                                    2.0*sqrt(pi)*dPQ*dPQ*nDensQ
-                                *pow
-                                    (
-                                        translationalT_[cell]
-                                    /Tref_,
-                                        1.0 - omegaPQ
-                                    )
-                                *sqrt
-                                    (
-                                        2.0*physicoChemical::k.value()
-                                    *Tref_/reducedMass
-                                    )
-                                ); // //Bird, eq (4.74)
+                                2.0*sqrt(pi)*dPQ*dPQ*nDensQ*pow(translationalT_[cell]/Tref_,1.0 - omegaPQ)*sqrt(2.0*physicoChemical::k.value()*Tref_/reducedMass); 
                         }
                     }
 
@@ -329,9 +290,7 @@ void uspDynamicAdapter::update()
                 {
                     if (rhoN_[cell] > VSMALL)
                     {
-                        scalar nDensP =
-                            (nParcelsXnParticle_[iD][cell])
-                           /(meshV[cell]*nAvTimeSteps_);
+                        scalar nDensP = (nParcelsXnParticle_[iD][cell])/(meshV[cell]*nAvTimeSteps_);
 
                         mfp_[iD][cell] = 1.0/mfp_[iD][cell];
 
@@ -371,8 +330,8 @@ void uspDynamicAdapter::update()
                 cellSizeMFPRatio_[cell] = (maxPoint-minPoint)/MFP_[cell];
 
             }
-
         }
+        cellSizeMFPRatio_.correctBoundaryConditions();
 
         // smooth fields
         for (label pass=0; pass<smoothingPasses_; ++pass)
@@ -380,21 +339,30 @@ void uspDynamicAdapter::update()
             cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
             cellSizeMFPRatio_.correctBoundaryConditions();
         }
+    }
 
-        // Adapt time-step (not coded yet)
-        //forAll(mesh_.cells(), cell)
-        //{
-        //    if (rhoNMean_[cell] > VSMALL && cloud_.cellCollModel(cell) == cloud_.binCollModel())
-        //    {
-        //
-        //    }
-        //
-        //}
+}
+
+void uspDynamicAdapter::update()
+{
+
+    if (timeSteps_ == timeInterval_)
+    {
+
+        const auto& meshCC = cloud_.mesh().cellCentres();
+        const auto& meshV = cloud_.mesh().V();
+
+        // Adapt time-step 
+        if (timeStepAdaptation_)
+        {
+            //not coded yet
+        }
 
         // Adapt subcell levels
-        if (adaptiveSubcells_)
+        if (subcellAdaptation_)
         {
             const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
+
             forAll(mesh_.cells(), cell)
             {
                 if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
@@ -404,7 +372,7 @@ void uspDynamicAdapter::update()
                     {
                         if (solutionDimensions[dim])
                         {
-                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio_[cell][dim]/maxSubcellSizeMFPRatio_)));
+                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio_[cell][dim]/maxSubcellSizeMFPRatio_))+0.5);
                         }
                         else
                         {
@@ -422,7 +390,7 @@ void uspDynamicAdapter::update()
                         }
                         else
                         {
-                            cloud_.subcellLevels()[cell][dim] = 1.0;
+                            cloud_.subcellLevels()[cell][dim] = label(1.0);
                         }
                     }    
                 }
@@ -432,17 +400,14 @@ void uspDynamicAdapter::update()
         }
 
         // update cell weighting factor        
-        if (cloud_.cellWeighted())
+        if (cellWeightAdaptation_)
         {
-            
             forAll(mesh_.cells(), cell)
             {
-
                 scalar RWF = cloud_.axiRWF(meshCC[cell]);
                 const vector& subcellLevels = cloud_.subcellLevels()[cell];
                 const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
                 cellWeightFactor_[cell] = (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
-
             }
             cellWeightFactor_.correctBoundaryConditions();
 
@@ -463,7 +428,7 @@ void uspDynamicAdapter::update()
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
                     const vector& subcellLevels = cloud_.subcellLevels()[cell];
                     const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cellWeightFactor_[cell] = (rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+                    cellWeightFactor_[cell] = max((rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor_[cell]);
 
                 }
                 cellWeightFactor_.correctBoundaryConditions();
@@ -494,10 +459,20 @@ void uspDynamicAdapter::update()
             } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
 
             // time average cell weight factor
-            cloud_.cellWeightFactor() = theta_*cellWeightFactor_ + (1.0-theta_)*cloud_.cellWeightFactor() ;
+            cloud_.cellWeightFactor() = theta_*cellWeightFactor_ + (1.0-theta_)*cloud_.cellWeightFactor();
             cellWeightFactor_ = cloud_.cellWeightFactor();
 
         }
+
+    }
+
+}
+
+void uspDynamicAdapter::reset()
+{
+
+    if (timeSteps_ == timeInterval_)
+    {
 
         // reset
         timeSteps_ = 0;
@@ -521,8 +496,18 @@ void uspDynamicAdapter::update()
                 mct_[iD][cell] = 0.0;
             }
         }
-
     }
+
+}
+
+void uspDynamicAdapter::adapt()
+{
+
+    calculateProperties();
+
+    update();
+
+    reset();
 
 }
 

@@ -33,7 +33,7 @@ namespace Foam
 {
 defineTypeNameAndDebug(Shakhov, 0);
 
-addToRunTimeSelectionTable(relaxationModel, Shakhov, dictionary);
+addToRunTimeSelectionTable(relaxationCollisionModel, Shakhov, dictionary);
 }
 
 
@@ -46,7 +46,7 @@ Foam::Shakhov::Shakhov
     uspCloud& cloud
 )
 :
-    relaxationModel(dict, mesh, cloud),
+    relaxationCollisionModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
     Tref_(propertiesDict_.get<scalar>("Tref")),
     theta_(propertiesDict_.getOrDefault<scalar>("theta", 1.0)),
@@ -347,7 +347,6 @@ Foam::Shakhov::Shakhov
     }
 
 }
-
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

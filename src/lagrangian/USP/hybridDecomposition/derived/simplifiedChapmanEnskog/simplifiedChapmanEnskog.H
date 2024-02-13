@@ -66,7 +66,7 @@ class simplifiedChapmanEnskog
 
     // Private data
 
-        label decomposeInterval_;
+        label timeInterval_;
         scalar breakdownMax_;
         scalar theta_;
         label smoothingPasses_;

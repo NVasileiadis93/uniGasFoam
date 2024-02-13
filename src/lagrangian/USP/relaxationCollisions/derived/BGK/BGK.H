@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    Shakhov
+    BGK
 
 Description
-    Relaxes particles to local Shakhov distribution
+    Relaxes particles to local Maxwellian distribution
 
 SourceFiles
-    Shakhov.C
+    BGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Shakhov_H
-#define Shakhov_H
+#ifndef BGK_H
+#define BGK_H
 
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 #include "vector.H"
 #include "polyMesh.H"
 #include "uspCloud.H"
@@ -50,27 +50,24 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class Shakhov Declaration
+                        class BGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class Shakhov
+class BGK
 :
-    public relaxationModel
+    public relaxationCollisionModel
 {
     // Private data
     
         const dictionary propertiesDict_;
         const scalar Tref_;
-        const scalar theta_;
         const bool macroInterpolation_;
+        
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
-        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
-        boolField maxProbReset_;
-        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -115,20 +112,16 @@ class Shakhov
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
-        volVectorField heatFluxVector_;
-        volVectorField heatFluxVectorPrevious_;
-        volTensorField pressureTensor_;
-        volTensorField pressureTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("Shakhov");
+    TypeName("BGK");
 
     //- Construct from componentsonst label& cell
-    Shakhov
+    BGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -136,7 +129,7 @@ public:
     );
 
     //- Destructor
-    virtual ~Shakhov() = default;
+    virtual ~BGK() = default;
 
     // Member Functions
 
@@ -158,13 +151,9 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
-            const label& cell,
             const scalar& m,
-            const scalar& Pr,
-            const scalar& p,
             const scalar& T,
-            const vector& U,
-            const vector& q
+            const vector& U
         );
 
 };

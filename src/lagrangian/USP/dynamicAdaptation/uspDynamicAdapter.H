@@ -62,14 +62,6 @@ class uspDynamicAdapter
 
     // Private data
 
-        label minSubcellLevels_ = 2;
-
-        label maxSubcellLevels_ = 5;
-
-        label smoothingPasses_;
-
-        scalar theta_;
-
         const dictionary& dict_;
 
         const fvMesh& mesh_;
@@ -78,19 +70,29 @@ class uspDynamicAdapter
 
         Random& rndGen_;
 
-        label timeSteps_;
+        const label minSubcellLevels_;
 
-        label nAvTimeSteps_;
+        const label maxSubcellLevels_;
 
-        bool adaptiveSubcells_;
+        bool timeStepAdaptation_;
 
-        bool adaptiveCellWeights_;
+        bool cellWeightAdaptation_;
+
+        bool subcellAdaptation_;
 
         label timeInterval_;
 
         scalar maxSubcellSizeMFPRatio_;
 
         scalar Tref_;
+
+        label smoothingPasses_;
+
+        scalar theta_;
+
+        label timeSteps_;
+
+        label nAvTimeSteps_;
 
         labelList typeIds_;        
 
@@ -133,8 +135,26 @@ public:
 
     // Member Functions
 
+    void calculateProperties();
+
+    void adapt();
+
+    void reset();
+
     void update();
- 
+
+    inline const label& minSubcellLevels() const;
+
+    inline const label& maxSubcellLevels() const;
+
+    inline const bool& timeStepAdaptation() const;
+
+    inline const bool& cellWeightAdaptation() const;
+
+    inline const bool& subcellAdaptation() const;
+
+    inline const scalar& maxSubcellSizeMFPRatio() const;
+
 };
 
 
@@ -144,7 +164,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//#include "uspDynamicLoadBalancingI.H"
+#include "uspDynamicAdapterI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

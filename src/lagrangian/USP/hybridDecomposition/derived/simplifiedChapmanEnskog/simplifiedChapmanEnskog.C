@@ -47,7 +47,7 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    decomposeInterval_(dict.subDict("decompositionProperties").get<label>("decomposeInterval")),
+    timeInterval_(dict.subDict("decompositionProperties").get<label>("timeInterval")),
     breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
     theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
@@ -269,7 +269,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
 
     }
 
-    if (timeSteps_ == decomposeInterval_)
+    if (timeSteps_ == timeInterval_)
     {
 
         const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -388,7 +388,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
                     pressureTensor_[cell].zy()*UMean_[cell].y() -
                     pressureTensor_[cell].zz()*UMean_[cell].z();
 
-                if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cloud_.relaxationModelName() == "unifiedShakhov")
+                if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cloud_.relaxationCollisionModelName() == "unifiedShakhov")
                 {
                     scalar Prandtl = 0.0;
                     scalar viscosity = 0.0;

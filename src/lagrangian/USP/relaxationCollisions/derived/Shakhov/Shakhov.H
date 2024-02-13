@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unifiedShakhov
+    Shakhov
 
 Description
-    Relaxes particles to local Chapman-Enskog distributions
+    Relaxes particles to local Shakhov distribution
 
 SourceFiles
-    unifiedShakhov.C
+    Shakhov.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unifiedShakhov_H
-#define unifiedShakhov_H
+#ifndef Shakhov_H
+#define Shakhov_H
 
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 #include "vector.H"
 #include "polyMesh.H"
 #include "uspCloud.H"
@@ -50,12 +50,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class unifiedShakhov Declaration
+                        class Shakhov Declaration
 \*---------------------------------------------------------------------------*/
 
-class unifiedShakhov
+class Shakhov
 :
-    public relaxationModel
+    public relaxationCollisionModel
 {
     // Private data
     
@@ -118,18 +118,17 @@ class unifiedShakhov
         volVectorField heatFluxVector_;
         volVectorField heatFluxVectorPrevious_;
         volTensorField pressureTensor_;
-        volTensorField shearStressTensor_;
-        volTensorField shearStressTensorPrevious_;
+        volTensorField pressureTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("unifiedShakhov");
+    TypeName("Shakhov");
 
     //- Construct from componentsonst label& cell
-    unifiedShakhov
+    Shakhov
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -137,7 +136,7 @@ public:
     );
 
     //- Destructor
-    virtual ~unifiedShakhov() = default;
+    virtual ~Shakhov() = default;
 
     // Member Functions
 
@@ -162,12 +161,10 @@ public:
             const label& cell,
             const scalar& m,
             const scalar& Pr,
-            const scalar& rF,
             const scalar& p,
             const scalar& T,
             const vector& U,
-            const vector& q,
-            const tensor& s
+            const vector& q
         );
 
 };

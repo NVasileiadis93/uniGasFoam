@@ -35,18 +35,18 @@ binaryCollisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariab
 binaryCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
 
 
-/* COLLISION PARTNER SELECTION ROUTINES */
+/* BINARY COLLISION PARTNER SELECTION ROUTINES */
 binaryCollisionPartner/basic/binaryCollisionPartner.C
 binaryCollisionPartner/derived/noTimeCounter/noTimeCounter.C
 binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
 
 
-/* RELAXATIONS */
-relaxations/basic/relaxationModel/relaxationModel.C
-relaxations/derived/BGK/BGK.C
-relaxations/derived/ellipsoidalStatistical/ellipsoidalStatistical.C
-relaxations/derived/Shakhov/Shakhov.C
-relaxations/derived/unifiedShakhov/unifiedShakhov.C
+/* RELAXATIONS COLLISIONS */
+relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
+relaxationCollisions/derived/BGK/BGK.C
+relaxationCollisions/derived/ellipsoidalStatistical/ellipsoidalStatistical.C
+relaxationCollisions/derived/Shakhov/Shakhov.C
+relaxationCollisions/derived/unifiedShakhov/unifiedShakhov.C
 
 
 /* REACTIONS */

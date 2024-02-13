@@ -40,9 +40,9 @@ inline Foam::label Foam::uspCloud::relCollModel() const
     return relCollModel_;
 }
 
-inline Foam::word Foam::uspCloud::relaxationModelName() const
+inline Foam::word Foam::uspCloud::relaxationCollisionModelName() const
 {
-    return relaxationModelName_;
+    return relaxationCollisionModelName_;
 }
 
 inline Foam::boolVector Foam::uspCloud::solutionDimensions() const
@@ -58,6 +58,11 @@ inline const Foam::List<Foam::word>& Foam::uspCloud::typeIdList() const
 inline Foam::scalar Foam::uspCloud::nParticle() const
 {
     return nParticle_;
+}
+
+inline Foam::scalar Foam::uspCloud::collTref() const
+{
+    return collTref_;
 }
 
 inline bool Foam::uspCloud::dynamicAdaptation() const
@@ -188,18 +193,27 @@ inline Foam::Random& Foam::uspCloud::rndGen()
 }
 
 
-inline const Foam::binaryCollisionModel&
-Foam::uspCloud::binaryCollision() const
+inline const Foam::uspDynamicAdapter& Foam::uspCloud::dynamicAdapter() const
 {
-    return binaryCollisionModel_;
+    return dynamicAdapter_;
 }
 
 
-inline Foam::binaryCollisionModel& Foam::uspCloud::binaryCollision()
+inline Foam::uspDynamicAdapter& Foam::uspCloud::dynamicAdapter()
 {
-    return binaryCollisionModel_();
+    return dynamicAdapter_;
 }
 
+
+inline const Foam::uspFieldProperties& Foam::uspCloud::fields() const
+{
+    return fields_;
+}
+
+inline Foam::uspFieldProperties& Foam::uspCloud::fields()
+{
+    return fields_;
+}
 
 inline const  Foam::uspBoundaries& Foam::uspCloud::boundaries() const
 {
@@ -210,18 +224,6 @@ inline const  Foam::uspBoundaries& Foam::uspCloud::boundaries() const
 inline  Foam::uspBoundaries& Foam::uspCloud::boundaries()
 {
     return  boundaries_;
-}
-
-
-inline const Foam::uspFieldProperties& Foam::uspCloud::fields() const
-{
-    return fields_;
-}
-
-
-inline Foam::uspFieldProperties& Foam::uspCloud::fields()
-{
-    return fields_;
 }
 
 
@@ -237,6 +239,42 @@ inline Foam::uspFaceTracker& Foam::uspCloud::tracker()
 }
 
 
+inline const Foam::binaryCollisionModel& Foam::uspCloud::binaryCollision() const
+{
+    return binaryCollisionModel_;
+}
+
+
+inline Foam::binaryCollisionModel& Foam::uspCloud::binaryCollision()
+{
+    return binaryCollisionModel_();
+}
+
+
+inline const Foam::relaxationCollisionModel& Foam::uspCloud::relaxationCollision() const
+{
+    return relaxationCollisionModel_;
+}
+
+
+inline Foam::relaxationCollisionModel& Foam::uspCloud::relaxationCollision()
+{
+    return relaxationCollisionModel_();
+}
+
+
+inline const Foam::uspHybridDecomposition& Foam::uspCloud::hybridDecomposition() const
+{
+    return hybridDecompositionModel_;
+}
+
+
+inline Foam::uspHybridDecomposition& Foam::uspCloud::hybridDecomposition()
+{
+    return hybridDecompositionModel_();
+}
+
+
 inline const Foam::uspReactions& Foam::uspCloud::reactions() const
 {
     return reactions_;
@@ -246,6 +284,30 @@ inline const Foam::uspReactions& Foam::uspCloud::reactions() const
 inline Foam::uspReactions& Foam::uspCloud::reactions()
 {
     return reactions_;
+}
+
+
+inline const Foam::boundaryMeasurements& Foam::uspCloud::boundaryFluxMeasurements() const
+{
+    return boundaryMeas_;
+}
+
+
+inline Foam::boundaryMeasurements& Foam::uspCloud::boundaryFluxMeasurements()
+{
+    return boundaryMeas_;
+}
+
+
+inline const Foam::cellMeasurements& Foam::uspCloud::cellPropMeasurements() const
+{
+    return cellMeas_;
+}
+
+
+inline Foam::cellMeasurements& Foam::uspCloud::cellPropMeasurements()
+{
+    return cellMeas_;
 }
 
 
@@ -356,32 +418,5 @@ inline void Foam::uspCloud::clear()
 {
     return IDLList<uspParcel>::clear();
 }
-
-
-inline Foam::boundaryMeasurements& Foam::uspCloud::boundaryFluxMeasurements()
-{
-    return boundaryMeas_;
-}
-
-
-inline const Foam::boundaryMeasurements&
-Foam::uspCloud::boundaryFluxMeasurements() const
-{
-    return boundaryMeas_;
-}
-
-
-inline Foam::cellMeasurements& Foam::uspCloud::cellPropMeasurements()
-{
-    return cellMeas_;
-}
-
-
-inline const Foam::cellMeasurements&
-Foam::uspCloud::cellPropMeasurements() const
-{
-    return cellMeas_;
-}
-
 
 // ************************************************************************* //

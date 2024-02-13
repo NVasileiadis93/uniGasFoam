@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::relaxationModel
+    Foam::relaxationCollisionModel
 
 Description
     Templated USP particle relaxation class
 
 SourceFiles
-    relaxationModel.C
+    relaxationCollisionModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef relaxationModel_H
-#define relaxationModel_H
+#ifndef relaxationCollisionModel_H
+#define relaxationCollisionModel_H
 
 #include "fvMesh.H"
 #include "uspParcel.H"
@@ -51,10 +51,10 @@ class uspCloud;
 class uspParcel;
 
 /*---------------------------------------------------------------------------*\
-                    Class relaxationModel Declaration
+                    Class relaxationCollisionModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class relaxationModel
+class relaxationCollisionModel
 {
     // Private data
 
@@ -73,13 +73,13 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("relaxationModel");
+    TypeName("relaxationCollisionModel");
 
     //- Declare runtime constructor selection table
     declareRunTimeSelectionTable
     (
         autoPtr,
-        relaxationModel,
+        relaxationCollisionModel,
         dictionary,
         (
             const dictionary& dict,
@@ -93,7 +93,7 @@ public:
     // Constructors
 
         //- Construct from components
-        relaxationModel
+        relaxationCollisionModel
         (
             const dictionary& dict,
             const polyMesh& mesh,
@@ -102,11 +102,11 @@ public:
 
 
     //- Destructor
-    virtual ~relaxationModel() = default;
+    virtual ~relaxationCollisionModel() = default;
 
 
     //- Selector
-    static autoPtr<relaxationModel> New
+    static autoPtr<relaxationCollisionModel> New
     (
         const dictionary& dict,
         const polyMesh& mesh,

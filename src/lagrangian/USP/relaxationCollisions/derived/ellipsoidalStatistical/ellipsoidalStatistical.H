@@ -36,7 +36,7 @@ SourceFiles
 #ifndef ellipsoidalStatistical_H
 #define ellipsoidalStatistical_H
 
-#include "relaxationModel.H"
+#include "relaxationCollisionModel.H"
 #include "vector.H"
 #include "polyMesh.H"
 #include "uspCloud.H"
@@ -55,7 +55,7 @@ namespace Foam
 
 class ellipsoidalStatistical
 :
-    public relaxationModel
+    public relaxationCollisionModel
 {
     // Private data
     
