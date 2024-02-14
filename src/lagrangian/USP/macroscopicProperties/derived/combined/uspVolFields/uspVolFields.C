@@ -1753,7 +1753,7 @@ void Foam::uspVolFields::calculateField()
         }
 
         // Reset
-        if (resetFieldsAtOutput_ && (mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT))
+        if (resetFieldsAtOutput_ && mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT)
         {
 
             nTimeSteps_ = 0;

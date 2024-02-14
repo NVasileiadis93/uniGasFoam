@@ -165,11 +165,11 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
     (
         IOobject
         (
-            "heatFluxVector",
+            "heatFluxVectorCE",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
         dimensionedVector(dimMass*pow(dimTime,-3), Zero),
@@ -193,11 +193,11 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
     (
         IOobject
         (
-            "shearStressTensor",
+            "shearStressTensorCE",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
         dimensionedTensor(dimPressure, Zero),
@@ -417,9 +417,9 @@ void Foam::simplifiedChapmanEnskog::decompose()
                     
                         scalar tau = 0.5*p_[cell]/viscosity*deltaT;
                     
-                        heatFluxVector_[cell] = heatFluxVector_[cell]/(1.0 + Prandtl*tau);
-                        pressureTensor_[cell] = pressureTensor_[cell]/(1.0 + tau);
-                        shearStressTensor_[cell] = shearStressTensor_[cell]/(1.0 + tau);
+                        heatFluxVector_[cell] /= (1.0 + Prandtl*tau);
+                        pressureTensor_[cell] /= (1.0 + tau);
+                        shearStressTensor_[cell] /= (1.0 + tau);
                     }
                 }
 

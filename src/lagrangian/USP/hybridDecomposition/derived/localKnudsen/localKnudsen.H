@@ -70,12 +70,12 @@ class localKnudsen
         scalar breakdownMax_;
         scalar theta_;
         label smoothingPasses_;
-        scalar Tref_;
 
         label timeSteps_;
         label nAvTimeSteps_;
-
+ 
         label refinementPasses_ = 10;
+        scalar boundCoeff_ = 0.5;
         labelList typeIds_;        
 
         // cell measurements
@@ -86,6 +86,7 @@ class localKnudsen
         scalarField rhoMMeanXnParticle_;
         scalarField linearKEMeanXnParticle_;
         vectorField momentumMeanXnParticle_;
+        List<scalarField> nParcelsXnParticle_;
 
         // boundary measurements
         List<labelList> boundaryCells_;

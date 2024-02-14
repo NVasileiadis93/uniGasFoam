@@ -51,7 +51,6 @@ Foam::localKnudsen::localKnudsen
     breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
     theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
-    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -61,6 +60,7 @@ Foam::localKnudsen::localKnudsen
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
     momentumMeanXnParticle_(mesh_.nCells(), Zero),
+    nParcelsXnParticle_(),
     boundaryCells_(),
     rhoNBF_(),
     rhoMBF_(),
@@ -77,7 +77,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     KnRho_
     (
@@ -90,7 +91,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     KnT_
     (
@@ -103,7 +105,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     KnU_
     (
@@ -116,7 +119,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless, Zero)
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     rhoN_
     (
@@ -129,7 +133,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless/dimVolume, Zero)
+        dimensionedScalar(dimless/dimVolume, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     rhoM_
     (
@@ -142,7 +147,8 @@ Foam::localKnudsen::localKnudsen
             IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimMass/dimVolume, Zero)
+        dimensionedScalar(dimMass/dimVolume, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     p_
     (
@@ -189,6 +195,13 @@ Foam::localKnudsen::localKnudsen
     forAll(typeIds_,iD)
     {
         typeIds_[iD] = iD;
+    }
+
+    nParcelsXnParticle_.setSize(typeIds_.size());
+
+    for (auto& n : nParcelsXnParticle_)
+    {
+        n.setSize(mesh_.nCells());
     }
 
     boundaryCells_.setSize(mesh_.boundaryMesh().size());
@@ -251,6 +264,7 @@ void Foam::localKnudsen::decompose()
         rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[i];
         linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[i];
         momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[i];
+        nParcelsXnParticle_[i] += cm.nParcelsXnParticle()[i];
 
     }
 
@@ -310,6 +324,12 @@ void Foam::localKnudsen::decompose()
                 UMean_[cell] = vector::zero;
             }
         }
+
+        rhoN_.correctBoundaryConditions();
+        rhoM_.correctBoundaryConditions();
+        p_.correctBoundaryConditions();
+        translationalT_.correctBoundaryConditions();
+        UMean_.correctBoundaryConditions();
 
         // Calcualte boundary vol fields
         forAll(rhoNBF_, j)
@@ -380,14 +400,35 @@ void Foam::localKnudsen::decompose()
         // smooth macroscopic quantities
         for (label pass=1; pass<=smoothingPasses_; pass++)
         {
+
             rhoM_ = fvc::average(fvc::interpolate(rhoM_));
             p_ = fvc::average(fvc::interpolate(p_));
             translationalT_ = fvc::average(fvc::interpolate(translationalT_));
             UMean_ = fvc::average(fvc::interpolate(UMean_)); 
-            rhoM_.correctBoundaryConditions();
-            p_.correctBoundaryConditions();
-            translationalT_.correctBoundaryConditions();
-            UMean_.correctBoundaryConditions();
+
+            forAll(boundaryCells_, j)
+            {
+                const polyPatch& patch = mesh_.boundaryMesh()[j];
+
+                const labelList& bCs = boundaryCells_[j];
+
+                forAll(bCs, k)
+                {
+                    if
+                    (
+                        isA<polyPatch>(patch)
+                     && !isA<emptyPolyPatch>(patch)
+                     && !isA<cyclicPolyPatch>(patch)
+                    )
+                    {
+                        rhoM_.boundaryFieldRef()[j][k] = boundCoeff_*rhoM_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*rhoM_[bCs[k]];
+                        translationalT_.boundaryFieldRef()[j][k] =  boundCoeff_*translationalT_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*translationalT_[bCs[k]];
+                        p_.boundaryFieldRef()[j][k] = boundCoeff_*p_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*p_[bCs[k]];
+                        UMean_.boundaryFieldRef()[j][k] = boundCoeff_*UMean_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*UMean_[bCs[k]];
+                    }
+                }
+            }
+
         }
 
         // assume single species - fix for mixtures
@@ -397,13 +438,32 @@ void Foam::localKnudsen::decompose()
         const scalar& rotDoF = cloud_.constProps(0).rotationalDoF();
         scalar gamma = (5.0+rotDoF)/(3.0+rotDoF);
 
-        scalarField magGradRho(mesh_.nCells());
-        scalarField magGradT(mesh_.nCells());
-        scalarField magGradU(mesh_.nCells());
+        scalarField maxMagGradRho(mesh_.nCells());
+        scalarField maxMagGradT(mesh_.nCells());
+        scalarField maxMagGradU(mesh_.nCells());
 
-        magGradRho = mag(fvc::grad(rhoM_));
-        magGradT = mag(fvc::grad(translationalT_));
-        magGradU = mag(fvc::grad(UMean_));
+        maxMagGradRho = mag(fvc::grad(rhoM_));
+        maxMagGradT = mag(fvc::grad(translationalT_));
+        maxMagGradU = mag(fvc::grad(UMean_));
+
+        //forAll(mesh_.cells(), cell)
+        //{
+        //
+        //    maxMagGradRho[cell] = 0.0;
+        //    maxMagGradT[cell] = 0.0;
+        //    maxMagGradU[cell] = 0.0;
+        //    forAll(mesh_.cellCells()[cell], cellI)
+        //    {
+        //
+        //        label adjCell = mesh_.cellCells()[cell][cellI];
+        //        scalar cellDistance = mag(mesh_.C()[adjCell]-mesh_.C()[cell]);
+        //
+        //        maxMagGradRho[cell] = max(maxMagGradRho[cell], fabs(rhoM_[adjCell]-rhoM_[cell])/cellDistance);
+        //        maxMagGradT[cell] = max(maxMagGradT[cell], fabs(translationalT_[adjCell]-translationalT_[cell])/cellDistance);
+        //        maxMagGradU[cell] = max(maxMagGradU[cell], fabs(mag(UMean_[adjCell])-mag(UMean_[cell]))/cellDistance);
+        //
+        //    }
+        //}        
 
         // Calculate KnGLL based on macroscopic quantities
         scalar instKnRho;
@@ -414,15 +474,61 @@ void Foam::localKnudsen::decompose()
         forAll(mesh_.cells(), cell)
         {
 
+            const scalar cellVolume = mesh_.cellVolumes()[cell];
+
             if (rhoNMean_[cell] > VSMALL && translationalT_[cell] > VSMALL)
             {
 
-                scalar meanFreePath = 1.0/(std::sqrt(2.0)*Foam::constant::mathematical::pi*sqr(diameter*std::pow(translationalT_[cell]/Tref_,0.5-omega))*(rhoM_[cell]/mass));
-                scalar soundSpeed = std::sqrt(gamma*Foam::constant::physicoChemical::k.value()/mass*translationalT_[cell]);
+                scalarList speciesMFP(typeIds_.size(), 0.0);
 
-                instKnRho = meanFreePath*magGradRho[cell]/rhoM_[cell];
-                instKnT = meanFreePath*magGradT[cell]/translationalT_[cell];
-                instKnU = meanFreePath*magGradU[cell]/max(mag(UMean_[cell]),soundSpeed);
+                forAll(typeIds_, i)
+                {
+                    label qspec = 0;
+
+                    for (qspec=0; qspec<typeIds_.size(); ++qspec)
+                    {
+                        scalar dPQ = 0.5*(cloud_.constProps(i).d() + cloud_.constProps(qspec).d());
+
+                        scalar omegaPQ = 0.5*(cloud_.constProps(i).omega() + cloud_.constProps(qspec).omega());
+
+                        scalar massRatio = cloud_.constProps(i).mass()/cloud_.constProps(qspec).mass();
+
+                        if (nParcelsXnParticle_[qspec][cell] > VSMALL)
+                        {
+
+                            scalar nDensQ = nParcelsXnParticle_[qspec][cell]/cellVolume;
+
+                            scalar reducedMass =
+                                cloud_.constProps(i).mass()*cloud_.constProps(qspec).mass()
+                                /(cloud_.constProps(i).mass() + cloud_.constProps(qspec).mass());
+
+                            //Bird, eq (4.76)
+                            speciesMFP[i] += pi*dPQ*dPQ*nDensQ*pow(cloud_.collTref()/translationalT_[cell], omegaPQ-0.5)*sqrt(1.0 + massRatio); 
+
+                        }
+                    }
+
+                }
+
+                scalar MFP = 0.0;
+                forAll(typeIds_, i)
+                {
+                    if (nParcelsXnParticle_[i][cell] > VSMALL)
+                    {
+
+                        speciesMFP[i] = 1.0/speciesMFP[i];
+
+                        //Bird, eq (4.77)
+                        MFP += speciesMFP[i]*nParcelsXnParticle_[i][cell]/(rhoN_[cell]*cellVolume);
+
+                    }
+                }
+
+                scalar u0 = std::sqrt(gamma*Foam::constant::physicoChemical::k.value()/(rhoM_[cell]/rhoN_[cell])*translationalT_[cell]);
+
+                instKnRho = MFP*maxMagGradRho[cell]/rhoM_[cell];
+                instKnT = MFP*maxMagGradT[cell]/translationalT_[cell];
+                instKnU = MFP*maxMagGradU[cell]/max(mag(UMean_[cell]),u0);
 
                 instKnGLL = std::max(instKnRho,instKnT);
                 instKnGLL = std::max(instKnGLL,instKnU); 
@@ -448,6 +554,18 @@ void Foam::localKnudsen::decompose()
         KnT_.correctBoundaryConditions();
         KnU_.correctBoundaryConditions();
         KnGLL_.correctBoundaryConditions();
+
+        for (label pass=1; pass<=smoothingPasses_; pass++)
+        {
+            KnRho_ = fvc::average(fvc::interpolate(KnRho_));
+            KnT_ = fvc::average(fvc::interpolate(KnT_));
+            KnU_ = fvc::average(fvc::interpolate(KnU_));
+            KnGLL_ = fvc::average(fvc::interpolate(KnGLL_)); 
+            KnRho_.correctBoundaryConditions();
+            KnT_.correctBoundaryConditions();
+            KnU_.correctBoundaryConditions();
+            KnGLL_.correctBoundaryConditions();
+        }
 
         // determine cell collision model
         forAll(mesh_.cells(), cell)
@@ -526,7 +644,11 @@ void Foam::localKnudsen::decompose()
             rhoMMeanXnParticle_[cell] = 0.0;
             linearKEMeanXnParticle_[cell] = 0.0;
             momentumMeanXnParticle_[cell] = vector::zero;
-            
+
+            forAll(typeIds_, i)
+            {
+                nParcelsXnParticle_[i][cell] = 0.0;
+            }
         }
 
         // reset boundary information

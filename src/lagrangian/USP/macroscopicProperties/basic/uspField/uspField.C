@@ -49,7 +49,7 @@ uspField::uspField
     timeDict_(dict.subDict("timeProperties")),
     sampleInterval_(timeDict_.getOrDefault<label>("sampleInterval",1)),
     resetFieldsAtOutput_(timeDict_.getOrDefault<bool>("resetAtOutput",true)),
-    resetFieldsAtOutputUntilTime_(timeDict_.getOrDefault<scalar>("resetAtOutputUntilTime",0.0)),
+    resetFieldsAtOutputUntilTime_(timeDict_.getOrDefault<scalar>("resetAtOutputUntilTime",VGREAT)),
     casePath_(t.path()/"fieldMeasurements"),
     timePath_()
 {

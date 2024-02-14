@@ -1,5 +1,9 @@
 Check uspInitialise zoneFil and meshFieldFill for dynamic simulation
 
+Fix localKnudsen boundaries
+
+Fix simplifedChapmanEnskog?
+
 
 
 Check what's up with totalvDofBF_

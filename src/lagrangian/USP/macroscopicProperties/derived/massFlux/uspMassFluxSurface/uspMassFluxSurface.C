@@ -337,7 +337,7 @@ void Foam::uspMassFluxSurface::calculateField()
             momentumFlowZone_[timeIndex_] = 0.0;
         }
 
-        if (resetFieldsAtOutput_ && (mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT))
+        if (resetFieldsAtOutput_ && mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT)
         {
             averagingCounter_ = 0;
             molsZone_ = 0.0;
