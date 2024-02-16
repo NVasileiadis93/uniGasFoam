@@ -41,8 +41,6 @@ uspDynamicAdapter::uspDynamicAdapter
     mesh_(mesh),
     cloud_(cloud),
     rndGen_(cloud.rndGen()),
-    minSubcellLevels_(2),
-    maxSubcellLevels_(5),
     timeStepAdaptation_(false),
     cellWeightAdaptation_(false),
     subcellAdaptation_(false),
@@ -50,7 +48,7 @@ uspDynamicAdapter::uspDynamicAdapter
     maxSubcellSizeMFPRatio_(),
     Tref_(),
     smoothingPasses_(10),
-    theta_(0.8),
+    theta_(0.1),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -104,18 +102,18 @@ uspDynamicAdapter::uspDynamicAdapter
         dimensionedVector(dimVelocity, Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
-    cellSizeMFPRatio_
+    cellWeightFactor_
     (
         IOobject
         (
-            "cellSizeToMFPRatioAdapt",
+            "cellWeightFactor",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
-        dimensionedVector(dimless, Zero),
+        dimensionedScalar(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
     timeStepMCTRatio_
@@ -132,11 +130,11 @@ uspDynamicAdapter::uspDynamicAdapter
         dimensionedScalar(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
-    cellWeightFactor_
+    prevTimeStepMCTRatio_
     (
         IOobject
         (
-            "cellWeightFactor",
+            "prevTimeStepMCTRatio_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -144,6 +142,34 @@ uspDynamicAdapter::uspDynamicAdapter
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    cellSizeMFPRatio_
+    (
+        IOobject
+        (
+            "cellSizeToMFPRatioAdapt",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    prevCellSizeMFPRatio_
+    (
+        IOobject
+        (
+            "prevCellSizeMFPRatio_",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
     )
 {
@@ -236,6 +262,7 @@ void uspDynamicAdapter::calculateProperties()
         // computing internal fields
         forAll(rhoNMean_, cell)
         {
+
             if (rhoNMean_[cell] > VSMALL)
             {
 
@@ -252,6 +279,21 @@ void uspDynamicAdapter::calculateProperties()
                         linearKEMean
                       - 0.5*rhoMMean*(UMean_[cell] & UMean_[cell])
                     );
+            }
+            else
+            {
+                rhoN_[cell] = 0.0;
+                translationalT_[cell] = 0.0;
+                UMean_[cell] = vector::zero;
+            }
+
+        }
+
+        forAll(rhoNMean_, cell)
+        {
+
+            if (translationalT_[cell] > SMALL)
+            {
 
                 forAll(typeIds_, iD)
                 {
@@ -304,11 +346,6 @@ void uspDynamicAdapter::calculateProperties()
                     }
                 }
 
-                // Calculate time-step to mean collision time ratio
-                const scalar deltaT = mesh_.time().deltaTValue();
-
-                timeStepMCTRatio_[cell] = deltaT/MCT_[cell];
-
                 // Calculate cell size to mean free path ratio
                 scalar largestCellDimension = 0.0;
 
@@ -329,7 +366,19 @@ void uspDynamicAdapter::calculateProperties()
 
                 cellSizeMFPRatio_[cell] = (maxPoint-minPoint)/MFP_[cell];
 
+                // Calculate time-step to mean collision time ratio
+                const scalar deltaT = mesh_.time().deltaTValue();
+
+                timeStepMCTRatio_[cell] = deltaT/MCT_[cell];
+
+
             }
+            else
+            {
+                timeStepMCTRatio_[cell] = prevTimeStepMCTRatio_[cell];
+                cellSizeMFPRatio_[cell] = prevCellSizeMFPRatio_[cell];
+            }
+
         }
         cellSizeMFPRatio_.correctBoundaryConditions();
 
@@ -351,12 +400,6 @@ void uspDynamicAdapter::update()
 
         const auto& meshCC = cloud_.mesh().cellCentres();
         const auto& meshV = cloud_.mesh().V();
-
-        // Adapt time-step 
-        if (timeStepAdaptation_)
-        {
-            //not coded yet
-        }
 
         // Adapt subcell levels
         if (subcellAdaptation_)
@@ -399,9 +442,10 @@ void uspDynamicAdapter::update()
 
         }
 
-        // update cell weighting factor        
+        // Adapt cell weighting factor        
         if (cellWeightAdaptation_)
         {
+
             forAll(mesh_.cells(), cell)
             {
                 scalar RWF = cloud_.axiRWF(meshCC[cell]);
@@ -428,7 +472,8 @@ void uspDynamicAdapter::update()
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
                     const vector& subcellLevels = cloud_.subcellLevels()[cell];
                     const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cellWeightFactor_[cell] = max((rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor_[cell]);
+                    cellWeightFactor_[cell] = 
+                        max(min((rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor_[cell]),SMALL);
 
                 }
                 cellWeightFactor_.correctBoundaryConditions();
@@ -464,6 +509,12 @@ void uspDynamicAdapter::update()
 
         }
 
+        // Adapt time-step 
+        if (timeStepAdaptation_)
+        {
+            //not coded yet
+        }
+
     }
 
 }
@@ -471,16 +522,17 @@ void uspDynamicAdapter::update()
 void uspDynamicAdapter::reset()
 {
 
+
     if (timeSteps_ == timeInterval_)
     {
 
         // reset
         timeSteps_ = 0;
+        
+        nAvTimeSteps_ = 0;
 
         forAll(rhoN_, cell)
         {
-
-            nAvTimeSteps_ = 0;
 
             rhoNMean_[cell] = 0.0;
             rhoNMeanXnParticle_[cell] = 0.0;
@@ -496,6 +548,11 @@ void uspDynamicAdapter::reset()
                 mct_[iD][cell] = 0.0;
             }
         }
+
+        // Store old data
+        prevTimeStepMCTRatio_ = timeStepMCTRatio_;
+        prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
     }
 
 }

@@ -135,7 +135,7 @@ private:
             label minParticlesPerSubcell_;
 
             //- Maximum allowed cell weight ratio between adjacent cells
-            const scalar maxCellWeightRatio_ = 0.01;
+            const scalar maxCellWeightRatio_ = 0.08;
 
             //- Maximum allowed number of smoothing passes
             const label maxSmoothingPasses_ = 1000;

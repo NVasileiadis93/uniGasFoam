@@ -277,7 +277,8 @@ void Foam::uspZoneFill::setInitialConfiguration()
                     scalar RWF = cloud_.axiRWF(meshCC[cell]);
                     const vector& subcellLevels = cloud_.subcellLevels()[cell];
                     const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cloud_.cellWeightFactor()[cell] = max((totalNumberDensity*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cloud_.cellWeightFactor()[cell]);
+                    cloud_.cellWeightFactor()[cell] = 
+                        max(min((totalNumberDensity*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cloud_.cellWeightFactor()[cell]),SMALL);
                 }
             }
             cloud_.cellWeightFactor().correctBoundaryConditions();

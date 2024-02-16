@@ -70,9 +70,9 @@ class uspDynamicAdapter
 
         Random& rndGen_;
 
-        const label minSubcellLevels_;
+        const label minSubcellLevels_ = 2;
 
-        const label maxSubcellLevels_;
+        const label maxSubcellLevels_= 5;
 
         bool timeStepAdaptation_;
 
@@ -114,9 +114,12 @@ class uspDynamicAdapter
         volScalarField rhoN_;
         volScalarField translationalT_;
         volVectorField UMean_;
-        volVectorField cellSizeMFPRatio_;
-        volScalarField timeStepMCTRatio_;
+
         volScalarField cellWeightFactor_;
+        volScalarField timeStepMCTRatio_;
+        volScalarField prevTimeStepMCTRatio_;
+        volVectorField cellSizeMFPRatio_;
+        volVectorField prevCellSizeMFPRatio_;
 
     // Private Member Functions
 
