@@ -66,17 +66,10 @@ class constitutiveLaws
 
     // Private data
 
-        label timeInterval_;
-        scalar breakdownMax_;
-        scalar theta_;
-        label smoothingPasses_;
-        scalar Tref_;
-
-        bool firstDecomp_;
         label timeSteps_;
-        label nAvTimeSteps_;
 
-        label refinementPasses_ = 10;
+        label nAvTimeSteps_;
+        
         labelList typeIds_;        
 
         // cell measurements

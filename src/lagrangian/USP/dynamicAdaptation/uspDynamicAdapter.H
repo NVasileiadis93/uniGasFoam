@@ -80,7 +80,7 @@ class uspDynamicAdapter
 
         bool subcellAdaptation_;
 
-        label timeInterval_;
+        label adaptationInterval_;
 
         scalar maxSubcellSizeMFPRatio_;
 

@@ -401,6 +401,11 @@ Foam::uspCloud::uspCloud
 )
 :
     CloudWithModels<uspParcel>(mesh, cloudName, false),
+    binCollModel_(1),
+    relCollModel_(0),
+    binaryCollModel_("binary"),
+    relaxationCollModel_("relaxation"),
+    hybridCollModel_("hybrid"),
     collisionModel_(),
     relaxationCollisionModelName_(),
     solutionDimensions_(),
@@ -408,6 +413,8 @@ Foam::uspCloud::uspCloud
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
     collTref_(particleProperties_.subDict("collisionProperties").get<scalar>("Tref")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
+    maxCellWeightRatio_(0.05),
+    maxSmoothingPasses_(1000),
     dynamicAdaptation_(particleProperties_.get<Switch>("dynamicSimulation")),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
     radialExtent_(0.0),

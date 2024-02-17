@@ -44,7 +44,7 @@ uspDynamicAdapter::uspDynamicAdapter
     timeStepAdaptation_(false),
     cellWeightAdaptation_(false),
     subcellAdaptation_(false),
-    timeInterval_(),
+    adaptationInterval_(),
     maxSubcellSizeMFPRatio_(),
     Tref_(),
     smoothingPasses_(10),
@@ -216,7 +216,7 @@ uspDynamicAdapter::uspDynamicAdapter
         {
             maxSubcellSizeMFPRatio_ = dict.subDict("dynamicSimulationProperties").get<scalar>("maxSubcellSizeMFPRatio");
         }
-        timeInterval_ = dict.subDict("dynamicSimulationProperties").get<label>("timeInterval");
+        adaptationInterval_ = dict.subDict("dynamicSimulationProperties").get<label>("adaptationInterval");
         Tref_ = dict.subDict("collisionProperties").get<scalar>("Tref");
     }
 
@@ -253,7 +253,7 @@ void uspDynamicAdapter::calculateProperties()
 
     }
 
-    if (timeSteps_ == timeInterval_)
+    if (timeSteps_ == adaptationInterval_)
     {
 
         const auto& meshCC = cloud_.mesh().cellCentres();
@@ -395,7 +395,7 @@ void uspDynamicAdapter::calculateProperties()
 void uspDynamicAdapter::update()
 {
 
-    if (timeSteps_ == timeInterval_)
+    if (timeSteps_ == adaptationInterval_)
     {
 
         const auto& meshCC = cloud_.mesh().cellCentres();
@@ -523,7 +523,7 @@ void uspDynamicAdapter::reset()
 {
 
 
-    if (timeSteps_ == timeInterval_)
+    if (timeSteps_ == adaptationInterval_)
     {
 
         // reset

@@ -47,11 +47,6 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    timeInterval_(dict.subDict("decompositionProperties").get<label>("timeInterval")),
-    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
-    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
-    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -269,7 +264,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
 
     }
 
-    if (timeSteps_ == timeInterval_)
+    if (timeSteps_ == decompositionInterval_)
     {
 
         const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -404,10 +399,10 @@ void Foam::simplifiedChapmanEnskog::decompose()
                             const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
 
                             scalar speciesViscRef = 
-                                1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
+                                1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*cloud_.collTref())
                                 /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
                                 
-                            viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
+                            viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/cloud_.collTref(),omega);
 
                             Prandtl += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
 

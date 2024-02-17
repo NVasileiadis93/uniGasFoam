@@ -69,6 +69,24 @@ protected:
         // reference to the owner cloud class
         uspCloud& cloud_;
 
+        // Time interval between successive decompositions
+        label decompositionInterval_;
+        
+        // Breakdown parameter threshold
+        scalar breakdownMax_;
+        
+        // Time averaging coefficient
+        scalar theta_;
+        
+        // Number of smoothing passes
+        label smoothingPasses_;
+
+        // Number of refinement passes
+        label refinementPasses_;
+
+        // Coefficient for correcting boundary measurements
+        scalar boundCoeff_;
+
 
 public:
 

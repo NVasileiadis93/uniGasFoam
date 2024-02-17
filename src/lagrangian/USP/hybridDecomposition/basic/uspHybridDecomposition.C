@@ -44,7 +44,13 @@ Foam::uspHybridDecomposition::uspHybridDecomposition
 :
     dict_(dict),
     mesh_(refCast<const fvMesh>(mesh)),
-    cloud_(owner)
+    cloud_(owner),
+    decompositionInterval_(dict.subDict("decompositionProperties").get<label>("decompositionInterval")),
+    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
+    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    refinementPasses_(10),
+    boundCoeff_(0.5)
 {
 
 }

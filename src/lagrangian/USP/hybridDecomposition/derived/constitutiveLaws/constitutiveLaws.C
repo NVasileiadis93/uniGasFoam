@@ -47,11 +47,6 @@ Foam::constitutiveLaws::constitutiveLaws
 )
 :
     uspHybridDecomposition(dict, mesh, cloud),
-    timeInterval_(dict.subDict("decompositionProperties").get<label>("timeInterval")),
-    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
-    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
-    Tref_(dict.subDict("collisionProperties").get<scalar>("Tref")),
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -404,7 +399,7 @@ void Foam::constitutiveLaws::decompose()
         
     }
 
-    if (timeSteps_ == timeInterval_)
+    if (timeSteps_ == decompositionInterval_)
     {
 
         scalar pSum;
@@ -629,12 +624,12 @@ void Foam::constitutiveLaws::decompose()
         const scalar& rotDoF = cloud_.constProps(0).rotationalDoF();
         Prandtl = (5+rotDoF)/(7.5+rotDoF);
         const scalar CP = 2.5*Foam::constant::physicoChemical::k.value()/mass;
-        const scalar muRef  = 7.5*std::sqrt(mass*Foam::constant::physicoChemical::k.value()*Tref_)
+        const scalar muRef  = 7.5*std::sqrt(mass*Foam::constant::physicoChemical::k.value()*cloud_.collTref())
                        /(std::sqrt(Foam::constant::mathematical::pi)*(5.0-2.0*omega)*(7.0-2.0*omega)*sqr(diameter));
 
         forAll(mesh_.cells(), cell)
         {
-            mu_[cell] = muRef*std::pow(translationalT_[cell]/Tref_,omega);
+            mu_[cell] = muRef*std::pow(translationalT_[cell]/cloud_.collTref(),omega);
             kappa_[cell] = mu_[cell]*CP/Prandtl;
         }
 

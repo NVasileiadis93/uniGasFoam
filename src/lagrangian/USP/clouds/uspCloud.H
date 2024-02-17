@@ -86,15 +86,15 @@ private:
     // Private data
 
         //- Variables for identifying different binary/collision collision models
-        const label binCollModel_ = 1;
+        const label binCollModel_;
 
-        const label relCollModel_ = 0;
+        const label relCollModel_;
 
-        const word binaryCollModel_ = "binary";
+        const word binaryCollModel_;
         
-        const word relaxationCollModel_ = "relaxation";
+        const word relaxationCollModel_;
         
-        const word hybridCollModel_ = "hybrid";
+        const word hybridCollModel_;
 
         //- A variable holding the simulation collision type (binary, relaxation, hybrid)
         word collisionModel_;
@@ -135,10 +135,10 @@ private:
             label minParticlesPerSubcell_;
 
             //- Maximum allowed cell weight ratio between adjacent cells
-            const scalar maxCellWeightRatio_ = 0.08;
+            const scalar maxCellWeightRatio_;
 
             //- Maximum allowed number of smoothing passes
-            const label maxSmoothingPasses_ = 1000;
+            const label maxSmoothingPasses_;
 
         // Axisymmetric set-ups
 

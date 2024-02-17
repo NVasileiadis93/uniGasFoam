@@ -66,16 +66,10 @@ class simplifiedChapmanEnskog
 
     // Private data
 
-        label timeInterval_;
-        scalar breakdownMax_;
-        scalar theta_;
-        label smoothingPasses_;
-        scalar Tref_;
-        
         label timeSteps_;
+        
         label nAvTimeSteps_;
 
-        label refinementPasses_ = 10;
         labelList typeIds_;        
 
         // cell measurements
