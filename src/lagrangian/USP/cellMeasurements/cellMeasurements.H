@@ -25,12 +25,9 @@ Class
     Foam::cellMeasurements
 
 Description
-
-    This class measures the number of collisions in each cell and the distance
-    between colliding particles. This is used to return the mean collision
-    separation, a key parameter for ensuring good USP practice.
-
-
+    This class measures the microscopic properties of particles inside cells. 
+    This is required to return internal macroscopic properties.
+    
     Reference:
         G. A. Bird. "Visual USP Program for Two-Dimensional and Axially
         Symmetric Flows", The DS2V Program User’s Guide, Version 3.8,

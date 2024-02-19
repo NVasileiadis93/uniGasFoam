@@ -25,7 +25,7 @@ Class
     Foam::binaryCollisionPartner
 
 Description
-    An abstract class for selecting collision partners in a USP simulation
+    An abstract class for selecting collision partners for binary collision models
 
 SourceFiles
     binaryCollisionPartnerI.H

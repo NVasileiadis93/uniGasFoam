@@ -22,14 +22,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspField
+    Foam::uspField
 
 Description
+    Abstract class for macroscopic quantity fields.
 
 SourceFiles
-    uspFieldI.H
     uspField.C
-    uspFieldIO.C
 
 \*---------------------------------------------------------------------------*/
 

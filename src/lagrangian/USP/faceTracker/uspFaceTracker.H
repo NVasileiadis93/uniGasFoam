@@ -25,6 +25,8 @@ Class
     Foam::uspFaceTracker
 
 Description
+    Class for tracking particles microscopic properties while crossing mesh faces.
+    This is used to calculate particle, mass and momentum flow rate.
 
 SourceFiles
     uspFaceTrackerI.H

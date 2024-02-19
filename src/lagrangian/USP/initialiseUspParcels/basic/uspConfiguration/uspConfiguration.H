@@ -25,7 +25,7 @@ Class
     Foam::uspConfiguration
 
 Description
-
+    Abstract class for initialising particles.
 
 SourceFiles
     uspConfiguration.C

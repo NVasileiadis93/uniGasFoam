@@ -39,7 +39,9 @@ Description
     3. General boundary models:
        - time-dependent actions on molecules close to the boundary
 
-
+Source Files
+    uspBoundaries.C
+    
 \*---------------------------------------------------------------------------*/
 
 #ifndef uspBoundaries_H

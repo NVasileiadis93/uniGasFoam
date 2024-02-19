@@ -26,51 +26,27 @@ Class
 
 Description
     The no-time-counter collision partner selection routine, which is sub-cycled to account for the presence of electrons.
-    
-    From Bird's 1994 book, equation 11.3, the NTC method is that
 
-        \f[
-            0.5 N (N-1) F_N \left( (\sigma_T c_r\right)_{max} \Delta t/V_C
-        \f]
+    Use in the uspProperties file.
 
-    pairs are selected from a cell each time step, where
-    \vartable
-        N           | Number of USP particles in the cell
-        F_N         | Number of real atoms/molecules the USP particles represent
-        \sigma_T    | Collision cross-section [m^2]
-        c_r         | Relative speed of the collision pair [m/s]
-        \Delta t    | Time step [s]
-        V_C         | Cell volume [m^3]
-    \endvartable
-    
-    The pair are selected for collision if
-    
-        \f[
-            \frac{\sigma_T c_r}{\left(\sigma_T c_r\right)_{max} > Rand}
-        \f]
-        
-    where
-    \vartable
-        Rand         | Uniformly distributed randomly generated number between 0 and 1.
-    \endvartable
-    
     References:
         G.A. Bird,  "Molecular Gas Dynamics and the Direct Simulation of Gas Flows", Oxford Science Publications, 1994 (page 219).
         
         I.D. Boyd. "Computation of Hypersonic Flows Using the Direct Simulation Monte Carlo Method", Journal of Spacecraft and Rockets, 52(1), 38–53, 2015.
         
 Usage
+    Example of the binary collision partner selection specification:
+    
     \verbatim
     binaryCollisionPartnerModel   		 noTimeCounterSubCycled;
     
-    noTimeCounterSubCycledProperties
+    collisionProperties
     {
-        nSubCycles      30;
+        nSubCycles      3;
     }
     \endverbatim
 
 SourceFiles
-    noTimeCounterSubCycledI.H
     noTimeCounterSubCycled.C
 
 \*---------------------------------------------------------------------------*/

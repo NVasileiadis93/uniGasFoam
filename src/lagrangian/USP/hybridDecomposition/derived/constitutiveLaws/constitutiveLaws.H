@@ -25,7 +25,7 @@ Class
     Foam::constitutiveLaws
 
 Description
-    Hybrid decomposition class based on constitutive law breakdown criterion
+    Hybrid decomposition class based on constitutive law breakdown criterion.
 
 SourceFiles
     constitutiveLaws.C

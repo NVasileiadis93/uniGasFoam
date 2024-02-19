@@ -40,8 +40,8 @@ Description
         Physics of Fluids A, 3(4), 706-710, 1991.
 
 Usage
-
     Example of the boundary condition specification:
+    
     \verbatim
     patchBoundaryProperties
     {

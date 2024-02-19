@@ -25,11 +25,10 @@ Class
     Foam::binaryCollisionModel
 
 Description
-    Templated USP particle collision class
+    Templated binary collision class
 
 SourceFiles
     binaryCollisionModel.C
-    binaryCollisionModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

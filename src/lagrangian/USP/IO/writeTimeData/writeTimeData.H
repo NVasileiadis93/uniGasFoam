@@ -22,13 +22,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    writeTimeData
+    Foam::writeTimeData
 
 Description
+    Class for outputing field data.
 
-    A class that outputs data to hard disc
-
-    Constructors overloaded
+Source Files
+    writeTimeData.C
 
 
 \*---------------------------------------------------------------------------*/

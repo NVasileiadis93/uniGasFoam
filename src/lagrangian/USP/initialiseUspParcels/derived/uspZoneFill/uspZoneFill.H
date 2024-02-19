@@ -25,12 +25,29 @@ Class
     uspZoneFill
 
 Description
+    This class provides functions to initialise particles based
+    on uniform macroscopic properties.
 
+    Use in the uspInitialiseDict file.
+
+Usage
+    Example of the particle initialization specification:
+    
+    \verbatim
+    configuration
+    {
+        type                        uspZoneFill;
+        numberDensities{Ar          4.24700E+20;};
+		translationalTemperature    200;
+		rotationalTemperature       0;
+		vibrationalTemperature      0;
+        electronicTemperature       0;
+		velocity		            (2634.7 0 0);
+    }
+    \endverbatim
 
 SourceFiles
-    uspZoneFillI.H
     uspZoneFill.C
-    uspZoneFillIO.C
 
 
 \*---------------------------------------------------------------------------*/

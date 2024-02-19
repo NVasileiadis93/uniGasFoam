@@ -25,7 +25,7 @@ Class
     Foam::uspParcel
 
 Description
-    USP parcel class
+    Parcel class
 
 SourceFiles
     uspParcelI.H

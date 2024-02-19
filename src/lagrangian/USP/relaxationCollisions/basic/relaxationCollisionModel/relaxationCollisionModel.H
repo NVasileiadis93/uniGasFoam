@@ -25,7 +25,7 @@ Class
     Foam::relaxationCollisionModel
 
 Description
-    Templated USP particle relaxation class
+    Templated particle relaxation class
 
 SourceFiles
     relaxationCollisionModel.C

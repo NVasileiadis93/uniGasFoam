@@ -44,9 +44,9 @@ binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
 /* RELAXATIONS COLLISIONS */
 relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
 relaxationCollisions/derived/BGK/BGK.C
-relaxationCollisions/derived/ellipsoidalStatistical/ellipsoidalStatistical.C
-relaxationCollisions/derived/Shakhov/Shakhov.C
-relaxationCollisions/derived/unifiedShakhov/unifiedShakhov.C
+relaxationCollisions/derived/ESBGK/ESBGK.C
+relaxationCollisions/derived/SBGK/SBGK.C
+relaxationCollisions/derived/unifiedSBGK/unifiedSBGK.C
 
 
 /* REACTIONS */

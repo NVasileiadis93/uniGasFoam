@@ -32,8 +32,8 @@ Description
     Use in the boundariesDict file.
 
 Usage
-
     Example of the boundary condition specification:
+    
     \verbatim
     patchBoundaryProperties
     {

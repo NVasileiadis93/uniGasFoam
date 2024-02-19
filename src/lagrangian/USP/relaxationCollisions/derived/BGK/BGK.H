@@ -23,10 +23,24 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    BGK
+    Foam::BGK
 
 Description
-    Relaxes particles to local Maxwellian distribution
+    Relaxes particles to the local Maxwellian distribution
+
+    Use in uspProperties file.
+
+Usage
+    Example of relaxation specification
+
+    \verbatim
+    relaxationCollisionModel    BGK;
+    collisionProperties
+    {
+        Tref                273;
+        macroInterpolation  true;
+    }
+    /endverbatim
 
 SourceFiles
     BGK.C

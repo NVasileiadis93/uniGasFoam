@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspMixedDiffuseSpecularWallFieldPatch
+    Foam::uspMixedDiffuseSpecularWallFieldPatch
 
 Description
     Wall interaction that performs a diffuse reflection or a specular
@@ -35,8 +35,8 @@ Description
     your time directory.
 
 Usage
-
     Example of the boundary condition specification:
+    
     \verbatim
     patchBoundaryProperties
     {

@@ -23,18 +23,32 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    Shakhov
+    ESBGK
 
 Description
-    Relaxes particles to local Shakhov distribution
+    Relaxes particles to the local Ellipsoidal-Statistical distribution
+
+    Use in uspProperties file.
+
+Usage
+    Example of relaxation specification
+
+    \verbatim
+    relaxationCollisionModel    ESBGK;
+    collisionProperties
+    {
+        Tref                273;
+        macroInterpolation  true;
+    }
+    /endverbatim
 
 SourceFiles
-    Shakhov.C
+    ESBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Shakhov_H
-#define Shakhov_H
+#ifndef ESBGK_H
+#define ESBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -50,10 +64,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class Shakhov Declaration
+                        class ESBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class Shakhov
+class ESBGK
 :
     public relaxationCollisionModel
 {
@@ -61,16 +75,13 @@ class Shakhov
     
         const dictionary propertiesDict_;
         const scalar Tref_;
-        const scalar theta_;
         const bool macroInterpolation_;
+
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
-        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
-        boolField maxProbReset_;
-        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -115,20 +126,17 @@ class Shakhov
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
-        volVectorField heatFluxVector_;
-        volVectorField heatFluxVectorPrevious_;
         volTensorField pressureTensor_;
-        volTensorField pressureTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("Shakhov");
+    TypeName("ESBGK");
 
     //- Construct from componentsonst label& cell
-    Shakhov
+    ESBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -136,7 +144,7 @@ public:
     );
 
     //- Destructor
-    virtual ~Shakhov() = default;
+    virtual ~ESBGK() = default;
 
     // Member Functions
 
@@ -158,13 +166,12 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
-            const label& cell,
             const scalar& m,
             const scalar& Pr,
             const scalar& p,
             const scalar& T,
             const vector& U,
-            const vector& q
+            const tensor& pT
         );
 
 };

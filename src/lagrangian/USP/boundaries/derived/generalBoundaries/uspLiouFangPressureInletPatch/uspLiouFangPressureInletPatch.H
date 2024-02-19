@@ -38,8 +38,8 @@ Description
     110-128, 2000.
 
 Usage
-
     Example of the boundary condition specification:
+
     \verbatim
     generalBoundaryProperties
     {

@@ -24,22 +24,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "unifiedShakhov.H"
+#include "unifiedSBGK.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-defineTypeNameAndDebug(unifiedShakhov, 0);
+defineTypeNameAndDebug(unifiedSBGK, 0);
 
-addToRunTimeSelectionTable(relaxationCollisionModel, unifiedShakhov, dictionary);
+addToRunTimeSelectionTable(relaxationCollisionModel, unifiedSBGK, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::unifiedShakhov::unifiedShakhov
+Foam::unifiedSBGK::unifiedSBGK
 (
     const dictionary& dict,
     const polyMesh& mesh,
@@ -365,7 +365,7 @@ Foam::unifiedShakhov::unifiedShakhov
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::unifiedShakhov::calculateProperties()
+void Foam::unifiedSBGK::calculateProperties()
 {
 
     auto& cm = cloud_.cellPropMeasurements();
@@ -805,7 +805,7 @@ void Foam::unifiedShakhov::calculateProperties()
 
 }
 
-void Foam::unifiedShakhov::resetProperties()
+void Foam::unifiedSBGK::resetProperties()
 {
 
     forAll(mesh_.cells(), cell)
@@ -870,7 +870,7 @@ void Foam::unifiedShakhov::resetProperties()
 
 }
 
-void Foam::unifiedShakhov::relax()
+void Foam::unifiedSBGK::relax()
 {
 
     const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -997,7 +997,7 @@ void Foam::unifiedShakhov::relax()
 
 }
 
-void Foam::unifiedShakhov::conserveMomentumAndEnergy
+void Foam::unifiedSBGK::conserveMomentumAndEnergy
 (
     const label& cell
 )
@@ -1048,7 +1048,7 @@ void Foam::unifiedShakhov::conserveMomentumAndEnergy
 
 }
 
-Foam::vector Foam::unifiedShakhov::samplePostRelaxationVelocity
+Foam::vector Foam::unifiedSBGK::samplePostRelaxationVelocity
 (   
     const label& cell,
     const scalar& m,
@@ -1103,7 +1103,7 @@ Foam::vector Foam::unifiedShakhov::samplePostRelaxationVelocity
 }
 
 const Foam::dictionary&
-Foam::unifiedShakhov::propertiesDict() const
+Foam::unifiedSBGK::propertiesDict() const
 {
     return propertiesDict_;
 }

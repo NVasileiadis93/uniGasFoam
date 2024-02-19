@@ -25,7 +25,22 @@ Class
     Foam::noBinaryCollision
 
 Description
-    A class that does not perform collisions. For use with free-molecular flows.
+    A class that does not perform binary collisions. For use with free-molecular flows.
+
+    Use in the uspProperties file.
+
+Usage
+    Example of the binary collision model specification:
+
+    \verbatim
+    binaryCollisionModel            noBinaryCollision;
+    collisionProperties
+    {
+    }
+    \endverbatim
+
+SourceFiles
+    noBinaryCollision.C
 
 \*---------------------------------------------------------------------------*/
 

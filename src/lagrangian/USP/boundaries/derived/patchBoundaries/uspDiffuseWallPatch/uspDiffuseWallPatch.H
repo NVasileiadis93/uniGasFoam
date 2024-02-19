@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspDiffuseWallPatch
+    Foam::uspDiffuseWallPatch
 
 Description
     Wall interaction setting microscopic velocity to a random one
@@ -32,8 +32,8 @@ Description
     Use in the boundariesDict file.
 
 Usage
-
     Example of the boundary condition specification:
+    
     \verbatim
     patchBoundaryProperties
     {

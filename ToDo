@@ -1,10 +1,11 @@
-Fix dynamic adaptation when zero particles in cell
+Make hybridDecomposition into a clean class
 
+Make dynamicAdaptation into a clean class
 
 
 Check uspInitialise zoneFil and meshFieldFill for dynamic simulation
 
-Check what's up with totalvDofBF_
+Check what's up with totalvDofBF_ and overall temperature
 
 Fix non-surface boundary measurements
 

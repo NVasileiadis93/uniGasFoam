@@ -25,9 +25,27 @@ Class
     Foam::LarsenBorgnakkeVariableSoftSphere
 
 Description
-    Variable Soft Sphere binaryCollision Model with Larsen Borgnakke internal
+    Variable Soft Sphere binary collision model with Larsen Borgnakke internal
     energy redistribution. This class only has rotational energy implemented,
     it currently does not handle vibrational and electronic modes
+
+    Use in the uspProperties file.
+
+Usage
+    Example of the binary collision model specification:
+
+    \verbatim
+    binaryCollisionModel        LarsenBorgnakkeVariableSoftSphere;
+    collisionProperties
+    {
+        Tref                                273;
+        rotationalRelaxationCollisionNumber 5;
+        electronicRelaxationCollisionNumber 50;
+    }
+    \endverbatim
+
+SourceFiles
+    LarsenBorgnakkeVariableSoftSphere.C
 
 \*---------------------------------------------------------------------------*/
 

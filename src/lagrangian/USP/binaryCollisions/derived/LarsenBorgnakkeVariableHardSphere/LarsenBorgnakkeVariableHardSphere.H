@@ -25,8 +25,26 @@ Class
     Foam::LarsenBorgnakkeVariableHardSphere
 
 Description
-    Variable Hard Sphere binaryCollision Model with Larsen Borgnakke internal
-    energy redistribution.  Based on the INELRS subroutine in Bird's USP0R.FOR
+    Variable Hard Sphere binary collision model with Larsen Borgnakke internal
+    energy redistribution.
+
+    Use in the uspProperties file.
+
+Usage
+    Example of the binary collision model specification:
+
+    \verbatim
+    binaryCollisionModel        LarsenBorgnakkeVariableHardSphere;
+    collisionProperties
+    {
+        Tref                                273;
+        rotationalRelaxationCollisionNumber 5;
+        electronicRelaxationCollisionNumber 50;
+    }
+    \endverbatim
+
+SourceFiles
+    LarsenBorgnakkeVariableHardSphere.C
 
 \*---------------------------------------------------------------------------*/
 

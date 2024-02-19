@@ -25,7 +25,7 @@ Class
     uspReaction
 
 Description
-    Basic/abstract class of a state controller
+    Abstract class for chemical reactions
 
 SourceFiles
     uspReactionI.H

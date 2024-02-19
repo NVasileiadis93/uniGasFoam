@@ -25,51 +25,18 @@ Class
     Foam::variableSoftSphere
 
 Description
-    This class provides functions to use the variable soft sphere collision
-    model. In this model, the effective diameter that allows the collision
-    cross-section to be caculated is calculated from
+    This class provides functions to use the variable soft sphere binary collision model.
 
-        \f[
-            d_{pq} = \left(d_{ref}\right)_{pq} \left[ \left{ 2 k \left(T_{ref}\right)_{pq}/\left( m_r c_r^2\right)\right}^{\omega - \frac{1}{2}}/Gamma\left(5/2 - \omega_{pq} \right) \right]^{\frac{1}{2}}
-        \f]
-
-    where
-    \vartable
-        d_{pq}                    | Effective diameter of collision pair [m]
-        \left(d_{ref}\right)_{pq} | Diameter of collision pair at reference temperature [m]
-        k                         | Boltzmann constant [m^2 kg s^{-2} K^{-1}]
-        T_{ref}                   | Reference temperature [K]
-        m_{r}                     | Reduced mass of collision pair [kg]
-        c_{r}                     | Relative speed of collision pair [m/s]
-        \omega                    | Viscosity index
-    \endvartable
-
-    A random elevation and azimuth angle are then generated to calculate the
-    post-collision velocities
-
-        \f[
-            \cos{\chi} = 2 R_f^{\frac{1}{\alpha}} - 1,
-        \f]
-        \f[
-            \theta = 2 \pi R_f
-        \f]
-
-    where R_f is a uniformly distributed random number between 0 and 1.
+    Use in the uspProperties file.
 
     Reference:
-        G.A. Bird,  "Molecular Gas Dynamics and the Direct Simulation of Gas
-        Flows", Oxford Science Publications, 1994 (pages 41, 97, 222, 426, 428).
+        G.A. Bird,  "Molecular Gas Dynamics and the Direct Simulation of Gas Flows", Oxford Science Publications, 1994 (pages 41, 97, 222, 426, 428).
 
 Usage
-    \table
-        Property                 | Description                   | Required  | Default
-        Tref                     | Reference temperature         | yes       |
-    \endtable
+    Example of the binary collision model specification:
 
-    Example of the boundary condition specification:
     \verbatim
     binaryCollisionModel            variableSoftSphere;
-
     collisionProperties
     {
         Tref                        273;

@@ -22,12 +22,16 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspFieldProperties
+    Foam::uspFieldProperties
 
 Description
     Stores all the information for the uspFieldProperties models
     defined within the fieldPropertiesDict, and selects & builds the models
     automatically.
+
+Source Files
+    uspFieldPropertiesI.H
+    uspFieldProperties.C
 
 \*---------------------------------------------------------------------------*/
 

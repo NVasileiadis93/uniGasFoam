@@ -22,16 +22,29 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspMeshFieldFill
+    Foam::uspMeshFieldFill
 
 Description
+    This class provides functions to initialise particles.
 
+    Use in the uspInitialiseDict file.
+
+    FIELD VERSION: require initialNumberDensity_Ar, initialTransT, initialRotT, 
+    initialVibT, initialElecT and initialU fields to be defined in your time directory.
+
+Usage
+    Example of the particle initialization specification:
+    
+    \verbatim
+    configuration
+    {
+        type            uspMeshFieldFill;
+        typeIdList      (Ar);
+    }
+    \endverbatim
 
 SourceFiles
-    uspMeshFieldFillI.H
     uspMeshFieldFill.C
-    uspMeshFieldFillIO.C
-
 
 \*---------------------------------------------------------------------------*/
 

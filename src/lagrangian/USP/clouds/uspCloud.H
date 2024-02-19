@@ -25,7 +25,7 @@ Class
     Foam::uspCloud
 
 Description
-    Base class for usp cloud.
+    Base cloud class.
 
 SourceFiles
     uspCloudI.H

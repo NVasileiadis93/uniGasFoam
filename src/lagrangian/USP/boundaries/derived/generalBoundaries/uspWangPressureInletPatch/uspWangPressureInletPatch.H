@@ -39,6 +39,7 @@ Description
 
 Usage
     Example of the boundary condition specification:
+    
     \verbatim
     generalBoundaryProperties
     {

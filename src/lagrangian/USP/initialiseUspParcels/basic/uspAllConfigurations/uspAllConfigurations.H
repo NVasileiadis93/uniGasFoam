@@ -25,7 +25,11 @@ Class
     Foam::uspAllConfigurations
 
 Description
+    Templated class for initialising particles.
 
+Source Files
+    uspAllConfigurationsI.H
+    uspAllConfigurations.C
 \*---------------------------------------------------------------------------*/
 
 #ifndef uspAllConfigurations_H

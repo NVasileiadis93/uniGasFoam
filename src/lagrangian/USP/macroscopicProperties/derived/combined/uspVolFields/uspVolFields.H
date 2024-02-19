@@ -23,25 +23,45 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    uspVolFields
+    Foam::uspVolFields
 
 Description
-    Creates geometric fields for temperature, density, velocity, pressure.
+    Class for measuring volumetric fields. Internal fields are measured in 
+    conjunction with the cellMeasurements class. Boundary fields are measured 
+    in conjunction with the boundaryMeasurements class.
 
-    Measures overall temperature, including vibrational temperature, for a
-    single specie gas or a gas mixture and writes the results to a volume
-    scalar field for further post-processing.
+    Use in fieldPropertiesDict.
 
-    Translational, rotatational and vibrational temperature fields will also be
-    written automatically.
+Usage
+    Example of field specification
 
-    Boundary fields are measured in conjunction with the boundaryMeasurements
-    class and are also written.
+    /verbatim
+    field
+    {
+        fieldModel          	uspVolFields;
+ 
+        timeProperties
+        {
+            sampleInterval              1;
+            resetAtOutput               on;
+ 	   	    resetAtOutputUntilTime      1e-3;
+        }
+ 
+        uspVolFieldsProperties
+        {
+            field	                    Ar;
+            typeIds                     (Ar);
+            measureMeanFreePath         true;
+            Tref                        1000;
+            measureHeatFluxShearStress  true;
+            measureErrors				true;
+            averagingAcrossManyRuns     true;
+        }
+    }
+    /endverbatim
 
 SourceFiles
-    uspVolFieldsI.H
     uspVolFields.C
-    uspVolFieldsIO.C
 
 \*---------------------------------------------------------------------------*/
 

@@ -22,12 +22,14 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspReactions
+    Foam::uspReactions
 
 Description
-
     Stores all the information for the uspReactions models defined within
     the uspReactionsDict, and selects & builds the models automatically.
+
+Source Files
+    uspReactions.C
 
 \*---------------------------------------------------------------------------*/
 

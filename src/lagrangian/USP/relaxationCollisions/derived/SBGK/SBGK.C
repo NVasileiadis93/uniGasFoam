@@ -24,22 +24,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "ellipsoidalStatistical.H"
+#include "SBGK.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-defineTypeNameAndDebug(ellipsoidalStatistical, 0);
+defineTypeNameAndDebug(SBGK, 0);
 
-addToRunTimeSelectionTable(relaxationCollisionModel, ellipsoidalStatistical, dictionary);
+addToRunTimeSelectionTable(relaxationCollisionModel, SBGK, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::ellipsoidalStatistical::ellipsoidalStatistical
+Foam::SBGK::SBGK
 (
     const dictionary& dict,
     const polyMesh& mesh,
@@ -49,10 +49,14 @@ Foam::ellipsoidalStatistical::ellipsoidalStatistical
     relaxationCollisionModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
     Tref_(propertiesDict_.get<scalar>("Tref")),
+    theta_(propertiesDict_.getOrDefault<scalar>("theta", 1.0)),
     macroInterpolation_(propertiesDict_.getOrDefault<bool>("macroInterpolation", false)),
     infoCounter_(0),
     shufflePasses_(5),
+    maxProbResetValue_(0.9999),
     performRelaxation_(mesh_.nCells(), true),
+    maxProbReset_(mesh_.nCells(), true),
+    maxProb_(mesh_.nCells(), 1.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoMMean_(mesh_.nCells(), 0.0),
     linearKEMean_(mesh_.nCells(), 0.0),
@@ -226,11 +230,53 @@ Foam::ellipsoidalStatistical::ellipsoidalStatistical
         dimensionedVector(dimVelocity, vector::zero),
         zeroGradientFvPatchScalarField::typeName
     ),
+    heatFluxVector_
+    (
+        IOobject
+        (
+            "heatFluxVector",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimMass*pow(dimTime,-3), Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    heatFluxVectorPrevious_
+    (
+        IOobject
+        (
+            "heatFluxVectorPrevious",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimMass*pow(dimTime,-3), Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
     pressureTensor_
     (
         IOobject
         (
             "pressureTensor",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedTensor(dimPressure, tensor::zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    pressureTensorPrevious_
+    (
+        IOobject
+        (
+            "pressureTensorPrevious",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -302,58 +348,57 @@ Foam::ellipsoidalStatistical::ellipsoidalStatistical
 
 }
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::ellipsoidalStatistical::calculateProperties()
+void Foam::SBGK::calculateProperties()
 {
 
     auto& cm = cloud_.cellPropMeasurements();
 
-    forAll(typeIds_, iD)
+    forAll(typeIds_, i)
     {
 
-        rhoNMean_ += cm.rhoNMean()[iD];
-        rhoMMean_ += cm.rhoMMean()[iD];
-        linearKEMean_ += cm.linearKEMean()[iD];
-        momentumMean_ += cm.momentumMean()[iD];
-        rotationalEMean_ += cm.rotationalEMean()[iD];
-        rotationalDofMean_ += cm.rotationalDofMean()[iD];
-        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
-        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
-        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
-        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
+        rhoNMean_ += cm.rhoNMean()[i];
+        rhoMMean_ += cm.rhoMMean()[i];
+        linearKEMean_ += cm.linearKEMean()[i];
+        momentumMean_ += cm.momentumMean()[i];
+        rotationalEMean_ += cm.rotationalEMean()[i];
+        rotationalDofMean_ += cm.rotationalDofMean()[i];
+        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[i];
+        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[i];
+        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[i];
+        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[i];
 
-        muu_ += cm.muu()[iD];
-        muv_ += cm.muv()[iD];
-        muw_ += cm.muw()[iD];
-        mvv_ += cm.mvv()[iD];
-        mvw_ += cm.mvw()[iD];
-        mww_ += cm.mww()[iD];
-        mcc_ += cm.mcc()[iD];
-        mccu_ += cm.mccu()[iD];
-        mccv_ += cm.mccv()[iD];
-        mccw_ += cm.mccw()[iD];
+        muu_ += cm.muu()[i];
+        muv_ += cm.muv()[i];
+        muw_ += cm.muw()[i];
+        mvv_ += cm.mvv()[i];
+        mvw_ += cm.mvw()[i];
+        mww_ += cm.mww()[i];
+        mcc_ += cm.mcc()[i];
+        mccu_ += cm.mccu()[i];
+        mccv_ += cm.mccv()[i];
+        mccw_ += cm.mccw()[i];
 
-        eu_ += cm.eu()[iD];
-        ev_ += cm.ev()[iD];
-        ew_ += cm.ew()[iD];
-        e_ += cm.e()[iD];
+        eu_ += cm.eu()[i];
+        ev_ += cm.ev()[i];
+        ew_ += cm.ew()[i];
+        e_ += cm.e()[i];
 
-        rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
-        molsElec_ += cm.molsElec()[iD];
+        rhoNMeanInt_ += cm.rhoNMeanInt()[i];
+        molsElec_ += cm.molsElec()[i];
 
-        nParcels_[iD] += cm.nParcels()[iD];
-        nParcelsXnParticle_[iD] += cm.nParcelsXnParticle()[iD];
-        mccSpecies_[iD] += cm.mccSpecies()[iD];
+        nParcels_[i] += cm.nParcels()[i];
+        nParcelsXnParticle_[i] += cm.nParcelsXnParticle()[i];
+        mccSpecies_[i] += cm.mccSpecies()[i];
 
-        nGroundElectronicLevel_[iD] += cm.nGroundElectronicLevel()[iD];
-        nFirstElectronicLevel_[iD] += cm.nFirstElectronicLevel()[iD];
-        electronicETotal_[iD] += cm.electronicETotal()[iD];
+        nGroundElectronicLevel_[i] += cm.nGroundElectronicLevel()[i];
+        nFirstElectronicLevel_[i] += cm.nFirstElectronicLevel()[i];
+        electronicETotal_[i] += cm.electronicETotal()[i];
 
-        forAll(vibrationalETotal_[iD], v)
+        forAll(vibrationalETotal_[i], v)
         {
-            vibrationalETotal_[iD][v] += cm.vibrationalETotal()[iD][v];
+            vibrationalETotal_[i][v] += cm.vibrationalETotal()[i][v];
         }
 
     }
@@ -432,12 +477,46 @@ void Foam::ellipsoidalStatistical::calculateProperties()
                 *UMean_[cell].z()*UMean_[cell].z())
             );
 
+            // Heat flux vector
+            heatFluxVector_[cell].x() = rhoN_[cell]*
+            (
+                0.5*(mccu_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].x() + eu_[cell]/(rhoNMean_[cell]) -
+                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].x()
+            ) -
+                pressureTensor_[cell].xx()*UMean_[cell].x() -
+                pressureTensor_[cell].xy()*UMean_[cell].y() -
+                pressureTensor_[cell].xz()*UMean_[cell].z();
+
+            heatFluxVector_[cell].y() = rhoN_[cell]*
+            (
+                0.5*(mccv_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].y() + ev_[cell]/(rhoNMean_[cell])-
+                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].y()
+            ) -
+                pressureTensor_[cell].yx()*UMean_[cell].x() -
+                pressureTensor_[cell].yy()*UMean_[cell].y() -
+                pressureTensor_[cell].yz()*UMean_[cell].z();
+
+            heatFluxVector_[cell].z() = rhoN_[cell]*
+            (
+                0.5*(mccw_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].z() + ew_[cell]/(rhoNMean_[cell]) -
+                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].z()
+            ) -
+                pressureTensor_[cell].zx()*UMean_[cell].x() -
+                pressureTensor_[cell].zy()*UMean_[cell].y() -
+                pressureTensor_[cell].zz()*UMean_[cell].z();
+
             // Scale macroscopic properties
-            if (rhoNMean_[cell] > 1.0)
+            if (rhoNMean_[cell] > 2.0)
             {
                 p_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*p_[cell];
                 translationalT_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*translationalT_[cell];
-                pressureTensor_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*pressureTensor_[cell];
+                heatFluxVector_[cell] = sqr(rhoNMean_[cell])/(rhoNMean_[cell]-1.0)/(rhoNMean_[cell]-2.0)*heatFluxVector_[cell];
             }
             else
             {
@@ -452,6 +531,7 @@ void Foam::ellipsoidalStatistical::calculateProperties()
             p_[cell] = 0.0;
             translationalT_[cell] = 0.0;
             UMean_[cell] = vector::zero;
+            heatFluxVector_[cell] = vector::zero;
             pressureTensor_[cell] = tensor::zero;
         }
 
@@ -661,7 +741,7 @@ void Foam::ellipsoidalStatistical::calculateProperties()
             viscosity /= rhoNMean_[cell];
             Prandtl_[cell] /= rhoNMean_[cell]; 
 
-            relaxFreq_[cell] = Prandtl_[cell]*p_[cell]/viscosity;
+            relaxFreq_[cell] = p_[cell]/viscosity;
         }
         else
         {
@@ -670,6 +750,14 @@ void Foam::ellipsoidalStatistical::calculateProperties()
             relaxFreq_[cell] = 0.0;
         }
 
+    }
+
+    // time-average and scale heat flux vector
+    const scalar& deltaT = cloud_.mesh().time().deltaTValue();
+    forAll(mesh_.cells(), cell)
+    {
+        heatFluxVector_[cell] = theta_*heatFluxVector_[cell]/(1.0+0.5*Prandtl_[cell]*relaxFreq_[cell]*deltaT) + (1.0-theta_)*heatFluxVectorPrevious_[cell];
+        heatFluxVectorPrevious_[cell] = heatFluxVector_[cell];
     }
 
     //Correct boundary conditions
@@ -683,11 +771,11 @@ void Foam::ellipsoidalStatistical::calculateProperties()
     electronicT_.correctBoundaryConditions();
     overallT_.correctBoundaryConditions();
     UMean_.correctBoundaryConditions();
-    pressureTensor_.correctBoundaryConditions();
+    heatFluxVector_.correctBoundaryConditions();
 
 }
 
-void Foam::ellipsoidalStatistical::resetProperties()
+void Foam::SBGK::resetProperties()
 {
 
     forAll(mesh_.cells(), cell)
@@ -740,13 +828,19 @@ void Foam::ellipsoidalStatistical::resetProperties()
         
         }
 
+        if (maxProbReset_[cell])
+        { 
+            maxProb_[cell] *= maxProbResetValue_; 
+        }
+        maxProbReset_[cell] = true;
+
         performRelaxation_[cell] = true;
 
     }
 
 }
 
-void Foam::ellipsoidalStatistical::relax()
+void Foam::SBGK::relax()
 {
 
     const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -765,7 +859,7 @@ void Foam::ellipsoidalStatistical::relax()
     autoPtr <Foam::interpolation<scalar>> pInterp;
     autoPtr <Foam::interpolation<scalar>> translationalTInterp;
     autoPtr <Foam::interpolation<vector>> UMeanInterp;
-    autoPtr <Foam::interpolation<tensor>> pressureTensorInterp;
+    autoPtr <Foam::interpolation<vector>> heatFluxVectorInterp;
 
     if (macroInterpolation_)
     {
@@ -774,7 +868,7 @@ void Foam::ellipsoidalStatistical::relax()
         pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
         translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
         UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
-        pressureTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, pressureTensor_);
+        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, heatFluxVector_);
     }
 
     forAll(cellOccupancy, cell)
@@ -810,24 +904,26 @@ void Foam::ellipsoidalStatistical::relax()
                 {
                     parcel.U() = samplePostRelaxationVelocity
                             (
+                                cell,
                                 mass,
                                 PrandtlInterp().interpolate(position, cell),
                                 pInterp().interpolate(position, cell),
                                 translationalTInterp().interpolate(position, cell),
                                 UMeanInterp().interpolate(position, cell),
-                                pressureTensorInterp().interpolate(position, cell)
+                                heatFluxVectorInterp().interpolate(position, cell)
                             );
                 }
                 else
                 {
                     parcel.U() = samplePostRelaxationVelocity
                             (
+                                cell,
                                 mass,
                                 Prandtl_[cell],
                                 p_[cell],
                                 translationalT_[cell],
                                 UMean_[cell],
-                                pressureTensor_[cell]
+                                heatFluxVector_[cell]
                             );                    
                 }
 
@@ -864,7 +960,7 @@ void Foam::ellipsoidalStatistical::relax()
 
 }
 
-void Foam::ellipsoidalStatistical::conserveMomentumAndEnergy
+void Foam::SBGK::conserveMomentumAndEnergy
 (
     const label& cell
 )
@@ -915,29 +1011,47 @@ void Foam::ellipsoidalStatistical::conserveMomentumAndEnergy
 
 }
 
-Foam::vector Foam::ellipsoidalStatistical::samplePostRelaxationVelocity
+Foam::vector Foam::SBGK::samplePostRelaxationVelocity
 (   
+    const label& cell,
     const scalar& m,
     const scalar& Pr,
     const scalar& p,
     const scalar& T,
     const vector& U,
-    const tensor& pT
+    const vector& q
 )
 {
 
     scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
 
-    vector v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
-    
-    tensor S = I-0.5*(1-Pr)/Pr*(pT/p-I);
-    
-    return U + u0*(S & v);
+    vector v;
+    scalar prob;
+    while(true)
+    {
+
+        v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
+        prob = 1.0+2.0*(1.0-Pr)/(p*u0)*(q.x()*v.x()+q.y()*v.y()+q.z()*v.z())*((sqr(v.x())+sqr(v.y())+sqr(v.z()))/2.5-1.0);
+
+        if (prob > maxProb_[cell])
+        {
+            maxProb_[cell] = prob;
+            maxProbReset_[cell] = false;
+            break;
+        }
+        if (cloud_.rndGen().sample01<scalar>() < prob/maxProb_[cell])
+        {
+            break;
+        }
+
+    }
+
+    return U+u0*v;
 
 }
 
 const Foam::dictionary&
-Foam::ellipsoidalStatistical::propertiesDict() const
+Foam::SBGK::propertiesDict() const
 {
     return propertiesDict_;
 }

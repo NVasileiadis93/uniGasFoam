@@ -25,7 +25,8 @@ Class
     Foam::boundaryMeasurements
 
 Description
-    This class measures the microscopic properties of particles that hit boundaries. This is required to return macroscopic properties.
+    This class measures the microscopic properties of particles that hit boundaries. 
+    This is required to return boundary macroscopic properties.
     
     The equations for measuring these properies are given in Bird's 2013 book.
     

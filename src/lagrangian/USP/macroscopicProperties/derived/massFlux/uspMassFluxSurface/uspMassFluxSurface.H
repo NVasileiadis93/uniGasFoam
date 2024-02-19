@@ -23,27 +23,39 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    uspMassFluxSurface
+    Foam::uspMassFluxSurface
 
 Description
-    measure the average mass flux at a user-defined surface
+    Class for measuring fluxes through a surface. Fields are measured in 
+    conjunction with the faceTracker class. 
 
-Note
-    To understand this measurement model, one needs to look at how the cloudTracker works,
-    as well as how processor patches are defined on the mesh.
+    Use in fieldPropertiesDict.
 
-    - cloud tracker fields are generated every time-step (used by measurement models)
-      then fields are cleaned.
+Usage
+    Example of field specification
 
-    - in parallel processing runs a facezone on a processor patch does not get
-      divided uniquely. A pair of coupled processor patches will both identify that
-      a face belonging to the face occurs. care must therefore be taken to get the flux
-      right. For example note how the surface area of the total face zone is calculated.
-      Faces on processor patches are given a weighting of 0.5 so that when communication
-      occurs the correct zonal surface area is computed. The same is said for atomisticMolecule
-      crossings. In the cloudTracker class only one face on the processor patch gets
-      gets assigned the flux. Thereby synchronisation between processors gives the
-      correct total flux.
+    /verbatim
+     field
+     {
+         fieldModel          	        uspMassFluxSurface;
+ 
+         timeProperties
+         {
+            sampleInterval              1;
+         	resetAtOutput               on;
+         	resetAtOutputUntilTime  	1e-3;
+         }
+         
+         uspMassFluxSurfaceProperties
+         {
+            field                       Ar;
+         	typeIds                     (Ar);
+            faceZone                    sliceFaceZone;
+            fluxDirection               (1 0 0);
+            averagingAcrossManyRuns     true;
+         }
+     } 
+    /endverbatim
 
 SourceFiles
     uspMassFluxSurface.C

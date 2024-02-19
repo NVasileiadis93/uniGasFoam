@@ -23,7 +23,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    uspReflectiveParticleMembranePatch
+    Foam::uspReflectiveParticleMembranePatch
 
 Description
     RPM technique Li et al.
@@ -59,10 +59,13 @@ class uspReflectiveParticleMembranePatch
         dictionary propsDict_;
 
         scalar p_;
+
         scalar temperature_;
+
         vector velocity_;
 
         label nReflections_;
+        
         label nRejections_;
 
 public:

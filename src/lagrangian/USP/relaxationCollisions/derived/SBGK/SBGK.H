@@ -23,18 +23,33 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    ellipsoidalStatistical
+    SBGK
 
 Description
-    Relaxes particles to local Ellipsoidal-Statistical distribution
+    Relaxes particles to the local Shakhov distribution
+
+    Use in uspProperties file.
+
+Usage
+    Example of relaxation specification
+
+    \verbatim
+    relaxationCollisionModel    SBGK;
+    collisionProperties
+    {
+        Tref                273;
+        macroInterpolation  true;
+        theta               0.5;
+    }
+    /endverbatim
 
 SourceFiles
-    ellipsoidalStatistical.C
+    SBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ellipsoidalStatistical_H
-#define ellipsoidalStatistical_H
+#ifndef SBGK_H
+#define SBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -50,10 +65,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class ellipsoidalStatistical Declaration
+                        class SBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class ellipsoidalStatistical
+class SBGK
 :
     public relaxationCollisionModel
 {
@@ -61,13 +76,16 @@ class ellipsoidalStatistical
     
         const dictionary propertiesDict_;
         const scalar Tref_;
+        const scalar theta_;
         const bool macroInterpolation_;
-
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
+        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
+        boolField maxProbReset_;
+        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -112,17 +130,20 @@ class ellipsoidalStatistical
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
+        volVectorField heatFluxVector_;
+        volVectorField heatFluxVectorPrevious_;
         volTensorField pressureTensor_;
+        volTensorField pressureTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("ellipsoidalStatistical");
+    TypeName("SBGK");
 
     //- Construct from componentsonst label& cell
-    ellipsoidalStatistical
+    SBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -130,7 +151,7 @@ public:
     );
 
     //- Destructor
-    virtual ~ellipsoidalStatistical() = default;
+    virtual ~SBGK() = default;
 
     // Member Functions
 
@@ -152,12 +173,13 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
+            const label& cell,
             const scalar& m,
             const scalar& Pr,
             const scalar& p,
             const scalar& T,
             const vector& U,
-            const tensor& pT
+            const vector& q
         );
 
 };

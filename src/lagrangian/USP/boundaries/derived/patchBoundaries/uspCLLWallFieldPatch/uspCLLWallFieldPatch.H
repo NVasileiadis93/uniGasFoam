@@ -22,17 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uspCLLWallFieldPatch
+    Foam::uspCLLWallFieldPatch
 
 Description
     Wall interaction based on the Cercignani-Lampis-Lord model
+
+    Use in the boundariesDict file.
 
     FIELD VERSION: require boundaryU and boundaryT fields to be defined in
     your time directory.
 
 Usage
-
     Example of the boundary condition specification:
+    
     \verbatim
     patchBoundaryProperties
     {

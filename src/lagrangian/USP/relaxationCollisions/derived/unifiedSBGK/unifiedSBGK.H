@@ -23,18 +23,33 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unifiedShakhov
+    unifiedSBGK
 
 Description
-    Relaxes particles to local Chapman-Enskog distributions
+    Relaxes particles to local unified Shakhov distribution
+    
+    Use in uspProperties file.
 
+Usage
+    Example of relaxation specification
+
+    \verbatim
+    relaxationCollisionModel    unifiedSBGK;
+    collisionProperties
+    {
+        Tref                273;
+        macroInterpolation  true;
+        theta               0.5;
+    }
+    /endverbatim
+    
 SourceFiles
-    unifiedShakhov.C
+    unifiedSBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unifiedShakhov_H
-#define unifiedShakhov_H
+#ifndef unifiedSBGK_H
+#define unifiedSBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -50,10 +65,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class unifiedShakhov Declaration
+                        class unifiedSBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class unifiedShakhov
+class unifiedSBGK
 :
     public relaxationCollisionModel
 {
@@ -126,10 +141,10 @@ class unifiedShakhov
 public:
 
     //- Runtime type information
-    TypeName("unifiedShakhov");
+    TypeName("unifiedSBGK");
 
     //- Construct from componentsonst label& cell
-    unifiedShakhov
+    unifiedSBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -137,7 +152,7 @@ public:
     );
 
     //- Destructor
-    virtual ~unifiedShakhov() = default;
+    virtual ~unifiedSBGK() = default;
 
     // Member Functions
 
