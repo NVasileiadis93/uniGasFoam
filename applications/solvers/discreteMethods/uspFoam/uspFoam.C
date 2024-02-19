@@ -43,14 +43,6 @@ int main(int argc, char *argv[])
 {
     #define NO_CONTROL
     #include "postProcess.H"
-
-    argList::addBoolOption
-    (
-        "no-lagrangian",  // noLagrangian
-        "Skip reconstructing lagrangian positions and fields"
-    );
-    argList::addOptionCompat("no-lagrangian", {"noLagrangian", 2106});
-
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createMesh.H"
@@ -61,8 +53,6 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     
     label infoCounter = 0;
-
-    const bool writeLagrangian = !args.found("no-lagrangian");
 
     while (runTime.loop())
     {          
@@ -78,11 +68,6 @@ int main(int argc, char *argv[])
         if (infoCounter >= usp.nTerminalOutputs())
         {
             usp.info();   
-        }
-
-        if (writeLagrangian)
-        {
-            runTime.write();
         }
 
         if (infoCounter >= usp.nTerminalOutputs())
