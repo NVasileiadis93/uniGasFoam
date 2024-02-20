@@ -1,9 +1,12 @@
-/*---------------------------------------------------------------------------*\
+/*---------------------------------------------------------------------------* \
   =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
-     \\/     M anipulation  |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /   O peration     |
+    \  /    A nd           | www.openfoam.com
+     \/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +31,7 @@ Group
     grpDiscreteMethodsSolvers
 
 Description
-    Direct simulation Monte Carlo (USP) solver for 3D, transient, multi-
-    species flows
+    Hybrid USP/DSMC solver for 3D multiscale rarefied gas flows
 
 \*---------------------------------------------------------------------------*/
 
