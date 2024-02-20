@@ -63,8 +63,8 @@ class uspHybridDecomposition
 
 protected:
 
-        //- The cloud dictionary
-        const dictionary& dict_;
+        //- reference to time
+        const Time& time_;
 
         //- reference to the mesh
         const fvMesh& mesh_;
@@ -72,17 +72,20 @@ protected:
         // reference to the owner cloud class
         uspCloud& cloud_;
 
+        //- The hybrid decomposition IO dictionary
+        IOdictionary hybridDecompositionDict_;
+
+        //- The time properties dictionary
+        dictionary timeDict_;
+
         // Time interval between successive decompositions
         label decompositionInterval_;
         
         // Breakdown parameter threshold
-        scalar breakdownMax_;
+        bool resetAtDecomposition_;
         
         // Time averaging coefficient
-        scalar theta_;
-        
-        // Number of smoothing passes
-        label smoothingPasses_;
+        scalar resetAtDecompositionUntilTime_;
 
         // Number of refinement passes
         label refinementPasses_;
@@ -92,6 +95,10 @@ protected:
 
 
 public:
+
+
+    //- Default name of the hybrid decomposition dictionary
+    static const word dictName;
 
     //- Runtime type information
     TypeName("uspHybridDecomposition");
@@ -103,20 +110,19 @@ public:
         uspHybridDecomposition,
         dictionary,
         (
-            const dictionary& dict,
+            const Time& t,
             const polyMesh& mesh,
             uspCloud& owner
         ),
-        (dict, mesh, owner)
+        (t, mesh, owner)
     );
-
 
     // Constructors
 
         //- Construct from components
         uspHybridDecomposition
         (
-            const dictionary& dict,
+            const Time& t,
             const polyMesh& mesh,
             uspCloud& owner
         );
@@ -128,19 +134,16 @@ public:
     //- Selector
     static autoPtr<uspHybridDecomposition> New
     (
-        const dictionary& dict,
+        const Time& t,
         const polyMesh& mesh,
         uspCloud& owner
     );
 
-
     // Access
 
-        //- Return the dictionary
-        const dictionary& dict() const;
-
-
     // Member Functions
+
+        void updateProperties();
 
         virtual void decompose() = 0;
 

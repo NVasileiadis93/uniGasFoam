@@ -668,7 +668,7 @@ Foam::uspCloud::uspCloud
             binaryCollisionPartnerModel_->initialConfiguration();
             relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
             relaxationCollisionModel_ =relaxationCollisionModel::New(particleProperties_, mesh_, *this);
-            hybridDecompositionModel_ = uspHybridDecomposition::New(particleProperties_, mesh_, *this);
+            hybridDecompositionModel_ = uspHybridDecomposition::New(mesh_.time(), mesh_, *this);
         }
         else
         {
@@ -723,7 +723,7 @@ Foam::uspCloud::uspCloud
             binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_ -> initialConfiguration();
             relaxationCollisionModel_ = relaxationCollisionModel::New(particleProperties_, mesh_, *this);  
-            hybridDecompositionModel_ = uspHybridDecomposition::New(particleProperties_, mesh_, *this);
+            hybridDecompositionModel_ = uspHybridDecomposition::New(mesh_.time(), mesh_, *this);
         }
         else
         {

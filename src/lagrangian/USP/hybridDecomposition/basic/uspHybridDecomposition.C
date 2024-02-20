@@ -28,6 +28,13 @@ License
 
 #include "uspHybridDecomposition.H"
 
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+const Foam::word Foam::uspHybridDecomposition::dictName("hybridDecompositionDict");
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -40,18 +47,29 @@ namespace Foam
 
 Foam::uspHybridDecomposition::uspHybridDecomposition
 (
-    const dictionary& dict,
+    const Time& t,
     const polyMesh& mesh,
     uspCloud& owner
 )
 :
-    dict_(dict),
+    time_(t),
     mesh_(refCast<const fvMesh>(mesh)),
     cloud_(owner),
-    decompositionInterval_(dict.subDict("decompositionProperties").get<label>("decompositionInterval")),
-    breakdownMax_(dict.subDict("decompositionProperties").get<scalar>("breakdownMax")),
-    theta_(dict.subDict("decompositionProperties").getOrDefault<scalar>("theta",1.0)),
-    smoothingPasses_(dict.subDict("decompositionProperties").getOrDefault<scalar>("smoothingPasses",0)),
+    hybridDecompositionDict_
+    (
+        IOobject
+        (
+            dictName,
+            t.system(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    ),
+    timeDict_(hybridDecompositionDict_.subDict("timeProperties")),
+    decompositionInterval_(timeDict_.get<label>("decompositionInterval")),
+    resetAtDecomposition_(timeDict_.getOrDefault<bool>("resetAtDecomposition",true)),
+    resetAtDecompositionUntilTime_(timeDict_.getOrDefault<scalar>("resetAtDecompositionUntilTime",VGREAT)),
     refinementPasses_(10),
     boundCoeff_(0.5)
 {
@@ -60,11 +78,25 @@ Foam::uspHybridDecomposition::uspHybridDecomposition
 
 Foam::autoPtr<Foam::uspHybridDecomposition> Foam::uspHybridDecomposition::New
 (
-    const dictionary& dict,
+    const Time& t,
     const polyMesh& mesh,
     uspCloud& owner
 )
 {
+
+    IOdictionary dict
+    (
+        IOobject
+        (
+            dictName,
+            t.system(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+
     const word modelType(dict.get<word>("decompositionModel"));
 
     Info<< "Selecting hybrid decomposition model " << modelType << endl;
@@ -82,16 +114,24 @@ Foam::autoPtr<Foam::uspHybridDecomposition> Foam::uspHybridDecomposition::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<uspHybridDecomposition>(cstrIter()(dict, mesh, owner));
+    return autoPtr<uspHybridDecomposition>(cstrIter()(t, mesh, owner));
 }
 
+// ************************************************************************* //
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::dictionary& Foam::uspHybridDecomposition::dict() const
+void Foam::uspHybridDecomposition::updateProperties()
 {
-    return dict_;
-}
 
+    timeDict_ = hybridDecompositionDict_.subDict("timeProperties");
+
+    timeDict_.readIfPresent("decompositionInterval", decompositionInterval_);
+
+    timeDict_.readIfPresent("resetAtDecomposition", resetAtDecomposition_);
+
+    timeDict_.readIfPresent("resetAtDecompositionUntilTime", resetAtDecompositionUntilTime_);
+
+}
 
 // ************************************************************************* //

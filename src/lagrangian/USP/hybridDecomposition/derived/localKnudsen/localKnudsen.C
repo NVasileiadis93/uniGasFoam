@@ -44,12 +44,16 @@ addToRunTimeSelectionTable(uspHybridDecomposition, localKnudsen, dictionary);
 
 Foam::localKnudsen::localKnudsen
 (
-    const dictionary& dict,
+    const Time& t,
     const polyMesh& mesh,
     uspCloud& cloud
 )
 :
-    uspHybridDecomposition(dict, mesh, cloud),
+    uspHybridDecomposition(t, mesh, cloud),
+    propsDict_(hybridDecompositionDict_.subDict(typeName + "Properties")),
+    breakdownMax_(propsDict_.get<scalar>("breakdownMax")),
+    theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(propsDict_.getOrDefault<scalar>("smoothingPasses",0)),    
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -430,13 +434,6 @@ void Foam::localKnudsen::decompose()
 
         }
 
-        // assume single species - fix for mixtures
-        const scalar& mass = cloud_.constProps(0).mass();
-        const scalar& omega = cloud_.constProps(0).omega();
-        const scalar& diameter = cloud_.constProps(0).d();
-        const scalar& rotDoF = cloud_.constProps(0).rotationalDoF();
-        scalar gamma = (5.0+rotDoF)/(3.0+rotDoF);
-
         scalarField maxMagGradRho(mesh_.nCells());
         scalarField maxMagGradT(mesh_.nCells());
         scalarField maxMagGradU(mesh_.nCells());
@@ -497,10 +494,6 @@ void Foam::localKnudsen::decompose()
 
                             scalar nDensQ = nParcelsXnParticle_[qspec][cell]/cellVolume;
 
-                            scalar reducedMass =
-                                cloud_.constProps(i).mass()*cloud_.constProps(qspec).mass()
-                                /(cloud_.constProps(i).mass() + cloud_.constProps(qspec).mass());
-
                             //Bird, eq (4.76)
                             speciesMFP[i] += pi*dPQ*dPQ*nDensQ*pow(cloud_.collTref()/translationalT_[cell], omegaPQ-0.5)*sqrt(1.0 + massRatio); 
 
@@ -523,7 +516,7 @@ void Foam::localKnudsen::decompose()
                     }
                 }
 
-                scalar u0 = std::sqrt(gamma*Foam::constant::physicoChemical::k.value()/(rhoM_[cell]/rhoN_[cell])*translationalT_[cell]);
+                scalar u0 = std::sqrt(2.0*Foam::constant::physicoChemical::k.value()/(rhoM_[cell]/rhoN_[cell])*translationalT_[cell]);
 
                 instKnRho = MFP*maxMagGradRho[cell]/rhoM_[cell];
                 instKnT = MFP*maxMagGradT[cell]/translationalT_[cell];
@@ -631,35 +624,60 @@ void Foam::localKnudsen::decompose()
         // reset
         timeSteps_ = 0;
 
-        nAvTimeSteps_ = 0;
-
-        forAll(rhoN_, cell)
+        if (resetAtDecomposition_ && mesh_.time().value() < resetAtDecompositionUntilTime_+0.5*cloud_.mesh().time().deltaTValue())
         {
 
-            rhoNMean_[cell] = 0.0;
-            rhoMMean_[cell] = 0.0;
-            linearKEMean_[cell] = 0.0;
-            rhoNMeanXnParticle_[cell] = 0.0;
-            rhoMMeanXnParticle_[cell] = 0.0;
-            linearKEMeanXnParticle_[cell] = 0.0;
-            momentumMeanXnParticle_[cell] = vector::zero;
+            nAvTimeSteps_ = 0;
 
-            forAll(typeIds_, i)
+            // reset cell information
+            forAll(rhoN_, cell)
             {
-                nParcelsXnParticle_[i][cell] = 0.0;
+
+                rhoNMean_[cell] = 0.0;
+                rhoMMean_[cell] = 0.0;
+                linearKEMean_[cell] = 0.0;
+                rhoNMeanXnParticle_[cell] = 0.0;
+                rhoMMeanXnParticle_[cell] = 0.0;
+                linearKEMeanXnParticle_[cell] = 0.0;
+                momentumMeanXnParticle_[cell] = vector::zero;
+
+                forAll(typeIds_, i)
+                {
+                    nParcelsXnParticle_[i][cell] = 0.0;
+                }
             }
+
+            // reset boundary information
+            forAll(rhoNBF_, j)
+            {
+                rhoNBF_[j] = 0.0;
+                rhoMBF_[j] = 0.0;
+                linearKEBF_[j] = 0.0;
+                momentumBF_[j] = vector::zero;
+            }
+            
         }
 
-        // reset boundary information
-        forAll(rhoNBF_, j)
-        {
-            rhoNBF_[j] = 0.0;
-            rhoMBF_[j] = 0.0;
-            linearKEBF_[j] = 0.0;
-            momentumBF_[j] = vector::zero;
-        }
-
+        update();
+   
     }
+
+}
+
+
+void Foam::localKnudsen::update()
+{
+
+    // The main properties should be updated first
+    updateProperties();
+
+    propsDict_ = hybridDecompositionDict_.subDict(typeName + "Properties");
+
+    propsDict_.readIfPresent("breakdownMax", breakdownMax_);
+
+    propsDict_.readIfPresent("theta", theta_);
+
+    propsDict_.readIfPresent("smoothingPasses", smoothingPasses_);  
 
 }
 

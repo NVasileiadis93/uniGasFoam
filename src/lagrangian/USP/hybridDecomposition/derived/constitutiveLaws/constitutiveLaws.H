@@ -69,11 +69,23 @@ class constitutiveLaws
 
     // Private data
 
-        label timeSteps_;
+        // Properties dictionary
+        dictionary propsDict_;
 
-        label nAvTimeSteps_;
+        // Breakdown parameter threshold
+        scalar breakdownMax_;
         
-        labelList typeIds_;        
+        // Time averaging coefficient
+        scalar theta_;
+        
+        // Number of smoothing passes
+        label smoothingPasses_;
+
+        label timeSteps_;
+        
+        label nAvTimeSteps_;
+
+        labelList typeIds_;       
 
         // cell measurements
         scalarField rhoNMean_;
@@ -135,7 +147,7 @@ public:
     //- Construct from components
     constitutiveLaws
     (
-        const dictionary& dict,
+        const Time& t,
         const polyMesh& mesh_,
         uspCloud& cloud
     );
@@ -146,7 +158,9 @@ public:
     // Member Functions
 
     void decompose();
- 
+
+    void update();
+
 };
 
 

@@ -44,12 +44,16 @@ addToRunTimeSelectionTable(uspHybridDecomposition, constitutiveLaws, dictionary)
 
 Foam::constitutiveLaws::constitutiveLaws
 (
-    const dictionary& dict,
+    const Time& t,
     const polyMesh& mesh,
     uspCloud& cloud
 )
 :
-    uspHybridDecomposition(dict, mesh, cloud),
+    uspHybridDecomposition(t, mesh, cloud),
+    propsDict_(hybridDecompositionDict_.subDict(typeName + "Properties")),
+    breakdownMax_(propsDict_.get<scalar>("breakdownMax")),
+    theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
+    smoothingPasses_(propsDict_.getOrDefault<scalar>("smoothingPasses",0)),  
     timeSteps_(0),
     nAvTimeSteps_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -769,46 +773,71 @@ void Foam::constitutiveLaws::decompose()
         // reset
         timeSteps_ = 0;
 
-        nAvTimeSteps_ = 0;
-
-        forAll(rhoN_, cell)
+        if (resetAtDecomposition_ && mesh_.time().value() < resetAtDecompositionUntilTime_+0.5*cloud_.mesh().time().deltaTValue())
         {
 
-            rhoNMean_[cell] = 0.0;
-            rhoMMean_[cell] = 0.0;
-            linearKEMean_[cell] = 0.0;
-            muu_[cell] = 0.0;
-            muv_[cell] = 0.0;
-            muw_[cell] = 0.0;
-            mvv_[cell] = 0.0;
-            mvw_[cell] = 0.0;
-            mww_[cell] = 0.0;
-            mcc_[cell] = 0.0;
-            mccu_[cell] = 0.0;
-            mccv_[cell] = 0.0;
-            mccw_[cell] = 0.0;
-            eu_[cell] = 0.0;
-            ev_[cell] = 0.0;
-            ew_[cell] = 0.0;
-            e_[cell] = 0.0;
-            nColls_[cell] = 0.0;
-            rhoNMeanXnParticle_[cell] = 0.0;
-            rhoMMeanXnParticle_[cell] = 0.0;
-            linearKEMeanXnParticle_[cell] = 0.0;
-            momentumMeanXnParticle_[cell] = vector::zero;
-            
+            nAvTimeSteps_ = 0;
+
+            // reset cell information
+            forAll(rhoN_, cell)
+            {
+
+                rhoNMean_[cell] = 0.0;
+                rhoMMean_[cell] = 0.0;
+                linearKEMean_[cell] = 0.0;
+                muu_[cell] = 0.0;
+                muv_[cell] = 0.0;
+                muw_[cell] = 0.0;
+                mvv_[cell] = 0.0;
+                mvw_[cell] = 0.0;
+                mww_[cell] = 0.0;
+                mcc_[cell] = 0.0;
+                mccu_[cell] = 0.0;
+                mccv_[cell] = 0.0;
+                mccw_[cell] = 0.0;
+                eu_[cell] = 0.0;
+                ev_[cell] = 0.0;
+                ew_[cell] = 0.0;
+                e_[cell] = 0.0;
+                nColls_[cell] = 0.0;
+                rhoNMeanXnParticle_[cell] = 0.0;
+                rhoMMeanXnParticle_[cell] = 0.0;
+                linearKEMeanXnParticle_[cell] = 0.0;
+                momentumMeanXnParticle_[cell] = vector::zero;
+
+            }
+
+            // reset boundary information
+            forAll(rhoNBF_, j)
+            {
+                rhoNBF_[j] = 0.0;
+                rhoMBF_[j] = 0.0;
+                linearKEBF_[j] = 0.0;
+                momentumBF_[j] = vector::zero;
+            }
+
         }
 
-        // reset boundary information
-        forAll(rhoNBF_, j)
-        {
-            rhoNBF_[j] = 0.0;
-            rhoMBF_[j] = 0.0;
-            linearKEBF_[j] = 0.0;
-            momentumBF_[j] = vector::zero;
-        }
+        update();
 
     }
+
+}
+
+
+void Foam::constitutiveLaws::update()
+{
+
+    // The main properties should be updated first
+    updateProperties();
+
+    propsDict_ = hybridDecompositionDict_.subDict(typeName + "Properties");
+
+    propsDict_.readIfPresent("breakdownMax", breakdownMax_);
+
+    propsDict_.readIfPresent("theta", theta_);
+
+    propsDict_.readIfPresent("smoothingPasses", smoothingPasses_);  
 
 }
 
