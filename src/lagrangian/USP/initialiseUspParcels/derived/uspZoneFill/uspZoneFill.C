@@ -107,144 +107,19 @@ void Foam::uspZoneFill::setInitialConfiguration()
     }
 
     const cellZone& zone = cellZones[zoneId];
-
     const auto& meshCC = cloud_.mesh().cellCentres();
     const auto& meshV = cloud_.mesh().V();
 
-    // Compute subcell levels
-    if (cloud_.dynamicAdapter().subcellAdaptation())
+    // Initialise subcells in case of adaptive simulation
+    if (cloud_.adaptive())
     {
-
-        const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
-
-        scalarList speciesMFP(molecules.size(), 0.0);
-        scalarList speciesMCT(molecules.size(), 0.0);       
-
-        if (zone.size())
-        {
-
-            for (const label cell : zone)
-            {
-
-
-
-                speciesMFP = 0.0;
-                speciesMCT = 0.0; 
-
-                forAll(molecules, i)
-                {
-                    label qspec = 0;
-
-                    for (qspec=0; qspec<molecules.size(); ++qspec)
-                    {
-                        scalar dPQ = 0.5*(cloud_.constProps(i).d() + cloud_.constProps(qspec).d());
-
-                        scalar omegaPQ = 0.5*(cloud_.constProps(i).omega() + cloud_.constProps(qspec).omega());
-
-                        scalar massRatio = cloud_.constProps(i).mass()/cloud_.constProps(qspec).mass();
-
-                        if (numberDensities[qspec] > VSMALL)
-                        {
-
-                            scalar nDensQ = numberDensities[qspec]/meshV[cell];
-
-                            scalar reducedMass =
-                                cloud_.constProps(i).mass()*cloud_.constProps(qspec).mass()
-                                /(cloud_.constProps(i).mass() + cloud_.constProps(qspec).mass());
-
-                            //Bird, eq (4.76)
-                            speciesMFP[i] += pi*dPQ*dPQ*nDensQ*pow(cloud_.collTref()/translationalTemperature, omegaPQ-0.5)*sqrt(1.0 + massRatio); 
-
-                            // //Bird, eq (4.74)
-                            speciesMCT[i] += 
-                                2.0*sqrt(pi)*dPQ*dPQ*nDensQ*pow(translationalTemperature/cloud_.collTref(),1.0-omegaPQ)*sqrt(2.0*physicoChemical::k.value()*cloud_.collTref()/reducedMass); 
-                        }
-                    }
-
-                }
-
-                scalar MFP = 0.0;
-                scalar MCT = 0.0;
-                forAll(molecules, i)
-                {
-                    if (numberDensities[i] > VSMALL)
-                    {
-                        scalar nDensP = numberDensities[i]/meshV[cell];
-
-                        speciesMFP[i] = 1.0/speciesMFP[i];
-
-                        speciesMCT[i] = 1.0/speciesMCT[i];
-
-                        //Bird, eq (4.77)
-                        MFP += speciesMFP[i]*nDensP/totalNumberDensity;
-
-                        //Bird, eq (1.38)
-                        MCT += speciesMCT[i]*nDensP/totalNumberDensity;
-                    }
-                }
-
-                // Calculate time-step to mean collision time ratio
-                const scalar deltaT = mesh_.time().deltaTValue();
-
-                scalar timeStepMCTRatio = deltaT/MCT;
-
-                // Calculate cell size to mean free path ratio
-                scalar largestCellDimension = 0.0;
-
-                point minPoint = vector(GREAT, GREAT, GREAT);
-                point maxPoint = vector(-GREAT, -GREAT, -GREAT);
-                const List<label>& cellNodes = mesh_.cellPoints()[cell];
-
-                forAll(cellNodes, node) 
-                {
-                    const point& cellPoint = mesh_.points()[cellNodes[node]];
-                    minPoint.x() = min(minPoint.x(),cellPoint.x());
-                    minPoint.y() = min(minPoint.y(),cellPoint.y());
-                    minPoint.z() = min(minPoint.z(),cellPoint.z());
-                    maxPoint.x() = max(maxPoint.x(),cellPoint.x());
-                    maxPoint.y() = max(maxPoint.y(),cellPoint.y());
-                    maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
-                }
-
-                vector cellSizeMFPRatio = (maxPoint-minPoint)/MFP;
-
-                if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
-                {
-
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = 
-                                label(min(cloud_.dynamicAdapter().maxSubcellLevels(),
-                                max(cloud_.dynamicAdapter().minSubcellLevels(),cellSizeMFPRatio[dim]/cloud_.dynamicAdapter().maxSubcellSizeMFPRatio()))+0.5);
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(1.0);
-                        }
-                    }
-                }
-                else
-                {
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = cloud_.dynamicAdapter().minSubcellLevels();
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(1.0);
-                        }
-                    }   
-
-                }
-            }
-            cloud_.subcellLevels().correctBoundaryConditions();
-        }
+        cloud_.dynamicAdapter().setInitialConfiguration
+        (
+            zone,
+            numberDensities,
+            translationalTemperature
+        );
     }
-    
 
     //Compute cell weights in case of cell weighted simulation    
     if (cloud_.cellWeighted())
@@ -311,7 +186,7 @@ void Foam::uspZoneFill::setInitialConfiguration()
 
         } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
     }
-    
+
     // Initialise particles
     if (zone.size())
     {

@@ -43,12 +43,6 @@ inline const label& uspDynamicAdapter::maxSubcellLevels() const
 }
 
 
-inline const bool& uspDynamicAdapter::timeStepAdaptation() const
-{
-    return timeStepAdaptation_;
-}
-
-
 inline const bool& uspDynamicAdapter::cellWeightAdaptation() const
 {
     return cellWeightAdaptation_;

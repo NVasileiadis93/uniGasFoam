@@ -28,7 +28,7 @@ Class
     Foam::uspDynamicAdapter
 
 Description
-    Basic/abstract class of a controller
+    Class providing functions for dynamically adapting cloud quantities
 
 SourceFiles
     uspDynamicAdapter.C
@@ -71,13 +71,9 @@ class uspDynamicAdapter
 
         uspCloud& cloud_;
 
-        Random& rndGen_;
+        const label minSubcellLevels_;
 
-        const label minSubcellLevels_ = 2;
-
-        const label maxSubcellLevels_= 5;
-
-        bool timeStepAdaptation_;
+        const label maxSubcellLevels_;
 
         bool cellWeightAdaptation_;
 
@@ -86,8 +82,6 @@ class uspDynamicAdapter
         label adaptationInterval_;
 
         scalar maxSubcellSizeMFPRatio_;
-
-        scalar Tref_;
 
         label smoothingPasses_;
 
@@ -105,13 +99,8 @@ class uspDynamicAdapter
         scalarField rhoMMeanXnParticle_;
         scalarField linearKEMeanXnParticle_;
         vectorField momentumMeanXnParticle_;
-        scalarField MFP_;
-        scalarField MCT_;
 
-        List<scalarField> nParcels_;
         List<scalarField> nParcelsXnParticle_;
-        List<scalarField> mfp_;
-        List<scalarField> mct_;
         
         // fields required for dynamic adaptation
         volScalarField rhoN_;
@@ -119,8 +108,6 @@ class uspDynamicAdapter
         volVectorField UMean_;
 
         volScalarField cellWeightFactor_;
-        volScalarField timeStepMCTRatio_;
-        volScalarField prevTimeStepMCTRatio_;
         volVectorField cellSizeMFPRatio_;
         volVectorField prevCellSizeMFPRatio_;
 
@@ -140,15 +127,54 @@ public:
     virtual ~uspDynamicAdapter() = default;
 
     // Member Functions
+    virtual void setInitialConfiguration
+    (
+        const Field<scalar>& speciesRhoN,
+        const scalar& transT
+    );
 
-    void calculateProperties();
+    virtual void setInitialConfiguration
+    (
+        const cellZone& zone,
+        const Field<scalar>& speciesRhoN,
+        const scalar& transT
+    );
+
+    virtual void setInitialConfiguration
+    (
+        const List<autoPtr<volScalarField>>& speciesRhoNPtr,
+        const volScalarField& transT
+    );
+    
+    vector calculateCellSizeMFPRatio
+    (
+        const label& cell,
+        const scalar& rhoN,
+        const scalar& transT,
+        const scalarList& speciesRhoN
+    );
+
+    vector calculateSubcellLevels
+    (
+        const label& cell,
+        const vector& cellSizeMFPRatio
+    );
+
+    scalar calculateCellWeightFactor
+    (
+        const label& cell,
+        const scalar& rhoN
+    );
+
+    virtual void smoothCellWeightFactor
+    (
+        volScalarField& rhoN,
+        volScalarField& cellWeightFactor
+    );
 
     void adapt();
 
-    void reset();
-
-    void update();
-
+    // Acess
     inline const label& minSubcellLevels() const;
 
     inline const label& maxSubcellLevels() const;

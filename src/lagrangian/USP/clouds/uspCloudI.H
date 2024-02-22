@@ -68,9 +68,9 @@ inline Foam::scalar Foam::uspCloud::collTref() const
     return collTref_;
 }
 
-inline bool Foam::uspCloud::dynamicAdaptation() const
+inline bool Foam::uspCloud::adaptive() const
 {
-    return dynamicAdaptation_;
+    return adaptive_;
 }
 
 inline bool Foam::uspCloud::cellWeighted() const

@@ -108,7 +108,6 @@ public:
     //- Default name of the boundaries dictionary
     static const word dictName;
 
-
     // Constructors
 
         //- Null Constructor

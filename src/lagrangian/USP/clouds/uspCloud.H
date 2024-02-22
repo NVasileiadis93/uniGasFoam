@@ -124,7 +124,7 @@ private:
         // dynamic simulation set-ups
 
             //- Bool to identify is this is a subcell dynamic simulation
-            bool dynamicAdaptation_;
+            bool adaptive_;
 
         // Cell weighted set-ups
             //- Bool to identify is this is a cell weighted simulation
@@ -327,7 +327,7 @@ public:
         inline scalar collTref() const;
 
         //- Return the bool to identify if this is an dynamic subcell simulation
-        inline bool dynamicAdaptation() const;
+        inline bool adaptive() const;
 
         //- Return the bool to identify if this is a cell weighted simulation
         //  Measurements, etc dealt differently if true

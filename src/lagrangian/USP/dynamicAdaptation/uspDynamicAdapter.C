@@ -43,13 +43,12 @@ uspDynamicAdapter::uspDynamicAdapter
     dict_(dict),
     mesh_(mesh),
     cloud_(cloud),
-    rndGen_(cloud.rndGen()),
-    timeStepAdaptation_(false),
+    minSubcellLevels_(2),
+    maxSubcellLevels_(5),
     cellWeightAdaptation_(false),
     subcellAdaptation_(false),
     adaptationInterval_(),
     maxSubcellSizeMFPRatio_(),
-    Tref_(),
     smoothingPasses_(10),
     theta_(0.1),
     timeSteps_(0),
@@ -59,9 +58,6 @@ uspDynamicAdapter::uspDynamicAdapter
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
     momentumMeanXnParticle_(mesh_.nCells(), Zero),
-    MFP_(mesh_.nCells(), 0.0),
-    MCT_(mesh_.nCells(), 0.0),
-    nParcels_(),
     nParcelsXnParticle_(),
     rhoN_
     (
@@ -119,34 +115,6 @@ uspDynamicAdapter::uspDynamicAdapter
         dimensionedScalar(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
-    timeStepMCTRatio_
-    (
-        IOobject
-        (
-            "timeStepToMCTRatio",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedScalar(dimless, Zero),
-        zeroGradientFvPatchScalarField::typeName
-    ),
-    prevTimeStepMCTRatio_
-    (
-        IOobject
-        (
-            "prevTimeStepMCTRatio_",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedScalar(dimless, Zero),
-        zeroGradientFvPatchScalarField::typeName
-    ),
     cellSizeMFPRatio_
     (
         IOobject
@@ -155,7 +123,7 @@ uspDynamicAdapter::uspDynamicAdapter
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimless, Zero),
@@ -169,7 +137,7 @@ uspDynamicAdapter::uspDynamicAdapter
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimless, Zero),
@@ -183,44 +151,22 @@ uspDynamicAdapter::uspDynamicAdapter
         typeIds_[iD] = iD;
     }
 
-    nParcels_.setSize(typeIds_.size());
-
-    for (auto& f : nParcels_)
-    {
-        f.setSize(mesh_.nCells());
-    }
-
     nParcelsXnParticle_.setSize(typeIds_.size());
     for (auto& f : nParcelsXnParticle_)
     {
         f.setSize(mesh_.nCells());
     }
 
-    mfp_.setSize(typeIds_.size());
-
-    for (auto& f : mfp_)
+    if (cloud_.adaptive())
     {
-        f.setSize(mesh_.nCells());
-    }
-
-    mct_.setSize(typeIds_.size());
-
-    for (auto& f : mct_)
-    {
-        f.setSize(mesh_.nCells());
-    }
-
-    if (cloud_.dynamicAdaptation())
-    {
-        timeStepAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("timeStepAdaptation",false);
-        subcellAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("subcellAdaptation",false);
-        cellWeightAdaptation_ = dict.subDict("dynamicSimulationProperties").getOrDefault<bool>("cellWeightAdaptation",false);
+        dictionary adaptationDict = dict.subDict("adaptiveProperties");
+        subcellAdaptation_ = adaptationDict.getOrDefault<bool>("subcellAdaptation",false);
+        cellWeightAdaptation_ = adaptationDict.getOrDefault<bool>("cellWeightAdaptation",false);
         if (subcellAdaptation_)
         {
-            maxSubcellSizeMFPRatio_ = dict.subDict("dynamicSimulationProperties").get<scalar>("maxSubcellSizeMFPRatio");
+            maxSubcellSizeMFPRatio_ = adaptationDict.get<scalar>("maxSubcellSizeMFPRatio");
         }
-        adaptationInterval_ = dict.subDict("dynamicSimulationProperties").get<label>("adaptationInterval");
-        Tref_ = dict.subDict("collisionProperties").get<scalar>("Tref");
+        adaptationInterval_ = adaptationDict.get<label>("adaptationInterval");
     }
 
 }
@@ -231,9 +177,202 @@ uspDynamicAdapter::uspDynamicAdapter
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void uspDynamicAdapter::calculateProperties()
+vector uspDynamicAdapter::calculateCellSizeMFPRatio
+(
+    const label& cell,
+    const scalar& rhoN,
+    const scalar& transT,
+    const scalarList& speciesRhoN
+)
 {
+
+    if (transT > SMALL)
+    {
+
+        scalarList speciesMFP(typeIds_.size(), 0.0);
+
+        forAll(typeIds_, iD)
+        {
+            label qspec = 0;
+
+            for (qspec=0; qspec<typeIds_.size(); ++qspec)
+            {
+                scalar dPQ = 0.5*(cloud_.constProps(typeIds_[iD]).d() + cloud_.constProps(typeIds_[qspec]).d());
+
+                scalar omegaPQ = 0.5*(cloud_.constProps(typeIds_[iD]).omega() + cloud_.constProps(typeIds_[qspec]).omega());
+
+                scalar massRatio = cloud_.constProps(typeIds_[iD]).mass()/cloud_.constProps(typeIds_[qspec]).mass();
+
+                if (speciesRhoN[qspec] > VSMALL && transT > VSMALL)
+                {
+
+                    //Bird, eq (4.76)
+                    speciesMFP[iD] += pi*dPQ*dPQ*speciesRhoN[qspec]*pow(cloud_.collTref()/transT,omegaPQ - 0.5)*sqrt(1.0 + massRatio);
+
+                }
+            }
+
+        }
+
+        scalar MFP = 0.0;
+        forAll(speciesMFP, iD)
+        {
+            if (speciesRhoN[iD] > VSMALL)
+            {
+
+                speciesMFP[iD] = 1.0/speciesMFP[iD];
+
+                //Bird, eq (4.77)
+                MFP += speciesMFP[iD]*speciesRhoN[iD]/rhoN;
+
+            }
+        }
+
+        // Calculate cell size to mean free path ratio
+        scalar largestCellDimension = 0.0;
+
+        point minPoint = vector(GREAT, GREAT, GREAT);
+        point maxPoint = vector(-GREAT, -GREAT, -GREAT);
+        const List<label>& cellNodes = mesh_.cellPoints()[cell];
+
+        forAll(cellNodes, node) 
+        {
+            const point& cellPoint = mesh_.points()[cellNodes[node]];
+            minPoint.x() = min(minPoint.x(),cellPoint.x());
+            minPoint.y() = min(minPoint.y(),cellPoint.y());
+            minPoint.z() = min(minPoint.z(),cellPoint.z());
+            maxPoint.x() = max(maxPoint.x(),cellPoint.x());
+            maxPoint.y() = max(maxPoint.y(),cellPoint.y());
+            maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
+        }
+
+        return (maxPoint-minPoint)/MFP;
+
+    }
+    else
+    {
+        return prevCellSizeMFPRatio_[cell];
+    }
     
+}
+
+vector uspDynamicAdapter::calculateSubcellLevels
+(
+    const label& cell,
+    const vector& cellSizeMFPRatio
+)
+{
+
+    vector subcellLevels;
+
+    if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
+    {
+        
+        forAll(cloud_.solutionDimensions(), dim)
+        {
+            if (cloud_.solutionDimensions()[dim])
+            {
+                subcellLevels[dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_))+0.5);
+            }
+            else
+            {
+                subcellLevels[dim] = label(1.0);
+            }
+        }
+    }
+    else
+    {
+        forAll(cloud_.solutionDimensions(), dim)
+        {
+            if (cloud_.solutionDimensions()[dim])
+            {
+                subcellLevels[dim] = minSubcellLevels_;
+            }
+            else
+            {
+                subcellLevels[dim] = label(1.0);
+            }
+        }    
+    }
+
+    return subcellLevels;
+
+}
+
+scalar uspDynamicAdapter::calculateCellWeightFactor
+(
+    const label& cell,
+    const scalar& rhoN
+)
+{
+
+    scalar RWF = cloud_.axiRWF(mesh_.C()[cell]);
+    const vector& subcellLevels = cloud_.subcellLevels()[cell];
+    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+
+    return (rhoN*mesh_.V()[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+
+}  
+
+void uspDynamicAdapter::smoothCellWeightFactor
+(
+    volScalarField& rhoN,
+    volScalarField& cellWeightFactor
+)
+{
+
+    scalar maxCellWeightRatio;
+    label smoothingPasses = 0;
+    do
+    {
+
+        smoothingPasses++;
+
+        cellWeightFactor = fvc::average(fvc::interpolate(cellWeightFactor));
+        cellWeightFactor.correctBoundaryConditions(); 
+
+        forAll(mesh_.cells(), cell)
+        {
+
+            scalar RWF = cloud_.axiRWF(mesh_.C()[cell]);
+            const vector& subcellLevels = cloud_.subcellLevels()[cell];
+            const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+            cellWeightFactor[cell] = 
+                max(min((rhoN[cell]*mesh_.V()[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor[cell]),SMALL);
+
+        }
+        cellWeightFactor.correctBoundaryConditions();
+
+        maxCellWeightRatio = VSMALL;
+        forAll(mesh_.faces(), face)
+        {
+
+            if (mesh_.isInternalFace(face))
+            {
+
+                scalar ownerCWF = cellWeightFactor[mesh_.faceOwner()[face]];
+                scalar neighbourCWF = cellWeightFactor[mesh_.faceNeighbour()[face]];
+                scalar cellWeightRatio = max(ownerCWF/neighbourCWF, neighbourCWF/ownerCWF);
+                if (cellWeightRatio > maxCellWeightRatio)
+                {
+                    maxCellWeightRatio = cellWeightRatio;
+                }
+            }
+
+        }
+
+        if (Pstream::parRun())
+        {
+            reduce(maxCellWeightRatio, maxOp<scalar>());
+        }
+
+    } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
+
+}  
+
+void uspDynamicAdapter::adapt()
+{
+
     timeSteps_++;
 
     nAvTimeSteps_++;
@@ -251,7 +390,6 @@ void uspDynamicAdapter::calculateProperties()
         momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
         linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
 
-        nParcels_[iD] += cm.nParcels()[iD];
         nParcelsXnParticle_[iD] += cm.nParcelsXnParticle()[iD];
 
     }
@@ -259,10 +397,10 @@ void uspDynamicAdapter::calculateProperties()
     if (timeSteps_ == adaptationInterval_)
     {
 
-        const auto& meshCC = cloud_.mesh().cellCentres();
-        const auto& meshV = cloud_.mesh().V();
+        const auto& meshCC = mesh_.cellCentres();
+        const auto& meshV = mesh_.V();
 
-        // computing internal fields
+        // Computing internal fields
         forAll(rhoNMean_, cell)
         {
 
@@ -292,244 +430,76 @@ void uspDynamicAdapter::calculateProperties()
 
         }
 
-        forAll(rhoNMean_, cell)
+        // Calculate cell size to mean free path ratio
+        forAll(mesh_.cells(), cell)
         {
 
-            if (translationalT_[cell] > SMALL)
+            scalarList speciesRhoN(typeIds_.size(), 0.0);
+            forAll(typeIds_,iD)
             {
-
-                forAll(typeIds_, iD)
-                {
-                    label qspec = 0;
-
-                    for (qspec=0; qspec<typeIds_.size(); ++qspec)
-                    {
-                        scalar dPQ = 0.5*(cloud_.constProps(typeIds_[iD]).d() + cloud_.constProps(typeIds_[qspec]).d());
-
-                        scalar omegaPQ = 0.5*(cloud_.constProps(typeIds_[iD]).omega() + cloud_.constProps(typeIds_[qspec]).omega());
-
-                        scalar massRatio = cloud_.constProps(typeIds_[iD]).mass()/cloud_.constProps(typeIds_[qspec]).mass();
-
-                        if (nParcels_[qspec][cell] > VSMALL && translationalT_[cell] > VSMALL)
-                        {
-                            scalar nDensQ = (nParcelsXnParticle_[qspec][cell])/(meshV[cell]*nAvTimeSteps_);
-
-                            scalar reducedMass = 
-                                cloud_.constProps(typeIds_[iD]).mass()*cloud_.constProps(typeIds_[qspec]).mass()
-                                /(cloud_.constProps(typeIds_[iD]).mass()+ cloud_.constProps(typeIds_[qspec]).mass());
-
-                            //Bird, eq (4.76)
-                            mfp_[iD][cell] += pi*dPQ*dPQ*nDensQ*pow(Tref_/translationalT_[cell],omegaPQ - 0.5)*sqrt(1.0 + massRatio);
-
-                            // //Bird, eq (4.74)
-                            mct_[iD][cell] +=
-                                2.0*sqrt(pi)*dPQ*dPQ*nDensQ*pow(translationalT_[cell]/Tref_,1.0 - omegaPQ)*sqrt(2.0*physicoChemical::k.value()*Tref_/reducedMass); 
-                        }
-                    }
-
-                }
-
-                MFP_ = 0.0;
-                MCT_ = 0.0;
-                forAll(mfp_, iD)
-                {
-                    if (rhoN_[cell] > VSMALL)
-                    {
-                        scalar nDensP = (nParcelsXnParticle_[iD][cell])/(meshV[cell]*nAvTimeSteps_);
-
-                        mfp_[iD][cell] = 1.0/mfp_[iD][cell];
-
-                        mct_[iD][cell] = 1.0/mct_[iD][cell];
-
-                        //Bird, eq (4.77)
-                        MFP_[cell] += mfp_[iD][cell]*nDensP/rhoN_[cell];
-
-                        //Bird, eq (1.38)
-                        MCT_[cell] += mct_[iD][cell]*nDensP/rhoN_[cell];
-                    }
-                }
-
-                // Calculate cell size to mean free path ratio
-                scalar largestCellDimension = 0.0;
-
-                point minPoint = vector(GREAT, GREAT, GREAT);
-                point maxPoint = vector(-GREAT, -GREAT, -GREAT);
-                const List<label>& cellNodes = mesh_.cellPoints()[cell];
-
-                forAll(cellNodes, node) 
-                {
-                    const point& cellPoint = mesh_.points()[cellNodes[node]];
-                    minPoint.x() = min(minPoint.x(),cellPoint.x());
-                    minPoint.y() = min(minPoint.y(),cellPoint.y());
-                    minPoint.z() = min(minPoint.z(),cellPoint.z());
-                    maxPoint.x() = max(maxPoint.x(),cellPoint.x());
-                    maxPoint.y() = max(maxPoint.y(),cellPoint.y());
-                    maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
-                }
-
-                cellSizeMFPRatio_[cell] = (maxPoint-minPoint)/MFP_[cell];
-
-                // Calculate time-step to mean collision time ratio
-                const scalar deltaT = mesh_.time().deltaTValue();
-
-                timeStepMCTRatio_[cell] = deltaT/MCT_[cell];
-
-
-            }
-            else
-            {
-                timeStepMCTRatio_[cell] = prevTimeStepMCTRatio_[cell];
-                cellSizeMFPRatio_[cell] = prevCellSizeMFPRatio_[cell];
+                speciesRhoN[iD] = nParcelsXnParticle_[iD][cell]/(meshV[cell]*nAvTimeSteps_);
             }
 
+            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
+                                        (
+                                            cell,
+                                            rhoN_[cell], 
+                                            translationalT_[cell], 
+                                            speciesRhoN
+                                        );
         }
         cellSizeMFPRatio_.correctBoundaryConditions();
 
-        // smooth fields
-        for (label pass=0; pass<smoothingPasses_; ++pass)
-        {
-            cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
-            cellSizeMFPRatio_.correctBoundaryConditions();
-        }
-    }
-
-}
-
-void uspDynamicAdapter::update()
-{
-
-    if (timeSteps_ == adaptationInterval_)
-    {
-
-        const auto& meshCC = cloud_.mesh().cellCentres();
-        const auto& meshV = cloud_.mesh().V();
+        // Smooth cell size to mean free path ratio
+        //for (label pass = 1; pass <= smoothingPasses_; ++pass)
+        //{
+        //    cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
+        //    cellSizeMFPRatio_.correctBoundaryConditions();
+        //}
 
         // Adapt subcell levels
         if (subcellAdaptation_)
         {
-            const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
-
             forAll(mesh_.cells(), cell)
             {
-                if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
-                {
-                    
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio_[cell][dim]/maxSubcellSizeMFPRatio_))+0.5);
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(1.0);
-                        }
-                    }
-                }
-                else
-                {
-                    forAll(solutionDimensions, dim)
-                    {
-                        if (solutionDimensions[dim])
-                        {
-                            cloud_.subcellLevels()[cell][dim] = minSubcellLevels_;
-                        }
-                        else
-                        {
-                            cloud_.subcellLevels()[cell][dim] = label(1.0);
-                        }
-                    }    
-                }
-            }
+                cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                                                (
+                                                    cell,
+                                                    cellSizeMFPRatio_[cell]
+                                                );
+            }                           
             cloud_.subcellLevels().correctBoundaryConditions();
-
         }
 
-        // Adapt cell weighting factor        
+        // Adapt cell weight factor
         if (cellWeightAdaptation_)
         {
 
+            // Calculate cell weight factor
             forAll(mesh_.cells(), cell)
             {
-                scalar RWF = cloud_.axiRWF(meshCC[cell]);
-                const vector& subcellLevels = cloud_.subcellLevels()[cell];
-                const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                cellWeightFactor_[cell] = (rhoN_[cell]*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
-            }
-            cellWeightFactor_.correctBoundaryConditions();
+                cellWeightFactor_[cell] = calculateCellWeightFactor
+                                            (
+                                                cell,
+                                                rhoN_[cell]
+                                            );
+            }                           
+            cloud_.subcellLevels().correctBoundaryConditions();
 
-            // smooth cell weighting factor
-            scalar maxCellWeightRatio;
-            label smoothingPasses = 0;
-            do
-            {
+            // Smooth cell weight factor
+            smoothCellWeightFactor
+                (
+                    rhoN_,
+                    cellWeightFactor_
+                );
 
-                smoothingPasses++;
-
-                cellWeightFactor_ = fvc::average(fvc::interpolate(cellWeightFactor_));
-                cellWeightFactor_.correctBoundaryConditions(); 
-
-                forAll(mesh_.cells(), cell)
-                {
-
-                    scalar RWF = cloud_.axiRWF(meshCC[cell]);
-                    const vector& subcellLevels = cloud_.subcellLevels()[cell];
-                    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-                    cellWeightFactor_[cell] = 
-                        max(min((rhoN_[cell]*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor_[cell]),SMALL);
-
-                }
-                cellWeightFactor_.correctBoundaryConditions();
-
-                maxCellWeightRatio = VSMALL;
-                forAll(mesh_.faces(), face)
-                {
-
-                    if (mesh_.isInternalFace(face))
-                    {
-
-                        scalar ownerCWF = cellWeightFactor_[mesh_.faceOwner()[face]];
-                        scalar neighbourCWF = cellWeightFactor_[mesh_.faceNeighbour()[face]];
-                        scalar cellWeightRatio = max(ownerCWF/neighbourCWF, neighbourCWF/ownerCWF);
-                        if (cellWeightRatio > maxCellWeightRatio)
-                        {
-                            maxCellWeightRatio = cellWeightRatio;
-                        }
-                    }
-
-                }
-
-                if (Pstream::parRun())
-                {
-                    reduce(maxCellWeightRatio, maxOp<scalar>());
-                }
-
-            } while(maxCellWeightRatio > 1.0 + cloud_.maxCellWeightRatio() && smoothingPasses < cloud_.maxSmoothingPasses());
-
-            // time average cell weight factor
+            // Time average cell weight factor
             cloud_.cellWeightFactor() = theta_*cellWeightFactor_ + (1.0-theta_)*cloud_.cellWeightFactor();
             cellWeightFactor_ = cloud_.cellWeightFactor();
 
         }
 
-        // Adapt time-step 
-        if (timeStepAdaptation_)
-        {
-            //not coded yet
-        }
-
-    }
-
-}
-
-void uspDynamicAdapter::reset()
-{
-
-
-    if (timeSteps_ == adaptationInterval_)
-    {
-
-        // reset
+        // Reset
         timeSteps_ = 0;
         
         nAvTimeSteps_ = 0;
@@ -545,33 +515,185 @@ void uspDynamicAdapter::reset()
 
             forAll(typeIds_, iD)
             {
-                nParcels_[iD][cell] = 0.0;
                 nParcelsXnParticle_[iD][cell] = 0.0;
-                mfp_[iD][cell] = 0.0;
-                mct_[iD][cell] = 0.0;
             }
         }
 
         // Store old data
-        prevTimeStepMCTRatio_ = timeStepMCTRatio_;
         prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
 
     }
 
 }
 
-void uspDynamicAdapter::adapt()
+void uspDynamicAdapter::setInitialConfiguration
+(
+    const Field<scalar>& speciesRhoN,
+    const scalar& transT
+)
 {
 
-    calculateProperties();
+        // Calculate total number density
+        scalar rhoN = 0.0;
+        forAll(typeIds_,iD)
+        {
+            rhoN += speciesRhoN[iD];
+        }
 
-    update();
+        // Calculate cell size to mean free path ratio
+        forAll(mesh_.cells(), cell)
+        {
+            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
+                                        (
+                                            cell,
+                                            rhoN, 
+                                            transT, 
+                                            speciesRhoN
+                                        );
+        }
+        cellSizeMFPRatio_.correctBoundaryConditions();
 
-    reset();
+        // Store old size to mean free path ratio
+        prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+        // Adapt subcell levels
+        if (subcellAdaptation_)
+        {
+            forAll(mesh_.cells(), cell)
+            {
+                cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                                                (
+                                                    cell,
+                                                    cellSizeMFPRatio_[cell]
+                                                );
+            }                           
+            cloud_.subcellLevels().correctBoundaryConditions();
+        }
 
 }
 
-}  // End namespace Foam
+void uspDynamicAdapter::setInitialConfiguration
+(
+    const cellZone& zone,
+    const Field<scalar>& speciesRhoN,
+    const scalar& transT
+)
+{
+
+    // Calculate total number density
+    scalar rhoN = 0.0;
+    forAll(typeIds_,iD)
+    {
+        rhoN += speciesRhoN[iD];
+    }
+
+    // Calculate cell size to mean free path ratio
+    if (zone.size())
+    {
+        for (const label cell : zone)
+        {
+            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
+                                        (
+                                            cell,
+                                            rhoN, 
+                                            transT, 
+                                            speciesRhoN
+                                        );
+        }
+    }
+    cellSizeMFPRatio_.correctBoundaryConditions();
+
+    // Store old size to mean free path ratio
+    prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+    // Adapt subcell levels
+    if (subcellAdaptation_)
+    {
+        if (zone.size())
+        {
+            for (const label cell : zone)
+            {
+                cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                                                (
+                                                    cell,
+                                                    cellSizeMFPRatio_[cell]
+                                                );
+            }            
+        }               
+        cloud_.subcellLevels().correctBoundaryConditions();
+    }
+
+}
+
+void uspDynamicAdapter::setInitialConfiguration
+(
+    const List<autoPtr<volScalarField>>& speciesRhoNPtr,
+    const volScalarField& transT
+)
+{
+
+    // Calculate total number density
+    volScalarField rhoN
+    (
+        IOobject
+        (
+            "rhoN",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar(dimless/dimVolume, 0.0)
+    );
+
+    forAll(typeIds_,iD)
+    {
+        const volScalarField& speciesRhoN = speciesRhoNPtr[iD];
+        rhoN += speciesRhoN;
+    }
+
+    // Calculate cell size to mean free path ratio
+    forAll(mesh_.cells(), cell)
+    {
+
+        scalarList speciesRhoN(typeIds_.size(), 0.0);
+        forAll(typeIds_,iD)
+        {
+            const volScalarField& speciesRhoNID = speciesRhoNPtr[iD];
+            speciesRhoN[iD] = speciesRhoNID[cell];
+        }
+
+        cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
+                                    (
+                                        cell,
+                                        rhoN[cell], 
+                                        transT[cell], 
+                                        speciesRhoN
+                                    );
+    }
+    cellSizeMFPRatio_.correctBoundaryConditions();
+
+    // Store old size to mean free path ratio
+    prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+    // Adapt subcell levels
+    if (subcellAdaptation_)
+    {
+        forAll(mesh_.cells(), cell)
+        {
+            cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                                            (
+                                                cell,
+                                                cellSizeMFPRatio_[cell]
+                                            );
+        }                           
+        cloud_.subcellLevels().correctBoundaryConditions();
+    }
+
+}
+
+} // End namespace Foam
 
 // ************************************************************************* //
 

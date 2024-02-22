@@ -72,6 +72,8 @@ int main(int argc, char *argv[])
             usp.info();   
         }
 
+        runTime.write();
+
         if (infoCounter >= usp.nTerminalOutputs())
         {
             usp.loadBalanceCheck();

@@ -222,7 +222,7 @@ void Foam::uspCloud::weighting()
 
 void Foam::uspCloud::adaptation()
 {
-    if (dynamicAdaptation())
+    if (adaptive())
     {
         dynamicAdapter_.adapt();
         if (dynamicAdapter_.cellWeightAdaptation())
@@ -416,10 +416,10 @@ Foam::uspCloud::uspCloud
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
     collTref_(particleProperties_.subDict("collisionProperties").get<scalar>("Tref")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
-    maxCellWeightRatio_(0.05),
-    maxSmoothingPasses_(1000),
-    dynamicAdaptation_(particleProperties_.get<Switch>("dynamicSimulation")),
+    maxCellWeightRatio_(0.1),
+    maxSmoothingPasses_(100),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
+    adaptive_(particleProperties_.get<Switch>("adaptiveSimulation")),
     radialExtent_(0.0),
     maxRWF_(1.0),
     nTerminalOutputs_
@@ -553,25 +553,23 @@ Foam::uspCloud::uspCloud
     }
     subcellLevels_.correctBoundaryConditions();  
 
-    // Set initial cell weights (changes while creating particles for dynamic simulation)
-    cellWeightFactor_ = 1.0;
-    cellWeightFactor_.correctBoundaryConditions();
-
     // Build particle constant properties
     buildConstProps();
 
     // Non-uniform cell weighting
     if (cellWeighted_)
     {
-        minParticlesPerSubcell_ = particleProperties_.get<label>("minParticlesPerSubcell");
-        particlesPerSubcell_ = particleProperties_.get<label>("particlesPerSubcell");
+        dictionary cellWeightedDict = particleProperties_.subDict("cellWeightedProperties");
+        minParticlesPerSubcell_ = cellWeightedDict.get<label>("minParticlesPerSubcell");
+        particlesPerSubcell_ = cellWeightedDict.get<label>("particlesPerSubcell");
     }
 
     // Axisymmetric weighting
     if (axisymmetric_)
     {
-        radialExtent_ = particleProperties_.get<scalar>("radialExtentOfDomain");
-        maxRWF_ = particleProperties_.get<scalar>("maxRadialWeightingFactor");
+        dictionary axisymmetricDict = particleProperties_.subDict("axisymmetricProperties");
+        radialExtent_ = axisymmetricDict.get<scalar>("radialExtentOfDomain");
+        maxRWF_ = axisymmetricDict.get<scalar>("maxRadialWeightingFactor");
     }
 
     // Check for existing lagrangian data
