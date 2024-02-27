@@ -43,7 +43,7 @@ uspDynamicAdapter::uspDynamicAdapter
     dict_(dict),
     mesh_(mesh),
     cloud_(cloud),
-    minSubcellLevels_(2),
+    minSubcellLevels_(1),
     maxSubcellLevels_(5),
     cellWeightAdaptation_(false),
     subcellAdaptation_(false),
@@ -284,7 +284,7 @@ vector uspDynamicAdapter::calculateSubcellLevels
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = label(1.0);
+                subcellLevels[dim] = minSubcellLevels_;
             }
             else
             {
