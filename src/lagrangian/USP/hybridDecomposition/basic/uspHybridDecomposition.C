@@ -99,7 +99,7 @@ Foam::autoPtr<Foam::uspHybridDecomposition> Foam::uspHybridDecomposition::New
 
     const word modelType(dict.get<word>("decompositionModel"));
 
-    Info<< "Selecting hybrid decomposition model " << modelType << endl;
+    Info<< "Selecting hybridDecompositionModel " << modelType << endl;
 
     auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
 

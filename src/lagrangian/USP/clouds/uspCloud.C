@@ -415,11 +415,11 @@ Foam::uspCloud::uspCloud
     typeIdList_(particleProperties_.lookup("typeIdList")),
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
     collTref_(particleProperties_.subDict("collisionProperties").get<scalar>("Tref")),
+    adaptive_(particleProperties_.get<Switch>("adaptiveSimulation")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
     maxCellWeightRatio_(0.1),
     maxSmoothingPasses_(100),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
-    adaptive_(particleProperties_.get<Switch>("adaptiveSimulation")),
     radialExtent_(0.0),
     maxRWF_(1.0),
     nTerminalOutputs_

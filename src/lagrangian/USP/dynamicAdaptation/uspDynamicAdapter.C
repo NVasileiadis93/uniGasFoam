@@ -229,10 +229,8 @@ vector uspDynamicAdapter::calculateCellSizeMFPRatio
         }
 
         // Calculate cell size to mean free path ratio
-        scalar largestCellDimension = 0.0;
-
-        point minPoint = vector(GREAT, GREAT, GREAT);
-        point maxPoint = vector(-GREAT, -GREAT, -GREAT);
+        point minPoint = vector(VGREAT, VGREAT, VGREAT);
+        point maxPoint = vector(-VGREAT, -VGREAT, -VGREAT);
         const List<label>& cellNodes = mesh_.cellPoints()[cell];
 
         forAll(cellNodes, node) 
@@ -286,7 +284,7 @@ vector uspDynamicAdapter::calculateSubcellLevels
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = minSubcellLevels_;
+                subcellLevels[dim] = label(1.0);
             }
             else
             {
@@ -397,7 +395,6 @@ void uspDynamicAdapter::adapt()
     if (timeSteps_ == adaptationInterval_)
     {
 
-        const auto& meshCC = mesh_.cellCentres();
         const auto& meshV = mesh_.V();
 
         // Computing internal fields
