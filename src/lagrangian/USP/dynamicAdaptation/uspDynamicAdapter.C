@@ -49,7 +49,7 @@ uspDynamicAdapter::uspDynamicAdapter
     subcellAdaptation_(false),
     adaptationInterval_(),
     maxSubcellSizeMFPRatio_(),
-    smoothingPasses_(10),
+    smoothingPasses_(25),
     theta_(0.1),
     timeSteps_(0),
     nAvTimeSteps_(0),
@@ -275,7 +275,6 @@ vector uspDynamicAdapter::calculateSubcellLevels
             {
                 subcellLevels[dim] = label(1.0);
             }
-            Info << dim << " " << subcellLevels[dim] << " " << cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_ << " " << std::ceil(cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_) << endl;
         }
     }
     else
@@ -449,11 +448,11 @@ void uspDynamicAdapter::adapt()
         cellSizeMFPRatio_.correctBoundaryConditions();
 
         // Smooth cell size to mean free path ratio
-        //for (label pass = 1; pass <= smoothingPasses_; ++pass)
-        //{
-        //    cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
-        //    cellSizeMFPRatio_.correctBoundaryConditions();
-        //}
+        for (label pass = 1; pass <= smoothingPasses_; ++pass)
+        {
+            cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
+            cellSizeMFPRatio_.correctBoundaryConditions();
+        }
 
         // Adapt subcell levels
         if (subcellAdaptation_)
