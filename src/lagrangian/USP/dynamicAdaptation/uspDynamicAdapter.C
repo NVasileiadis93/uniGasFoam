@@ -229,8 +229,8 @@ vector uspDynamicAdapter::calculateCellSizeMFPRatio
         }
 
         // Calculate cell size to mean free path ratio
-        point minPoint = vector(VGREAT, VGREAT, VGREAT);
-        point maxPoint = vector(-VGREAT, -VGREAT, -VGREAT);
+        point minPoint = vector(GREAT, GREAT, GREAT);
+        point maxPoint = vector(-GREAT, -GREAT, -GREAT);
         const List<label>& cellNodes = mesh_.cellPoints()[cell];
 
         forAll(cellNodes, node) 
@@ -264,18 +264,18 @@ vector uspDynamicAdapter::calculateSubcellLevels
     vector subcellLevels;
 
     if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
-    {
-        
+    { 
         forAll(cloud_.solutionDimensions(), dim)
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_))+0.5);
+                subcellLevels[dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,std::ceil(cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_))));
             }
             else
             {
                 subcellLevels[dim] = label(1.0);
             }
+            Info << dim << " " << subcellLevels[dim] << " " << cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_ << " " << std::ceil(cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_) << endl;
         }
     }
     else
@@ -284,14 +284,14 @@ vector uspDynamicAdapter::calculateSubcellLevels
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = minSubcellLevels_;
+                subcellLevels[dim] = label(minSubcellLevels_);
             }
             else
             {
                 subcellLevels[dim] = label(1.0);
             }
         }    
-    }
+    }  
 
     return subcellLevels;
 
@@ -395,6 +395,7 @@ void uspDynamicAdapter::adapt()
     if (timeSteps_ == adaptationInterval_)
     {
 
+        const auto& meshCC = mesh_.cellCentres();
         const auto& meshV = mesh_.V();
 
         // Computing internal fields
