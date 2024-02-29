@@ -225,11 +225,11 @@ void Foam::uspCloud::adaptation()
     if (adaptive())
     {
         dynamicAdapter_.adapt();
-        if (dynamicAdapter_.cellWeightAdaptation())
-        {
-            cellWeighting();
-            buildCellOccupancy();
-        }
+        //if (dynamicAdapter_.cellWeightAdaptation())
+        //{
+        //    cellWeighting();
+        //    buildCellOccupancy();
+        //}
     }
 }
 
@@ -417,8 +417,8 @@ Foam::uspCloud::uspCloud
     collTref_(particleProperties_.subDict("collisionProperties").get<scalar>("Tref")),
     adaptive_(particleProperties_.get<Switch>("adaptiveSimulation")),
     cellWeighted_(particleProperties_.get<Switch>("cellWeightedSimulation")),
-    maxCellWeightRatio_(0.1),
-    maxSmoothingPasses_(100),
+    maxCellWeightRatio_(0.05),
+    maxSmoothingPasses_(500),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
     radialExtent_(0.0),
     maxRWF_(1.0),

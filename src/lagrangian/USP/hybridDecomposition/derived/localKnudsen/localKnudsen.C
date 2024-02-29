@@ -438,28 +438,28 @@ void Foam::localKnudsen::decompose()
         scalarField maxMagGradT(mesh_.nCells());
         scalarField maxMagGradU(mesh_.nCells());
 
-        maxMagGradRho = mag(fvc::grad(rhoM_));
-        maxMagGradT = mag(fvc::grad(translationalT_));
-        maxMagGradU = mag(fvc::grad(UMean_));
+        //maxMagGradRho = mag(fvc::grad(rhoM_));
+        //maxMagGradT = mag(fvc::grad(translationalT_));
+        //maxMagGradU = mag(fvc::grad(UMean_));
 
-        //forAll(mesh_.cells(), cell)
-        //{
-        //
-        //    maxMagGradRho[cell] = 0.0;
-        //    maxMagGradT[cell] = 0.0;
-        //    maxMagGradU[cell] = 0.0;
-        //    forAll(mesh_.cellCells()[cell], cellI)
-        //    {
-        //
-        //        label adjCell = mesh_.cellCells()[cell][cellI];
-        //        scalar cellDistance = mag(mesh_.C()[adjCell]-mesh_.C()[cell]);
-        //
-        //        maxMagGradRho[cell] = max(maxMagGradRho[cell], fabs(rhoM_[adjCell]-rhoM_[cell])/cellDistance);
-        //        maxMagGradT[cell] = max(maxMagGradT[cell], fabs(translationalT_[adjCell]-translationalT_[cell])/cellDistance);
-        //        maxMagGradU[cell] = max(maxMagGradU[cell], fabs(mag(UMean_[adjCell])-mag(UMean_[cell]))/cellDistance);
-        //
-        //    }
-        //}        
+        forAll(mesh_.cells(), cell)
+        {
+        
+            maxMagGradRho[cell] = 0.0;
+            maxMagGradT[cell] = 0.0;
+            maxMagGradU[cell] = 0.0;
+            forAll(mesh_.cellCells()[cell], cellI)
+            {
+        
+                label adjCell = mesh_.cellCells()[cell][cellI];
+                scalar cellDistance = mag(mesh_.C()[adjCell]-mesh_.C()[cell]);
+        
+                maxMagGradRho[cell] = max(maxMagGradRho[cell], fabs(rhoM_[adjCell]-rhoM_[cell])/cellDistance);
+                maxMagGradT[cell] = max(maxMagGradT[cell], fabs(translationalT_[adjCell]-translationalT_[cell])/cellDistance);
+                maxMagGradU[cell] = max(maxMagGradU[cell], fabs(mag(UMean_[adjCell])-mag(UMean_[cell]))/cellDistance);
+        
+            }
+        }        
 
         // Calculate KnGLL based on macroscopic quantities
         scalar instKnRho;
