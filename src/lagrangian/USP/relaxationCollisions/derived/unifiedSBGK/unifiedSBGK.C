@@ -1088,7 +1088,7 @@ Foam::vector Foam::unifiedSBGK::samplePostRelaxationVelocity
         prob = 1.0+coeffQ/(p*u0)*(q.x()*v.x()+q.y()*v.y()+q.z()*v.z())*(vSq/2.5-1.0)
                +coeffS/p*(s.xx()*(v.x()*v.x()-vTr)+s.yy()*(v.y()*v.y()-vTr)+s.zz()*(v.z()*v.z()-vTr)+2.0*s.xy()*v.x()*v.y()+2.0*s.xz()*v.x()*v.z()+2.0*s.yz()*v.y()*v.z());
 
-        if (prob > maxProb_[cell])
+        if (prob > maxProb_[cell] && prob < 10.0)
         {
             maxProb_[cell] = prob;
             maxProbReset_[cell] = false;

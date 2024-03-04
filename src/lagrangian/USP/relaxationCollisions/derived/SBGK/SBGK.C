@@ -1036,7 +1036,7 @@ Foam::vector Foam::SBGK::samplePostRelaxationVelocity
         v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
         prob = 1.0+2.0*(1.0-Pr)/(p*u0)*(q.x()*v.x()+q.y()*v.y()+q.z()*v.z())*((sqr(v.x())+sqr(v.y())+sqr(v.z()))/2.5-1.0);
 
-        if (prob > maxProb_[cell])
+        if (prob > maxProb_[cell] && prob < 10.0)
         {
             maxProb_[cell] = prob;
             maxProbReset_[cell] = false;
