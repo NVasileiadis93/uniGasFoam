@@ -131,12 +131,12 @@ void uspLiouFangPressureInletPatch::controlParcelsBeforeCollisions()
 
 void uspLiouFangPressureInletPatch::controlParcelsAfterCollisions()
 {
+
     vectorField momentum(faces_.size(), Zero);
     vectorField newInletVelocity(faces_.size(), Zero);
     scalarField mass(faces_.size(), scalar(0));
 
-    const List<DynamicList<uspParcel*>>& cellOccupancy =
-        cloud_.cellOccupancy();
+    const List<DynamicList<uspParcel*>>& cellOccupancy = cloud_.cellOccupancy();
 
     forAll(cells_, c)
     {
@@ -145,16 +145,17 @@ void uspLiouFangPressureInletPatch::controlParcelsAfterCollisions()
 
         forAll(parcelsInCell, pIC)
         {
+
             uspParcel* p = parcelsInCell[pIC];
 
-            const scalar m =
-                cloud_.nParticle()*cloud_.constProps(p->typeId()).mass();
+            const scalar m = cloud_.nParticle()*cloud_.constProps(p->typeId()).mass();
 
             scalar CWF = cloud_.cellWF(cellI);
             scalar RWF = cloud_.axiRWF(p->position());
 
             momentum[c] += CWF*RWF*m*p->U();
             mass[c] += CWF*RWF*m;
+
         }
 
         if (mass[c]>0)

@@ -225,11 +225,11 @@ void Foam::uspCloud::adaptation()
     if (adaptive())
     {
         dynamicAdapter_.adapt();
-        //if (dynamicAdapter_.cellWeightAdaptation())
-        //{
-        //    cellWeighting();
-        //    buildCellOccupancy();
-        //}
+        if (dynamicAdapter_.cellWeightAdaptation())
+        {
+            cellWeighting();
+            buildCellOccupancy();
+        }
     }
 }
 

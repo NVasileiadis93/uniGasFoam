@@ -44,7 +44,7 @@ uspDynamicAdapter::uspDynamicAdapter
     mesh_(mesh),
     cloud_(cloud),
     minSubcellLevels_(1),
-    maxSubcellLevels_(5),
+    maxSubcellLevels_(10),
     cellWeightAdaptation_(false),
     subcellAdaptation_(false),
     adaptationInterval_(),
