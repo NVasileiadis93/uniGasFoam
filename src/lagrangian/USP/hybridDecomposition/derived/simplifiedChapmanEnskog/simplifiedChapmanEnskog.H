@@ -83,7 +83,7 @@ class simplifiedChapmanEnskog
 
         label timeSteps_;
         
-        label nAvTimeSteps_;
+        scalar timeAvCounter_;
 
         labelList typeIds_;        
 
@@ -105,7 +105,6 @@ class simplifiedChapmanEnskog
         scalarField ev_;
         scalarField ew_;
         scalarField e_;
-        scalarField nColls_;
         scalarField rhoNMeanXnParticle_;
         scalarField rhoMMeanXnParticle_;
         scalarField linearKEMeanXnParticle_;

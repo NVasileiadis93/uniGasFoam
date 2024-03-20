@@ -70,8 +70,11 @@ Foam::uspHybridDecomposition::uspHybridDecomposition
     decompositionInterval_(timeDict_.get<label>("decompositionInterval")),
     resetAtDecomposition_(timeDict_.getOrDefault<bool>("resetAtDecomposition",true)),
     resetAtDecompositionUntilTime_(timeDict_.getOrDefault<scalar>("resetAtDecompositionUntilTime",VGREAT)),
-    refinementPasses_(10),
-    boundCoeff_(0.5)
+    refinementPasses_(3),
+    neighborLevels_(3),
+    maxNeighborFraction_(0.4),
+    boundCoeff_(0.5),
+    neighborCells_()
 {
 
 }
@@ -120,6 +123,55 @@ Foam::autoPtr<Foam::uspHybridDecomposition> Foam::uspHybridDecomposition::New
 // ************************************************************************* //
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::uspHybridDecomposition::fetchCellNeighborhood
+(
+    const label cell,
+    const label nLevels,
+    DynamicList<label>& neighborCells
+)
+{
+
+    // initialize neighborCells
+    neighborCells.setCapacity(0);
+
+    // get cells in extended neighbor area
+    label neighborCandidate;
+    label neighborCellinitial = 0;
+    label neighborCellFinal = 0;
+    label neighborCellCapacity = 1;
+    boolList isNeighbor(mesh_.nCells());
+    isNeighbor = false;
+    isNeighbor[cell]=true;
+    neighborCells.append(cell);
+
+    for(label level=1; level<=nLevels; level++)
+    {
+
+        neighborCellinitial=neighborCellFinal;
+        neighborCellFinal=neighborCellCapacity-1;
+
+        for(label cellI=neighborCellinitial; cellI<=neighborCellFinal; cellI++)
+        {
+
+            forAll(mesh_.cellCells()[neighborCells[cellI]], cellJ)
+            {
+
+                  neighborCandidate=mesh_.cellCells()[neighborCells[cellI]][cellJ];
+
+                  if (!isNeighbor[neighborCandidate])
+                  {
+
+                      neighborCellCapacity++;
+                      isNeighbor[neighborCandidate]=true;
+                      neighborCells.append(neighborCandidate);
+
+                  }
+            }
+        }
+    }
+
+}
 
 void Foam::uspHybridDecomposition::updateProperties()
 {

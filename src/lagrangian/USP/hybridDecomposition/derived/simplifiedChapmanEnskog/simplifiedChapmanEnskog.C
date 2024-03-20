@@ -55,7 +55,7 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
     theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(propsDict_.getOrDefault<scalar>("smoothingPasses",0)),  
     timeSteps_(0),
-    nAvTimeSteps_(0),
+    timeAvCounter_(0.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoMMean_(mesh_.nCells(), 0.0),
     linearKEMean_(mesh_.nCells(), 0.0),
@@ -73,7 +73,6 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
     ev_(mesh_.nCells(), 0.0),
     ew_(mesh_.nCells(), 0.0),
     e_(mesh_.nCells(), 0.0),
-    nColls_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -231,9 +230,11 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
 void Foam::simplifiedChapmanEnskog::decompose()
 {
 
+    const scalar& deltaT = mesh_.time().deltaTValue();
+
     timeSteps_++;
 
-    nAvTimeSteps_++;
+    timeAvCounter_ += deltaT;
 
     // get cell measurements
     auto& cm = cloud_.cellPropMeasurements();
@@ -241,40 +242,37 @@ void Foam::simplifiedChapmanEnskog::decompose()
     forAll(cm.rhoNMean(), iD)
     {
 
-        rhoNMean_ += cm.rhoNMean()[iD];
-        rhoMMean_  += cm.rhoMMean()[iD];
-        linearKEMean_ += cm.linearKEMean()[iD];
+        rhoNMean_ += deltaT*cm.rhoNMean()[iD];
+        rhoMMean_  += deltaT*cm.rhoMMean()[iD];
+        linearKEMean_ += deltaT*cm.linearKEMean()[iD];
 
-        muu_ += cm.muu()[iD];
-        muv_ += cm.muv()[iD];
-        muw_ += cm.muw()[iD];
-        mvv_ += cm.mvv()[iD];
-        mvw_ += cm.mvw()[iD];
-        mww_ += cm.mww()[iD];
-        mcc_ += cm.mcc()[iD];
-        mccu_ += cm.mccu()[iD];
-        mccv_ += cm.mccv()[iD];
-        mccw_ += cm.mccw()[iD];
+        muu_ += deltaT*cm.muu()[iD];
+        muv_ += deltaT*cm.muv()[iD];
+        muw_ += deltaT*cm.muw()[iD];
+        mvv_ += deltaT*cm.mvv()[iD];
+        mvw_ += deltaT*cm.mvw()[iD];
+        mww_ += deltaT*cm.mww()[iD];
+        mcc_ += deltaT*cm.mcc()[iD];
+        mccu_ += deltaT*cm.mccu()[iD];
+        mccv_ += deltaT*cm.mccv()[iD];
+        mccw_ += deltaT*cm.mccw()[iD];
 
-        eu_ += cm.eu()[iD];
-        ev_ += cm.ev()[iD];
-        ew_ += cm.ew()[iD];
-        e_ += cm.e()[iD];
-        nColls_ += cm.nColls()[iD];
+        eu_ += deltaT*cm.eu()[iD];
+        ev_ += deltaT*cm.ev()[iD];
+        ew_ += deltaT*cm.ew()[iD];
+        e_ += deltaT*cm.e()[iD];
 
-        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
-        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
-        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
-        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
+        rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
+        rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
+        linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
+        momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
 
-        nParcels_[iD] += cm.nParcels()[iD];
+        nParcels_[iD] += deltaT*cm.nParcels()[iD];
 
     }
 
     if (timeSteps_ == decompositionInterval_)
     {
-
-        const scalar& deltaT = cloud_.mesh().time().deltaTValue();
 
         // computing internal fields
         forAll(rhoNMean_, cell)
@@ -284,14 +282,14 @@ void Foam::simplifiedChapmanEnskog::decompose()
             {
                 const scalar cellVolume = mesh_.cellVolumes()[cell];
 
-                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(nAvTimeSteps_*cellVolume);
-                rhoM_[cell] = rhoMMeanXnParticle_[cell]/(nAvTimeSteps_*cellVolume);
+                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(timeAvCounter_*cellVolume);
+                rhoM_[cell] = rhoMMeanXnParticle_[cell]/(timeAvCounter_*cellVolume);
 
-                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
-                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*cellVolume*nAvTimeSteps_);
+                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
+                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*cellVolume*timeAvCounter_);
 
-                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
-                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
+                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
+                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
                 translationalT_[cell] =
                     2.0/(3.0*physicoChemical::k.value()*rhoNMean)
                 *(
@@ -390,7 +388,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
                     pressureTensor_[cell].zy()*UMean_[cell].y() -
                     pressureTensor_[cell].zz()*UMean_[cell].z();
 
-                if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cloud_.relaxationCollisionModelName() == "unifiedShakhov")
+                if (cloud_.cellCollModel(cell) == cloud_.relCollModel() && cloud_.relaxationCollisionModelName() == "USBGK")
                 {
                     scalar Prandtl = 0.0;
                     scalar viscosity = 0.0;
@@ -513,52 +511,118 @@ void Foam::simplifiedChapmanEnskog::decompose()
             }
         }
 
-        //Remove isolated or single face connected cells
+        //Refine mesh decomposition
+        label adjacentBinCollCells;
+        label adjacentRelCollCells;
+        label neighborRelCollCells;
+        label neighborBinCollCells;
+
         for (label pass=1; pass<=refinementPasses_; pass++)
         {
-            forAll(mesh_.cells(), cell)
+
+            //Refine binary collision cells
+            forAll(mesh_.cells(), cellI)
             {
 
-                if (cloud_.cellCollModel()[cell] == cloud_.binCollModel())
+                if (cloud_.cellCollModel()[cellI] == cloud_.binCollModel())
                 {
+                    adjacentBinCollCells = 0;
+                    adjacentRelCollCells = 0;
 
-                    label adjacentBinCollCells=0;
-                    
-                    forAll(mesh_.cellCells()[cell], adjCell)
+                    forAll(mesh_.cellCells()[cellI], cellJ)
                     {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cell][adjCell]] == cloud_.binCollModel())
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
                         {
                             adjacentBinCollCells++;
                         }
-                    }
-                    
-                    if (adjacentBinCollCells <= 1)
-                    {
-                        cloud_.cellCollModel()[cell] = cloud_.relCollModel();   
-                    }
-
-                }
-
-                if (cloud_.cellCollModel()[cell] == cloud_.relCollModel())
-                {
-
-                    label adjacentRelCollCells=0;
-                    
-                    forAll(mesh_.cellCells()[cell], adjCell)
-                    {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cell][adjCell]] == cloud_.relCollModel())
+                        else
                         {
                             adjacentRelCollCells++;
                         }
                     }
-                    
-                    if (adjacentRelCollCells <= 1)
+
+                    if (adjacentBinCollCells == 0 || (adjacentBinCollCells == 1 && adjacentRelCollCells > 1))
                     {
-                        cloud_.cellCollModel()[cell] = cloud_.binCollModel();   
+                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        continue;
+                    }
+
+                    fetchCellNeighborhood
+                    (
+                        cellI,
+                        neighborLevels_,
+                        neighborCells_
+                    );
+
+                    neighborBinCollCells = 0;
+                    forAll(neighborCells_, cellJ)
+                    {
+                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.binCollModel())
+                        {
+                            neighborBinCollCells++;
+                        }
+                    }  
+
+                    if (neighborBinCollCells < maxNeighborFraction_*neighborCells_.size())
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        continue;
                     }
 
                 }
+            }
 
+            //Refine relaxation collision cells
+            forAll(mesh_.cells(), cellI)
+            {
+
+                if (cloud_.cellCollModel()[cellI] == cloud_.relCollModel())
+                {
+                
+                    adjacentBinCollCells=0;
+                    adjacentRelCollCells=0;
+
+                    forAll(mesh_.cellCells()[cellI], cellJ)
+                    {
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
+                        {
+                            adjacentBinCollCells++;
+                        }
+                        else
+                        {
+                            adjacentRelCollCells++;
+                        }
+                    }
+
+                    if (adjacentRelCollCells == 0 || (adjacentRelCollCells == 1 && adjacentBinCollCells > 1))
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        continue; 
+                    }
+
+                    fetchCellNeighborhood
+                    (
+                        cellI,
+                        neighborLevels_,
+                        neighborCells_
+                    );
+
+                    neighborRelCollCells = 0;
+                    forAll(neighborCells_, cellJ)
+                    {                    
+                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.relCollModel())
+                        {
+                            neighborRelCollCells++;
+                        }
+                    }  
+
+                    if (neighborRelCollCells < maxNeighborFraction_*neighborCells_.size())
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        continue;
+                    }
+
+                }
             }
         }
 
@@ -568,7 +632,7 @@ void Foam::simplifiedChapmanEnskog::decompose()
         if (resetAtDecomposition_ && mesh_.time().value() < resetAtDecompositionUntilTime_+0.5*cloud_.mesh().time().deltaTValue())
         {
 
-            nAvTimeSteps_ = 0;
+            timeAvCounter_ = 0.0;
 
             // reset cell information
             forAll(rhoN_, cell)
@@ -591,7 +655,6 @@ void Foam::simplifiedChapmanEnskog::decompose()
                 ev_[cell] = 0.0;
                 ew_[cell] = 0.0;
                 e_[cell] = 0.0;
-                nColls_[cell] = 0.0;
                 rhoNMeanXnParticle_[cell] = 0.0;
                 rhoMMeanXnParticle_[cell] = 0.0;
                 linearKEMeanXnParticle_[cell] = 0.0;

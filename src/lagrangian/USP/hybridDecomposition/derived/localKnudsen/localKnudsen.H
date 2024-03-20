@@ -83,7 +83,7 @@ class localKnudsen
 
         label timeSteps_;
         
-        label nAvTimeSteps_;
+        scalar timeAvCounter_;
 
         labelList typeIds_;        
 
@@ -96,14 +96,6 @@ class localKnudsen
         scalarField linearKEMeanXnParticle_;
         vectorField momentumMeanXnParticle_;
         List<scalarField> nParcelsXnParticle_;
-
-        // boundary measurements
-        List<labelList> boundaryCells_;
-        
-        List<scalarField> rhoNBF_;
-        List<scalarField> rhoMBF_;
-        List<scalarField> linearKEBF_;
-        List<vectorField> momentumBF_;
 
         // fields required for decomposition
         volScalarField KnGLL_;

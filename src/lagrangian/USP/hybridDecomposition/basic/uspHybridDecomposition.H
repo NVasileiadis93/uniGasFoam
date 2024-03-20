@@ -90,9 +90,17 @@ protected:
         // Number of refinement passes
         label refinementPasses_;
 
+        // Levels of neightbors
+        label neighborLevels_;
+
+        // Fraction of maximum allowed neighbors of opposite collision model
+        scalar maxNeighborFraction_;
+
         // Coefficient for correcting boundary measurements
         scalar boundCoeff_;
 
+        // List of neighborhood cells
+        DynamicList<label> neighborCells_;
 
 public:
 
@@ -142,6 +150,13 @@ public:
     // Access
 
     // Member Functions
+
+        void fetchCellNeighborhood
+        (
+            const label cell,
+            const label nLevels,
+            DynamicList<label>& neighborCells
+        );
 
         void updateProperties();
 

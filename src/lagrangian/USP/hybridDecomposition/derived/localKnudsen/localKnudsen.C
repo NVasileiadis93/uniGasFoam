@@ -55,20 +55,15 @@ Foam::localKnudsen::localKnudsen
     theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(propsDict_.getOrDefault<scalar>("smoothingPasses",0)),    
     timeSteps_(0),
-    nAvTimeSteps_(0),
+    timeAvCounter_(0.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoMMean_(mesh_.nCells(), 0.0),
     linearKEMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
-    momentumMeanXnParticle_(mesh_.nCells(), Zero),
+    momentumMeanXnParticle_(mesh_.nCells(), vector::zero),
     nParcelsXnParticle_(),
-    boundaryCells_(),
-    rhoNBF_(),
-    rhoMBF_(),
-    linearKEBF_(),
-    momentumBF_(),
     KnGLL_
     (
         IOobject
@@ -129,11 +124,11 @@ Foam::localKnudsen::localKnudsen
     (
         IOobject
         (
-            "rhoN",
+            "rhoN_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless/dimVolume, Zero),
@@ -143,11 +138,11 @@ Foam::localKnudsen::localKnudsen
     (
         IOobject
         (
-            "rhoM",
+            "rhoM_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimMass/dimVolume, Zero),
@@ -157,40 +152,43 @@ Foam::localKnudsen::localKnudsen
     (
         IOobject
         (
-            "p",
+            "p_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimPressure, Zero)
+        dimensionedScalar(dimPressure, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     translationalT_
     (
         IOobject
         (
-            "translationalT",
+            "translationalT_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimTemperature, Zero)
+        dimensionedScalar(dimTemperature, Zero),
+        zeroGradientFvPatchScalarField::typeName
     ),
     UMean_
     (
         IOobject
         (
-            "UMean",
+            "UMean_",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedVector(dimVelocity, Zero)
+        dimensionedVector(dimVelocity, Zero),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
 
@@ -204,37 +202,7 @@ Foam::localKnudsen::localKnudsen
 
     for (auto& n : nParcelsXnParticle_)
     {
-        n.setSize(mesh_.nCells());
-    }
-
-    boundaryCells_.setSize(mesh_.boundaryMesh().size());
-
-    forAll(boundaryCells_, p)
-    {
-        const polyPatch& patch = mesh_.boundaryMesh()[p];
-
-        boundaryCells_[p].setSize(patch.size());
-
-        forAll(boundaryCells_[p], c)
-        {
-            boundaryCells_[p][c] = patch.faceCells()[c];
-        }
-    }
-
-    // initialisation
-    rhoNBF_.setSize(mesh_.boundaryMesh().size());
-    rhoMBF_.setSize(mesh_.boundaryMesh().size());
-    linearKEBF_.setSize(mesh_.boundaryMesh().size());
-    momentumBF_.setSize(mesh_.boundaryMesh().size());
-
-    forAll(rhoNBF_, j)
-    {
-        const polyPatch& patch = mesh_.boundaryMesh()[j];
-
-        rhoNBF_[j].setSize(patch.size(), 0.0);
-        rhoMBF_[j].setSize(patch.size(), 0.0);
-        linearKEBF_[j].setSize(patch.size(), 0.0);
-        momentumBF_[j].setSize(patch.size(), Zero);
+        n.setSize(mesh_.nCells(), 0.0);
     }
 
 }
@@ -248,11 +216,11 @@ Foam::localKnudsen::localKnudsen
 void Foam::localKnudsen::decompose()
 {
 
+    const scalar& deltaT = mesh_.time().deltaTValue();
+
     timeSteps_++;
 
-    nAvTimeSteps_++;
-
-    const scalar nParticle = cloud_.nParticle();
+    timeAvCounter_ += deltaT;
 
     // get cell measurements
     auto& cm = cloud_.cellPropMeasurements();
@@ -260,34 +228,15 @@ void Foam::localKnudsen::decompose()
     forAll(cm.rhoNMean(), i)
     {
 
-        rhoNMean_ += cm.rhoNMean()[i];
-        rhoMMean_  += cm.rhoMMean()[i];
-        linearKEMean_ += cm.linearKEMean()[i];
-        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[i];
-        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[i];
-        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[i];
-        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[i];
-        nParcelsXnParticle_[i] += cm.nParcelsXnParticle()[i];
+        rhoNMean_ += deltaT*cm.rhoNMean()[i];
+        rhoMMean_  += deltaT*cm.rhoMMean()[i];
+        linearKEMean_ += deltaT*cm.linearKEMean()[i];
+        rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[i];
+        rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[i];
+        linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[i];
+        momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[i];
+        nParcelsXnParticle_[i] += deltaT*cm.nParcelsXnParticle()[i];
 
-    }
-
-    // Obtain boundary measurements
-    auto& bm = cloud_.boundaryFluxMeasurements();
-
-    forAll(bm.rhoNBF(), i)
-    {
-
-        forAll(bm.rhoNBF()[i], j)
-        {
-            forAll(bm.rhoNBF()[i][j], k)
-            {
-                rhoNBF_[j][k] += bm.rhoNBF()[i][j][k];
-                rhoMBF_[j][k] += bm.rhoMBF()[i][j][k];
-                linearKEBF_[j][k] += bm.linearKEBF()[i][j][k];
-                momentumBF_[j][k] += bm.momentumBF()[i][j][k];
-            }
-        }
-        
     }
 
     if (timeSteps_ == decompositionInterval_)
@@ -300,14 +249,14 @@ void Foam::localKnudsen::decompose()
             {
                 const scalar cellVolume = mesh_.cellVolumes()[cell];
 
-                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(nAvTimeSteps_*cellVolume);
-                rhoM_[cell] = rhoMMeanXnParticle_[cell]/(nAvTimeSteps_*cellVolume);
+                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(timeAvCounter_*cellVolume);
+                rhoM_[cell] = rhoMMeanXnParticle_[cell]/(timeAvCounter_*cellVolume);
 
-                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
-                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*cellVolume*nAvTimeSteps_);
+                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
+                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*cellVolume*timeAvCounter_);
 
-                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
-                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps_);
+                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
+                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
                 translationalT_[cell] =
                     2.0/(3.0*physicoChemical::k.value()*rhoNMean)
                    *(
@@ -334,72 +283,6 @@ void Foam::localKnudsen::decompose()
         translationalT_.correctBoundaryConditions();
         UMean_.correctBoundaryConditions();
 
-        // Calcualte boundary vol fields
-        forAll(rhoNBF_, j)
-        {
-            const polyPatch& patch = mesh_.boundaryMesh()[j];
-
-            if (isA<wallPolyPatch>(patch))
-            {
-                forAll(rhoN_.boundaryFieldRef()[j], k)
-                {
-
-                    if (rhoNBF_[j][k] > VSMALL)
-                    {
-
-                        rhoN_.boundaryFieldRef()[j][k] = rhoNBF_[j][k]*nParticle/nAvTimeSteps_;
-                        rhoM_.boundaryFieldRef()[j][k] = rhoMBF_[j][k]*nParticle/nAvTimeSteps_;
-                        UMean_.boundaryFieldRef()[j][k] = momentumBF_[j][k]*nParticle/(rhoM_.boundaryFieldRef()[j][k]*nAvTimeSteps_);
-                        scalar rhoMMean = rhoMBF_[j][k]*nParticle/nAvTimeSteps_;
-                        scalar linearKEMean = linearKEBF_[j][k]*nParticle/nAvTimeSteps_;
-                        scalar rhoNMean = rhoNBF_[j][k]*nParticle/nAvTimeSteps_;
-                        translationalT_.boundaryFieldRef()[j][k] =
-                            2.0/(3.0*physicoChemical::k.value()*rhoNMean)
-                            *(linearKEMean - 0.5*rhoMMean*(UMean_.boundaryFieldRef()[j][k] & UMean_.boundaryFieldRef()[j][k]));
-
-                    }
-                    else
-                    {
-                        rhoN_.boundaryFieldRef()[j][k] = 0.0;
-                        rhoM_.boundaryFieldRef()[j][k] = 0.0;
-                        translationalT_.boundaryFieldRef()[j][k] = 0.0;
-                        UMean_.boundaryFieldRef()[j][k] = vector::zero;
-                    }
-
-                }
-
-            }
-        }
-
-        forAll(boundaryCells_, j)
-        {
-            const polyPatch& patch = mesh_.boundaryMesh()[j];
-
-            const labelList& bCs = boundaryCells_[j];
-
-            forAll(bCs, k)
-            {
-                if
-                (
-                    isA<polyPatch>(patch)
-                 && !isA<emptyPolyPatch>(patch)
-                 && !isA<cyclicPolyPatch>(patch)
-                )
-                {
-
-                    rhoN_.boundaryFieldRef()[j][k] = rhoN_[bCs[k]];
-                    rhoM_.boundaryFieldRef()[j][k] = rhoM_[bCs[k]];
-
-                    if (!isA<wallPolyPatch>(patch))
-                    {
-                        translationalT_.boundaryFieldRef()[j][k] =  translationalT_[bCs[k]];
-                        p_.boundaryFieldRef()[j][k] = p_[bCs[k]];
-                        UMean_.boundaryFieldRef()[j][k] = UMean_[bCs[k]];
-                    }
-                }
-            }
-        }
-
         // smooth macroscopic quantities
         for (label pass=1; pass<=smoothingPasses_; pass++)
         {
@@ -408,29 +291,10 @@ void Foam::localKnudsen::decompose()
             p_ = fvc::average(fvc::interpolate(p_));
             translationalT_ = fvc::average(fvc::interpolate(translationalT_));
             UMean_ = fvc::average(fvc::interpolate(UMean_)); 
-
-            forAll(boundaryCells_, j)
-            {
-                const polyPatch& patch = mesh_.boundaryMesh()[j];
-
-                const labelList& bCs = boundaryCells_[j];
-
-                forAll(bCs, k)
-                {
-                    if
-                    (
-                        isA<polyPatch>(patch)
-                     && !isA<emptyPolyPatch>(patch)
-                     && !isA<cyclicPolyPatch>(patch)
-                    )
-                    {
-                        rhoM_.boundaryFieldRef()[j][k] = boundCoeff_*rhoM_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*rhoM_[bCs[k]];
-                        translationalT_.boundaryFieldRef()[j][k] =  boundCoeff_*translationalT_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*translationalT_[bCs[k]];
-                        p_.boundaryFieldRef()[j][k] = boundCoeff_*p_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*p_[bCs[k]];
-                        UMean_.boundaryFieldRef()[j][k] = boundCoeff_*UMean_.boundaryFieldRef()[j][k]+(1.0-boundCoeff_)*UMean_[bCs[k]];
-                    }
-                }
-            }
+            rhoM_.correctBoundaryConditions();
+            p_.correctBoundaryConditions();
+            translationalT_.correctBoundaryConditions();
+            UMean_.correctBoundaryConditions();
 
         }
 
@@ -479,9 +343,8 @@ void Foam::localKnudsen::decompose()
 
                 forAll(typeIds_, i)
                 {
-                    label qspec = 0;
-
-                    for (qspec=0; qspec<typeIds_.size(); ++qspec)
+                    
+                    for (label qspec=0; qspec<typeIds_.size(); ++qspec)
                     {
                         scalar dPQ = 0.5*(cloud_.constProps(i).d() + cloud_.constProps(qspec).d());
 
@@ -572,52 +435,118 @@ void Foam::localKnudsen::decompose()
             }
         }
 
-        //Remove isolated or single face connected cells
+        //Refine mesh decomposition
+        label adjacentBinCollCells;
+        label adjacentRelCollCells;
+        label neighborRelCollCells;
+        label neighborBinCollCells;
+
         for (label pass=1; pass<=refinementPasses_; pass++)
         {
-            forAll(mesh_.cells(), cell)
+
+            //Refine binary collision cells
+            forAll(mesh_.cells(), cellI)
             {
 
-                if (cloud_.cellCollModel()[cell] == cloud_.binCollModel())
+                if (cloud_.cellCollModel()[cellI] == cloud_.binCollModel())
                 {
+                    adjacentBinCollCells = 0;
+                    adjacentRelCollCells = 0;
 
-                    label adjacentBinCollCells=0;
-                    
-                    forAll(mesh_.cellCells()[cell], adjCell)
+                    forAll(mesh_.cellCells()[cellI], cellJ)
                     {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cell][adjCell]] == cloud_.binCollModel())
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
                         {
                             adjacentBinCollCells++;
                         }
-                    }
-                    
-                    if (adjacentBinCollCells <= 1)
-                    {
-                        cloud_.cellCollModel()[cell] = cloud_.relCollModel();   
-                    }
-
-                }
-
-                if (cloud_.cellCollModel()[cell] == cloud_.relCollModel())
-                {
-
-                    label adjacentRelCollCells=0;
-                    
-                    forAll(mesh_.cellCells()[cell], adjCell)
-                    {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cell][adjCell]] == cloud_.relCollModel())
+                        else
                         {
                             adjacentRelCollCells++;
                         }
                     }
-                    
-                    if (adjacentRelCollCells <= 1)
+
+                    if (adjacentBinCollCells == 0 || (adjacentBinCollCells == 1 && adjacentRelCollCells > 1))
                     {
-                        cloud_.cellCollModel()[cell] = cloud_.binCollModel();   
+                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        continue;
+                    }
+
+                    fetchCellNeighborhood
+                    (
+                        cellI,
+                        neighborLevels_,
+                        neighborCells_
+                    );
+
+                    neighborBinCollCells = 0;
+                    forAll(neighborCells_, cellJ)
+                    {
+                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.binCollModel())
+                        {
+                            neighborBinCollCells++;
+                        }
+                    }  
+
+                    if (neighborBinCollCells < maxNeighborFraction_*neighborCells_.size())
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        continue;
                     }
 
                 }
+            }
 
+            //Refine relaxation collision cells
+            forAll(mesh_.cells(), cellI)
+            {
+
+                if (cloud_.cellCollModel()[cellI] == cloud_.relCollModel())
+                {
+                
+                    adjacentBinCollCells=0;
+                    adjacentRelCollCells=0;
+
+                    forAll(mesh_.cellCells()[cellI], cellJ)
+                    {
+                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
+                        {
+                            adjacentBinCollCells++;
+                        }
+                        else
+                        {
+                            adjacentRelCollCells++;
+                        }
+                    }
+
+                    if (adjacentRelCollCells == 0 || (adjacentRelCollCells == 1 && adjacentBinCollCells > 1))
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        continue; 
+                    }
+
+                    fetchCellNeighborhood
+                    (
+                        cellI,
+                        neighborLevels_,
+                        neighborCells_
+                    );
+
+                    neighborRelCollCells = 0;
+                    forAll(neighborCells_, cellJ)
+                    {                    
+                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.relCollModel())
+                        {
+                            neighborRelCollCells++;
+                        }
+                    }  
+
+                    if (neighborRelCollCells < maxNeighborFraction_*neighborCells_.size())
+                    {
+                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        continue;
+                    }
+
+                }
             }
         }
 
@@ -627,7 +556,7 @@ void Foam::localKnudsen::decompose()
         if (resetAtDecomposition_ && mesh_.time().value() < resetAtDecompositionUntilTime_+0.5*cloud_.mesh().time().deltaTValue())
         {
 
-            nAvTimeSteps_ = 0;
+            timeAvCounter_ = 0.0;
 
             // reset cell information
             forAll(rhoN_, cell)
@@ -645,15 +574,6 @@ void Foam::localKnudsen::decompose()
                 {
                     nParcelsXnParticle_[i][cell] = 0.0;
                 }
-            }
-
-            // reset boundary information
-            forAll(rhoNBF_, j)
-            {
-                rhoNBF_[j] = 0.0;
-                rhoMBF_[j] = 0.0;
-                linearKEBF_[j] = 0.0;
-                momentumBF_[j] = vector::zero;
             }
             
         }
