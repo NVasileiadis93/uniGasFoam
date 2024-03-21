@@ -128,7 +128,7 @@ Foam::localKnudsen::localKnudsen
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless/dimVolume, Zero),
@@ -142,7 +142,7 @@ Foam::localKnudsen::localKnudsen
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimMass/dimVolume, Zero),
@@ -156,7 +156,7 @@ Foam::localKnudsen::localKnudsen
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimPressure, Zero),
@@ -170,7 +170,7 @@ Foam::localKnudsen::localKnudsen
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimTemperature, Zero),
@@ -184,7 +184,7 @@ Foam::localKnudsen::localKnudsen
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimVelocity, Zero),
