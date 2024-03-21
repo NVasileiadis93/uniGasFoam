@@ -97,13 +97,14 @@ void Foam::uspMeshFill::setInitialConfiguration()
     const auto& meshCC = cloud_.mesh().cellCentres();
     const auto& meshV = cloud_.mesh().V();
 
-    // Initialise subcells in case of adaptive simulation
+    // Initialise subcells and time-step in case of adaptive simulation
     if (cloud_.adaptive())
     {
         cloud_.dynamicAdapter().setInitialConfiguration
         (
             numberDensities,
-            translationalTemperature
+            translationalTemperature,
+            velocity
         );
     }
 

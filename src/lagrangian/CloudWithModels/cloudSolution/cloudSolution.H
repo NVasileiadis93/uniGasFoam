@@ -57,7 +57,7 @@ class cloudSolution
     // Private Data
 
         //- Reference to the mesh
-        const fvMesh& mesh_;
+        fvMesh& mesh_;
 
         //- Dictionary used during construction
         dictionary dict_;
@@ -120,10 +120,10 @@ public:
     // Constructors
 
         //- Construct null from mesh reference
-        cloudSolution(const fvMesh& mesh);
+        cloudSolution(fvMesh& mesh);
 
         //- Construct from mesh and dictionary
-        cloudSolution(const fvMesh& mesh, const dictionary& dict);
+        cloudSolution(fvMesh& mesh, const dictionary& dict);
 
         //- Construct copy
         cloudSolution(const cloudSolution& cs);
@@ -148,7 +148,7 @@ public:
             bool semiImplicit(const word& fieldName) const;
 
             //- Return reference to the mesh
-            inline const fvMesh& mesh() const;
+            inline fvMesh& mesh() const;
 
             //- Return const access to the dictionary
             inline const dictionary& dict() const;

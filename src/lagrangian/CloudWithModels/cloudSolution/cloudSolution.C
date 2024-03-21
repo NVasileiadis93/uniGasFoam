@@ -32,7 +32,7 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::cloudSolution::cloudSolution(const fvMesh& mesh, const dictionary& dict)
+Foam::cloudSolution::cloudSolution(fvMesh& mesh, const dictionary& dict)
 :
     mesh_(mesh),
     dict_(dict),
@@ -94,7 +94,7 @@ Foam::cloudSolution::cloudSolution(const cloudSolution& cs)
 {}
 
 
-Foam::cloudSolution::cloudSolution(const fvMesh& mesh)
+Foam::cloudSolution::cloudSolution(fvMesh& mesh)
 :
     mesh_(mesh),
     dict_(dictionary::null),

@@ -289,9 +289,9 @@ public:
         //- reads them from file, else they are initialised
         uspCloud
         (
-            const Time& t,
+            Time& t,
             const word& cloudName,
-            const fvMesh& mesh,
+            fvMesh& mesh,
             const IOdictionary& uspInitialiseDict
         );
 

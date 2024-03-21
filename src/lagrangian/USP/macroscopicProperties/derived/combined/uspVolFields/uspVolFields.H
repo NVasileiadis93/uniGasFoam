@@ -103,7 +103,9 @@ class uspVolFields
         bool averagingAcrossManyRuns_;
 
         label sampleCounter_;
-        label nTimeSteps_;
+        label nAvTimeSteps_;
+        scalar timeAvCounter_;
+        
         //- Wall unit vectors - temporary storage, should be done in boundaries/patch
         List<vectorField> n_;
         List<vectorField> t1_;

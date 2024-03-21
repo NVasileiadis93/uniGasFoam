@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::fvMesh& Foam::cloudSolution::mesh() const
+inline Foam::fvMesh& Foam::cloudSolution::mesh() const
 {
     return mesh_;
 }

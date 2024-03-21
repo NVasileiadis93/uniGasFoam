@@ -397,9 +397,9 @@ Foam::scalar Foam::uspCloud::PSIm
 
 Foam::uspCloud::uspCloud
 (
-    const Time& t,
+    Time& t,
     const word& cloudName,
-    const fvMesh& mesh,
+    fvMesh& mesh,
     const IOdictionary& uspInitialiseDict
 )
 :
@@ -495,17 +495,17 @@ Foam::uspCloud::uspCloud
     rndGen_(label(clock::getTime()) + 7183*Pstream::myProcNo()),
     //rndGen_(1.0),
     dynamicLoadBalancing_(t, *this),
-    dynamicAdapter_(particleProperties_, mesh_, *this),
-    fields_(t, mesh, *this),
-    boundaries_(t, mesh, *this),
-    trackingInfo_(mesh, *this, true),
+    dynamicAdapter_(particleProperties_, t, mesh_, *this),
+    fields_(t, mesh_, *this),
+    boundaries_(t, mesh_, *this),
+    trackingInfo_(mesh_, *this, true),
     binaryCollisionModel_(),
     binaryCollisionPartnerModel_(),
     relaxationCollisionModel_(),
     hybridDecompositionModel_(),
-    reactions_(t, mesh, *this),
-    boundaryMeas_(mesh, *this, true),
-    cellMeas_(mesh, *this, true),
+    reactions_(t, mesh_, *this),
+    boundaryMeas_(mesh_, *this, true),
+    cellMeas_(mesh_, *this, true),
     functions_
     (
         *this,
@@ -519,7 +519,7 @@ Foam::uspCloud::uspCloud
     {
         forAll(solutionDimensions_, dim)
         {
-            if (mesh.solutionD()[dim] == 1)
+            if (mesh_.solutionD()[dim] == 1)
             {
                 solutionDimensions_[dim] = true;
             }
@@ -581,6 +581,21 @@ Foam::uspCloud::uspCloud
 
     if (exists(lagrangianFieldsDirectory))
     {
+
+        // Read time-step
+        IOdictionary tDict
+        (
+            IOobject
+            (
+                "time",
+                mesh_.time().timeName(),
+                "uniform",
+                mesh_.time(),
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        );
+        t.setDeltaT(tDict.get<scalar>("deltaT"));
 
         // Read subcell levels
         volVectorField fetchSubcellLevels
@@ -890,7 +905,8 @@ void Foam::uspCloud::info() const
     scalar electronicEnergy = infoMeasurements()[4];
     reduce(electronicEnergy, sumOp<scalar>());
 
-    Info<< "    Number of usp particles        = " << nUspParticles << endl;
+    Info<< "    Time step                       = " << mesh_.time().deltaTValue() << endl;
+    Info<< "    Number of usp particles         = " << nUspParticles << endl;
 
     if (nUspParticles)
     {

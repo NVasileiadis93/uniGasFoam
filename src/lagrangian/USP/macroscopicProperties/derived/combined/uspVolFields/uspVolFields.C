@@ -61,7 +61,8 @@ Foam::uspVolFields::uspVolFields
     measureErrors_(propsDict_.getOrDefault<bool>("measureErrors",false)),
     averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
     sampleCounter_(0),
-    nTimeSteps_(0),
+    nAvTimeSteps_(0),
+    timeAvCounter_(0.0),
     n_(),
     t1_(),
     t2_(),
@@ -634,7 +635,8 @@ void Foam::uspVolFields::readIn()
         )
     );
 
-    dict.readIfPresent("nTimeSteps", nTimeSteps_);
+    dict.readIfPresent("nTimeSteps", nAvTimeSteps_);
+    dict.readIfPresent("timeCounter", timeAvCounter_);
     dict.readIfPresent("binCoeff", binCoeff_);
     dict.readIfPresent("relCoeff", relCoeff_);
     dict.readIfPresent("rhoNMean", rhoNMean_);
@@ -709,7 +711,8 @@ void Foam::uspVolFields::writeOut()
             )
         );
 
-        dict.add("nTimeSteps", nTimeSteps_);
+        dict.add("nTimeSteps", nAvTimeSteps_);
+        dict.add("timeCounter", timeAvCounter_);
         dict.add("binCoeff", binCoeff_);
         dict.add("relCoeff", relCoeff_);
         dict.add("rhoNMean", rhoNMean_);
@@ -826,17 +829,21 @@ void Foam::uspVolFields::createField()
 
 void Foam::uspVolFields::calculateField()
 {
-    ++sampleCounter_;
+    sampleCounter_++;
 
-    auto& cm = cloud_.cellPropMeasurements();
+    const scalar& deltaT = mesh_.time().deltaTValue();
 
     rhoNInstantaneous_ = 0.0;
 
     if (sampleInterval_ <= sampleCounter_)
     {
-        ++nTimeSteps_;
+
+        nAvTimeSteps_++;
+
+        timeAvCounter_ += deltaT;
 
         //obtain cell measurements
+        auto& cm = cloud_.cellPropMeasurements();
 
         if (densityOnly_)
         {
@@ -845,15 +852,11 @@ void Foam::uspVolFields::calculateField()
             {
                 const label iD = typeIds_.find(i);
 
-                if (iD != -1)
-                {
+                rhoNMean_ += deltaT*cm.rhoNMean()[iD];
+                rhoNInstantaneous_ += deltaT*cm.rhoNInstantaneous()[iD];
+                rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
+                rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
 
-                    rhoNMean_ += cm.rhoNMean()[iD];
-                    rhoNInstantaneous_ += cm.rhoNInstantaneous()[iD];
-                    rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
-                    rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
-
-                }
             }
 
         }
@@ -865,93 +868,86 @@ void Foam::uspVolFields::calculateField()
 
                 const label iD = typeIds_.find(i);
 
-                if (iD != -1)
+                binCoeff_ += deltaT*cm.binCoeff()[iD];
+                relCoeff_ += deltaT*cm.relCoeff()[iD];
+                rhoNMean_ += deltaT*cm.rhoNMean()[iD];
+                rhoNInstantaneous_ += deltaT*cm.rhoNInstantaneous()[iD];
+                rhoMMean_ += deltaT*cm.rhoMMean()[iD];
+                linearKEMean_ += deltaT*cm.linearKEMean()[iD];
+                momentumMean_ += deltaT*cm.momentumMean()[iD];
+                rotationalEMean_ += deltaT*cm.rotationalEMean()[iD];
+                rotationalDofMean_ += deltaT*cm.rotationalDofMean()[iD];
+                electronicETotal_[iD] += deltaT*cm.electronicETotal()[iD];
+                rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
+                rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
+                momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
+                linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
+
+                muu_ += deltaT*cm.muu()[iD];
+                muv_ += deltaT*cm.muv()[iD];
+                muw_ += deltaT*cm.muw()[iD];
+                mvv_ += deltaT*cm.mvv()[iD];
+                mvw_ += deltaT*cm.mvw()[iD];
+                mww_ += deltaT*cm.mww()[iD];
+                mcc_ += deltaT*cm.mcc()[iD];
+                mccu_ += deltaT*cm.mccu()[iD];
+                mccv_ += deltaT*cm.mccv()[iD];
+                mccw_ += deltaT*cm.mccw()[iD];
+
+                eu_ += deltaT*cm.eu()[iD];
+                ev_ += deltaT*cm.ev()[iD];
+                ew_ += deltaT*cm.ew()[iD];
+                e_ += deltaT*cm.e()[iD];
+
+                rhoNMeanInt_ += deltaT*cm.rhoNMeanInt()[iD];
+                molsElec_ += deltaT*cm.molsElec()[iD];
+
+                nParcels_[iD] += deltaT*cm.nParcels()[iD];
+                nParcelsXnParticle_[iD] += deltaT*cm.nParcelsXnParticle()[iD];
+                mccSpecies_[iD] += deltaT*cm.mccSpecies()[iD];
+
+                nGroundElectronicLevel_[iD] += deltaT*cm.nGroundElectronicLevel()[iD];
+                nFirstElectronicLevel_[iD] += deltaT*cm.nFirstElectronicLevel()[iD];
+
+                forAll(vibrationalETotal_[iD], v)
                 {
-
-                    binCoeff_ += cm.binCoeff()[iD];
-                    relCoeff_ += cm.relCoeff()[iD];
-                    rhoNMean_ += cm.rhoNMean()[iD];
-                    rhoNInstantaneous_ += cm.rhoNInstantaneous()[iD];
-                    rhoMMean_ += cm.rhoMMean()[iD];
-                    linearKEMean_ += cm.linearKEMean()[iD];
-                    momentumMean_ += cm.momentumMean()[iD];
-                    rotationalEMean_ += cm.rotationalEMean()[iD];
-                    rotationalDofMean_ += cm.rotationalDofMean()[iD];
-                    electronicETotal_[iD] += cm.electronicETotal()[iD];
-                    rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
-                    rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
-                    momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
-                    linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
-
-                    muu_ += cm.muu()[iD];
-                    muv_ += cm.muv()[iD];
-                    muw_ += cm.muw()[iD];
-                    mvv_ += cm.mvv()[iD];
-                    mvw_ += cm.mvw()[iD];
-                    mww_ += cm.mww()[iD];
-                    mcc_ += cm.mcc()[iD];
-                    mccu_ += cm.mccu()[iD];
-                    mccv_ += cm.mccv()[iD];
-                    mccw_ += cm.mccw()[iD];
-
-                    eu_ += cm.eu()[iD];
-                    ev_ += cm.ev()[iD];
-                    ew_ += cm.ew()[iD];
-                    e_ += cm.e()[iD];
-
-                    rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
-                    molsElec_ += cm.molsElec()[iD];
-
-                    nParcels_[iD] += cm.nParcels()[iD];
-                    nParcelsXnParticle_[iD] += cm.nParcelsXnParticle()[iD];
-                    mccSpecies_[iD] += cm.mccSpecies()[iD];
-
-                    nGroundElectronicLevel_[iD] += cm.nGroundElectronicLevel()[iD];
-                    nFirstElectronicLevel_[iD] += cm.nFirstElectronicLevel()[iD];
-
-                    forAll(vibrationalETotal_[iD], v)
-                    {
-                        vibrationalETotal_[iD][v] += cm.vibrationalETotal()[iD][v];
-                    }
-
-                    nColls_ += cm.nColls();
-
+                    vibrationalETotal_[iD][v] += deltaT*cm.vibrationalETotal()[iD][v];
                 }
+
+                nColls_ += deltaT*cm.nColls();
+
             }
 
         }
 
         // obtain boundary measurements
-
         auto& bm = cloud_.boundaryFluxMeasurements();
 
         forAll(bm.rhoNBF(), i)
         {
             const label iD = typeIds_.find(i);
 
-            if (iD != -1)
+            forAll(bm.rhoNBF()[i], j)
             {
-                forAll(bm.rhoNBF()[i], j)
+                forAll(bm.rhoNBF()[i][j], k)
                 {
-                    forAll(bm.rhoNBF()[i][j], k)
-                    {
-                        rhoNBF_[j][k] += bm.rhoNBF()[i][j][k];
-                        rhoMBF_[j][k] += bm.rhoMBF()[i][j][k];
-                        linearKEBF_[j][k] += bm.linearKEBF()[i][j][k];
-                        momentumBF_[j][k] += bm.momentumBF()[i][j][k];
-                        rotationalEBF_[j][k] += bm.rotationalEBF()[i][j][k];
-                        rotationalDofBF_[j][k] += bm.rotationalDofBF()[i][j][k];
-                        qBF_[j][k] += bm.qBF()[i][j][k];
-                        fDBF_[j][k] += bm.fDBF()[i][j][k];
-                        speciesRhoNBF_[iD][j][k] += bm.rhoNBF()[i][j][k];
-                        vibrationalEBF_[iD][j][k] += bm.vibrationalEBF()[i][j][k];
-                        electronicEBF_[iD][j][k] += bm.electronicEBF()[i][j][k];
-                        mccSpeciesBF_[iD][j][k] += bm.mccSpeciesBF()[i][j][k];
-                        speciesRhoNIntBF_[j][k] += bm.rhoNIntBF()[i][j][k];
-                        speciesRhoNElecBF_[j][k] += bm.rhoNElecBF()[i][j][k];
-                    }
+                    rhoNBF_[j][k] += deltaT*bm.rhoNBF()[i][j][k];
+                    rhoMBF_[j][k] += deltaT*bm.rhoMBF()[i][j][k];
+                    linearKEBF_[j][k] += deltaT*bm.linearKEBF()[i][j][k];
+                    momentumBF_[j][k] += deltaT*bm.momentumBF()[i][j][k];
+                    rotationalEBF_[j][k] += deltaT*bm.rotationalEBF()[i][j][k];
+                    rotationalDofBF_[j][k] += deltaT*bm.rotationalDofBF()[i][j][k];
+                    qBF_[j][k] += deltaT*bm.qBF()[i][j][k];
+                    fDBF_[j][k] += deltaT*bm.fDBF()[i][j][k];
+                    speciesRhoNBF_[iD][j][k] += deltaT*bm.rhoNBF()[i][j][k];
+                    vibrationalEBF_[iD][j][k] += deltaT*bm.vibrationalEBF()[i][j][k];
+                    electronicEBF_[iD][j][k] += deltaT*bm.electronicEBF()[i][j][k];
+                    mccSpeciesBF_[iD][j][k] += deltaT*bm.mccSpeciesBF()[i][j][k];
+                    speciesRhoNIntBF_[j][k] += deltaT*bm.rhoNIntBF()[i][j][k];
+                    speciesRhoNElecBF_[j][k] += deltaT*bm.rhoNElecBF()[i][j][k];
                 }
             }
+
         }
 
         sampleCounter_ = 0;
@@ -959,10 +955,6 @@ void Foam::uspVolFields::calculateField()
 
     if (mesh_.time().writeTime())
     {
-
-        const scalar deltaT = mesh_.time().deltaTValue();
-
-        const scalar nAvTimeSteps = nTimeSteps_;
 
         if (densityOnly_)
         {
@@ -972,13 +964,11 @@ void Foam::uspVolFields::calculateField()
                 {
                     const scalar cellVolume = mesh_.cellVolumes()[cell];
 
-                    uspRhoNMean_[cell] = rhoNMean_[cell]/nAvTimeSteps;
+                    uspRhoNMean_[cell] = rhoNMean_[cell]/timeAvCounter_;
 
-                    rhoN_[cell] =
-                        (rhoNMeanXnParticle_[cell])/(nAvTimeSteps*cellVolume);
+                    rhoN_[cell] = (rhoNMeanXnParticle_[cell])/(timeAvCounter_*cellVolume);
 
-                    rhoM_[cell] =
-                        (rhoMMeanXnParticle_[cell])/(nAvTimeSteps*cellVolume);
+                    rhoM_[cell] = (rhoMMeanXnParticle_[cell])/(timeAvCounter_*cellVolume);
 
                 }
                 else
@@ -990,7 +980,7 @@ void Foam::uspVolFields::calculateField()
 
                 if (rhoNInstantaneous_[cell] > VSMALL)
                 {
-                    uspRhoN_[cell] = rhoNInstantaneous_[cell];
+                    uspRhoN_[cell] = rhoNInstantaneous_[cell]/timeAvCounter_;
                 }
                 else
                 {
@@ -1001,38 +991,30 @@ void Foam::uspVolFields::calculateField()
         else
         {
 
-            scalarField vibT(mesh_.nCells(), 0.0);
-            scalarField Cp(mesh_.nCells(), 0.0);
-            scalarField Cv(mesh_.nCells(), 0.0);
-            scalarField molecularMass(mesh_.nCells(), 0.0);
-            scalarField Cv_p(mesh_.nCells(), 0.0);
-            scalarField totalvDof(mesh_.nCells(), 0.0);
-            scalarField totalvDofOverall(mesh_.nCells(), 0.0);
-
             forAll(rhoNMean_, cell)
             {
                 if (rhoNMean_[cell] > VSMALL)
                 {
                     const scalar cellVolume = mesh_.cellVolumes()[cell];
 
-                    uspRhoNMean_[cell] = rhoNMean_[cell]/nAvTimeSteps;
+                    uspRhoNMean_[cell] = rhoNMean_[cell]/timeAvCounter_;
 
                     rhoN_[cell] =
-                        (rhoNMeanXnParticle_[cell])/(nAvTimeSteps*cellVolume);
+                        (rhoNMeanXnParticle_[cell])/(timeAvCounter_*cellVolume);
 
                     rhoM_[cell] =
-                        (rhoMMeanXnParticle_[cell])/(nAvTimeSteps*cellVolume);
+                        (rhoMMeanXnParticle_[cell])/(timeAvCounter_*cellVolume);
 
                     scalar rhoMMean =
-                        rhoMMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps);
+                        rhoMMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
                     UMean_[cell] =
                         momentumMeanXnParticle_[cell]
-                       /(rhoMMean*cellVolume*nAvTimeSteps);
+                       /(rhoMMean*cellVolume*timeAvCounter_);
                     scalar linearKEMean =
                         0.5*linearKEMeanXnParticle_[cell]
-                       /(cellVolume*nAvTimeSteps);
+                       /(cellVolume*timeAvCounter_);
                     scalar rhoNMean =
-                        rhoNMeanXnParticle_[cell]/(cellVolume*nAvTimeSteps);
+                        rhoNMeanXnParticle_[cell]/(cellVolume*timeAvCounter_);
 
                     translationalT_[cell] =
                         2.0/(3.0*physicoChemical::k.value()*rhoNMean)
@@ -1058,7 +1040,7 @@ void Foam::uspVolFields::calculateField()
 
                 if (rhoNInstantaneous_[cell] > VSMALL)
                 {
-                    uspRhoN_[cell] = rhoNInstantaneous_[cell];
+                    uspRhoN_[cell] = rhoNInstantaneous_[cell]/timeAvCounter_;
                 }
                 else
                 {
@@ -1066,16 +1048,13 @@ void Foam::uspVolFields::calculateField()
                 }
 
                 // Rotational temperature
-                if (rotationalDofMean_[cell] > VSMALL && nAvTimeSteps > VSMALL)
+                if (rotationalDofMean_[cell] > VSMALL && timeAvCounter_ > VSMALL)
                 {
-                    scalar rotationalEMean =
-                        rotationalEMean_[cell]/nAvTimeSteps;
-                    scalar rotationalDofMean =
-                        rotationalDofMean_[cell]/nAvTimeSteps;
+                    scalar rotationalEMean = rotationalEMean_[cell]/timeAvCounter_;
+                    
+                    scalar rotationalDofMean = rotationalDofMean_[cell]/timeAvCounter_;
 
-                    rotationalT_[cell] =
-                        (2.0/physicoChemical::k.value())
-                       *(rotationalEMean/rotationalDofMean);
+                    rotationalT_[cell] = (2.0/physicoChemical::k.value())*(rotationalEMean/rotationalDofMean);
                 }
                 else
                 {
@@ -1083,28 +1062,21 @@ void Foam::uspVolFields::calculateField()
                 }
 
                 // Vibrational temperature
+                scalar vibT = 0.0;
+                scalar totalvDof = 0.0;
                 scalarList degreesOfFreedomSpecies(typeIds_.size(), 0.0);
                 scalarList vibTID(vibrationalETotal_.size(), 0.0);
-
                 List<scalarList> dofMode;
                 List<scalarList> vibTMode;
-
                 dofMode.setSize(typeIds_.size());
                 vibTMode.setSize(typeIds_.size());
 
                 forAll(dofMode, iD)
                 {
-                    dofMode[iD].setSize
-                    (
-                        cloud_.constProps(typeIds_[iD]).vibrationalDoF(),
-                        0.0
-                    );
-
-                    vibTMode[iD].setSize
-                    (
-                        cloud_.constProps(typeIds_[iD]).vibrationalDoF(),
-                        0.0
-                    );
+                    const auto& constProp = cloud_.constProps(typeIds_[iD]);
+                    
+                    dofMode[iD].setSize(constProp.vibrationalDoF(), 0.0);
+                    vibTMode[iD].setSize(constProp.vibrationalDoF(), 0.0);
                 }
 
                 forAll(vibrationalETotal_, iD)
@@ -1114,26 +1086,29 @@ void Foam::uspVolFields::calculateField()
                         if
                         (
                             vibrationalETotal_[iD][v][cell] > VSMALL
-                         && nParcels_[iD][cell] > VSMALL
-                         && dofMode.size() > VSMALL
+                        && nParcels_[iD][cell] > VSMALL
+                        && dofMode.size() > VSMALL
                         )
                         {
-                            scalar thetaV =
-                                cloud_.constProps(typeIds_[iD]).thetaV()[v];
+                            const auto& constProp = 
+                                cloud_.constProps(typeIds_[iD]);
+                            
+                            scalar thetaV = constProp.thetaV()[v];
 
                             scalar vibrationalEMean =
                                 vibrationalETotal_[iD][v][cell]
-                               /nParcels_[iD][cell];
+                            /nParcels_[iD][cell];
 
                             scalar iMean =
                                 vibrationalEMean
-                               /(physicoChemical::k.value()*thetaV);
+                            /(physicoChemical::k.value()*thetaV);
 
                             vibTMode[iD][v] = thetaV / log(1.0 + (1.0/iMean));
 
                             dofMode[iD][v] =
                                 (2.0*thetaV/vibTMode[iD][v])
-                               /(exp(thetaV/vibTMode[iD][v]) - 1.0);
+                            /(exp(thetaV/vibTMode[iD][v]) - 1.0);
+
                         }
                     }
 
@@ -1148,39 +1123,27 @@ void Foam::uspVolFields::calculateField()
                         {
                             vibTID[iD] +=
                                 vibTMode[iD][v]
-                               *dofMode[iD][v]
-                               /degreesOfFreedomSpecies[iD];
+                            *dofMode[iD][v]
+                            /degreesOfFreedomSpecies[iD];
                         }
                     }
 
-                    totalvDof[cell] += degreesOfFreedomSpecies[iD];
+                    totalvDof += degreesOfFreedomSpecies[iD];
 
                     if
                     (
                         rhoNMeanInt_[cell] > VSMALL
-                     && rhoNMean_[cell] > VSMALL
-                     && nParcels_[iD][cell] > VSMALL
+                    && rhoNMean_[cell] > VSMALL
+                    && nParcels_[iD][cell] > VSMALL
                     )
                     {
-                        scalar fraction =
-                            nParcels_[iD][cell]
-                           /rhoNMeanInt_[cell];
-
-                        scalar fractionOverall =
-                            nParcels_[iD][cell]
-                           /rhoNMean_[cell];
-
-                        totalvDofOverall[cell] +=
-                            totalvDof[cell]
-                           *(fractionOverall/fraction);
-
-                        vibT[cell] += vibTID[iD]*fraction;
+                        vibT += vibTID[iD]*nParcels_[iD][cell]/rhoNMeanInt_[cell];
                     }
                 }
 
-                vibrationalT_[cell] = vibT[cell];
+                vibrationalT_[cell] = vibT;             
 
-                // electronic temperature
+                // Electronic temperature
                 scalar totalEDof = 0.0;
                 scalar elecT = 0.0;
 
@@ -1243,10 +1206,10 @@ void Foam::uspVolFields::calculateField()
                     (
                         (3.0*translationalT_[cell])
                       + (nRotDof*rotationalT_[cell])
-                      + (totalvDof[cell]*vibrationalT_[cell])
+                      + (totalvDof*vibrationalT_[cell])
                       + (totalEDof*electronicT_[cell])
                     )
-                   /(3.0 + nRotDof + totalvDof[cell] + totalEDof);
+                   /(3.0 + nRotDof + totalvDof + totalEDof);
 
                 if (measureHeatFluxShearStress_)
                 {
@@ -1390,38 +1353,37 @@ void Foam::uspVolFields::calculateField()
                     }
                 }
 
+                scalar Cp = 0.0;
+                scalar Cv = 0.0;
+                scalar molecularMass = 0.0;
+                scalar Cv_p = 0.0;
+
                 forAll(nParcels_, iD)
                 {
                     label typeId = typeIds_[iD];
 
                     if (rhoNMean_[cell] > VSMALL)
                     {
-                        molecularMass[cell] +=
-                            cloud_.constProps(typeId).mass()
-                           *(nParcels_[iD][cell]/rhoNMean_[cell]);
-                        Cp[cell] +=
-                            (5.0 + cloud_.constProps(typeId).rotationalDoF())
-                           *(nParcels_[iD][cell]/rhoNMean_[cell]);
-                        Cv[cell] +=
-                            (3.0 + cloud_.constProps(typeId).rotationalDoF())
-                           *(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        molecularMass += cloud_.constProps(typeId).mass()*(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        Cp += (5.0 + cloud_.constProps(typeId).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        Cv += (3.0 + cloud_.constProps(typeId).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
                     }
                 }
 
-                Cv_p[cell] = Cv[cell]/physicoChemical::NA.value();
+                Cv_p = Cv/physicoChemical::NA.value();
 
                 scalar gasConstant = 0.0;
                 scalar gamma = 0.0;
                 scalar speedOfSound = 0.0;
 
-                if (molecularMass[cell] > VSMALL)
+                if (molecularMass > VSMALL)
                 {
-                    gasConstant = physicoChemical::k.value()/molecularMass[cell];
+                    gasConstant = physicoChemical::k.value()/molecularMass;
                 }
 
                 if (rhoNMean_[cell] > VSMALL)
                 {
-                    gamma = Cp[cell]/Cv[cell]; // gamma = cP/cV
+                    gamma = Cp/Cv; // gamma = cP/cV
                 }
 
                 if (rhoNMean_[cell] > VSMALL && translationalT_[cell] > VSMALL)
@@ -1450,7 +1412,7 @@ void Foam::uspVolFields::calculateField()
 
                             if (nParcels_[qspec][cell] > VSMALL && translationalT_[cell] > VSMALL)
                             {
-                                scalar nDensQ = (nParcelsXnParticle_[qspec][cell])/(mesh_.cellVolumes()[cell]*nTimeSteps_);
+                                scalar nDensQ = (nParcelsXnParticle_[qspec][cell])/(mesh_.cellVolumes()[cell]*timeAvCounter_);
 
                                 scalar reducedMass = 
                                     cloud_.constProps(typeIds_[iD]).mass()*cloud_.constProps(typeIds_[qspec]).mass()
@@ -1481,7 +1443,7 @@ void Foam::uspVolFields::calculateField()
                     {
                         if (rhoN_[cell] > VSMALL)
                         {
-                            scalar nDensP = nParcelsXnParticle_[iD][cell]/(mesh_.cellVolumes()[cell]*nTimeSteps_);
+                            scalar nDensP = nParcelsXnParticle_[iD][cell]/(mesh_.cellVolumes()[cell]*timeAvCounter_);
 
                             //Bird, eq (4.77)
                             MFP_[cell] += mfp_[iD][cell]*nDensP/rhoN_[cell];
@@ -1556,12 +1518,12 @@ void Foam::uspVolFields::calculateField()
                 {
                     if (uspRhoNMean_[cell] > VSMALL &&
                         Ma_[cell] > VSMALL && gamma > VSMALL
-                        && Cv_p[cell] > VSMALL)
+                        && Cv_p > VSMALL)
                     {
-                        densityError_[cell] = 1.0/sqrt(uspRhoNMean_[cell]*nTimeSteps_);
-                        velocityError_[cell] = (1.0/sqrt(uspRhoNMean_[cell]*nTimeSteps_))*(1.0/(Ma_[cell]*sqrt(gamma)));
-                        temperatureError_[cell] = (1.0/sqrt(uspRhoNMean_[cell]*nTimeSteps_))*sqrt(physicoChemical::k.value()/Cv_p[cell]);
-                        pressureError_[cell] = sqrt(gamma)/sqrt(uspRhoNMean_[cell]*nTimeSteps_);
+                        densityError_[cell] = 1.0/sqrt(uspRhoNMean_[cell]*nAvTimeSteps_);
+                        velocityError_[cell] = (1.0/sqrt(uspRhoNMean_[cell]*nAvTimeSteps_))*(1.0/(Ma_[cell]*sqrt(gamma)));
+                        temperatureError_[cell] = (1.0/sqrt(uspRhoNMean_[cell]*nAvTimeSteps_))*sqrt(physicoChemical::k.value()/Cv_p);
+                        pressureError_[cell] = sqrt(gamma)/sqrt(uspRhoNMean_[cell]*nAvTimeSteps_);
                     }
                 }
             }
@@ -1590,13 +1552,13 @@ void Foam::uspVolFields::calculateField()
                             const scalar RWF = cloud_.axiRWF(fC);
                             const scalar nParticle = cloud_.nParticle()*CWF*RWF;
 
-                            rhoN_.boundaryFieldRef()[j][k] = rhoNBF_[j][k]*nParticle/nAvTimeSteps;
-                            rhoM_.boundaryFieldRef()[j][k] = rhoMBF_[j][k]*nParticle/nAvTimeSteps;
-                            UMean_.boundaryFieldRef()[j][k] = momentumBF_[j][k]*nParticle/(rhoM_.boundaryFieldRef()[j][k]*nAvTimeSteps);
+                            rhoN_.boundaryFieldRef()[j][k] = rhoNBF_[j][k]*nParticle/timeAvCounter_;
+                            rhoM_.boundaryFieldRef()[j][k] = rhoMBF_[j][k]*nParticle/timeAvCounter_;
+                            UMean_.boundaryFieldRef()[j][k] = momentumBF_[j][k]*nParticle/(rhoM_.boundaryFieldRef()[j][k]*timeAvCounter_);
 
-                            scalar rhoMMean = rhoMBF_[j][k]*nParticle/nAvTimeSteps;
-                            scalar linearKEMean = linearKEBF_[j][k]*nParticle/nAvTimeSteps;
-                            scalar rhoNMean = rhoNBF_[j][k]*nParticle/nAvTimeSteps;
+                            scalar rhoMMean = rhoMBF_[j][k]*nParticle/timeAvCounter_;
+                            scalar linearKEMean = linearKEBF_[j][k]*nParticle/timeAvCounter_;
+                            scalar rhoNMean = rhoNBF_[j][k]*nParticle/timeAvCounter_;
                             translationalT_.boundaryFieldRef()[j][k] =
                                 2.0/(3.0*physicoChemical::k.value()*rhoNMean)
                                 *(linearKEMean - 0.5*rhoMMean*(UMean_.boundaryFieldRef()[j][k] & UMean_.boundaryFieldRef()[j][k]));
@@ -1648,8 +1610,8 @@ void Foam::uspVolFields::calculateField()
 
                         totalvDofBF_[j][k] = 0.0;
 
-                        q_.boundaryFieldRef()[j][k] = qBF_[j][k]/nAvTimeSteps;
-                        fD_.boundaryFieldRef()[j][k] = fDBF_[j][k]/nAvTimeSteps;
+                        q_.boundaryFieldRef()[j][k] = qBF_[j][k]/timeAvCounter_;
+                        fD_.boundaryFieldRef()[j][k] = fDBF_[j][k]/timeAvCounter_;
 
                     }
 
@@ -1753,13 +1715,16 @@ void Foam::uspVolFields::calculateField()
             Ma_.write();
             UMean_.write();
             fD_.write();
+
         }
 
         // Reset
         if (resetFieldsAtOutput_ && mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT)
         {
 
-            nTimeSteps_ = 0;
+            nAvTimeSteps_ = 0;
+
+            timeAvCounter_ = 0.0;
 
             forAll(rhoNMean_, cell)
             {

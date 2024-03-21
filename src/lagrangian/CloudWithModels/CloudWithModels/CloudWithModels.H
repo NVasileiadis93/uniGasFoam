@@ -66,7 +66,7 @@ protected:
     // Protected data
 
         //- Reference to the fvMesh
-        const fvMesh& mesh_;
+        fvMesh& mesh_;
 
         //- Dictionary of particle properties
         IOdictionary particleProperties_;
@@ -91,7 +91,7 @@ public:
         //- Construct from mesh and a list of particles
         CloudWithModels
         (
-            const fvMesh& mesh,
+            fvMesh& mesh,
             const word& cloudName,
             const IDLList<Type>& particles
         );
@@ -100,7 +100,7 @@ public:
         //  Optionally disable checking of class name for post-processing
         CloudWithModels
         (
-            const fvMesh& pMesh,
+            fvMesh& pMesh,
             const word& cloudName,
             const bool checkClass = true
         );
@@ -109,7 +109,7 @@ public:
     // Member Functions
 
         //- Return a reference to the mesh
-        inline const fvMesh& mesh() const;
+        inline fvMesh& mesh() const;
 
         //- Return particle properties dictionary
         inline const IOdictionary& particleProperties() const;

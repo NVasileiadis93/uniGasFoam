@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::CloudWithModels<Type>::CloudWithModels
 (
-    const fvMesh& mesh,
+    fvMesh& mesh,
     const word& cloudName,
     const IDLList<Type>& particles
 )
@@ -71,7 +71,7 @@ Foam::CloudWithModels<Type>::CloudWithModels
 template<class Type>
 Foam::CloudWithModels<Type>::CloudWithModels
 (
-    const fvMesh& mesh,
+    fvMesh& mesh,
     const word& cloudName,
     const bool checkClass
 )

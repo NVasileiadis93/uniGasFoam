@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-const Foam::fvMesh& Foam::CloudWithModels<Type>::mesh() const
+Foam::fvMesh& Foam::CloudWithModels<Type>::mesh() const
 {
     return mesh_;
 }

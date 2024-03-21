@@ -67,7 +67,9 @@ class uspDynamicAdapter
 
         const dictionary& dict_;
 
-        const fvMesh& mesh_;
+        Time& time_;
+
+        fvMesh& mesh_;
 
         uspCloud& cloud_;
 
@@ -75,11 +77,17 @@ class uspDynamicAdapter
 
         const label maxSubcellLevels_;
 
-        bool cellWeightAdaptation_;
+        bool timeStepAdaptation_;
 
         bool subcellAdaptation_;
 
+        bool cellWeightAdaptation_;
+
         label adaptationInterval_;
+
+        scalar maxTimeStepMCTRatio_;
+
+        scalar maxCourantNumber_;
 
         scalar maxSubcellSizeMFPRatio_;
 
@@ -89,7 +97,7 @@ class uspDynamicAdapter
 
         label timeSteps_;
 
-        label nAvTimeSteps_;
+        scalar timeAvCounter_;
 
         labelList typeIds_;        
 
@@ -108,6 +116,8 @@ class uspDynamicAdapter
         volVectorField UMean_;
 
         volScalarField cellWeightFactor_;
+        volScalarField timeStepMCTRatio_;
+        volVectorField courantNumber_;
         volVectorField cellSizeMFPRatio_;
         volVectorField prevCellSizeMFPRatio_;
 
@@ -119,7 +129,8 @@ public:
     uspDynamicAdapter
     (
         const dictionary& dict,
-        const fvMesh& mesh,
+        Time& time,
+        fvMesh& mesh,
         uspCloud& cloud
     );
 
@@ -130,29 +141,38 @@ public:
     virtual void setInitialConfiguration
     (
         const Field<scalar>& speciesRhoN,
-        const scalar& transT
+        const scalar& transT,
+        const vector& U
     );
 
     virtual void setInitialConfiguration
     (
         const cellZone& zone,
         const Field<scalar>& speciesRhoN,
-        const scalar& transT
+        const scalar& transT,
+        const vector& U
     );
 
     virtual void setInitialConfiguration
     (
         const List<autoPtr<volScalarField>>& speciesRhoNPtr,
-        const volScalarField& transT
+        const volScalarField& transT,
+        const volVectorField& U
     );
     
-    vector calculateCellSizeMFPRatio
+    void calculateAdaptationQuantities
     (
         const label& cell,
         const scalar& rhoN,
         const scalar& transT,
-        const scalarList& speciesRhoN
+        const vector& U,
+        const scalarList& speciesRhoN,
+        scalar& timeStepMCTRatio,
+        vector& courantNumber,
+        vector& cellSizeMFPRatio
     );
+
+    void calculateTimeStep();
 
     vector calculateSubcellLevels
     (

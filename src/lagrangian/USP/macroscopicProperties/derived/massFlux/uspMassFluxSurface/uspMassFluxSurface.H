@@ -92,18 +92,29 @@ class uspMassFluxSurface
         dictionary propsDict_;
 
         word fieldName_;
+
         labelList typeIds_;
-        word faceZoneName_;        
+
+        word faceZoneName_;  
+
         vector fluxDirection_;
+
         bool averagingAcrossManyRuns_;
 
         label sampleCounter_;
+        
         label regionId_;
+
         scalar zoneSurfaceArea_;
+
         scalar molsZone_;
+
         scalar massZone_;
+
         scalar momentumZone_;
-        scalar averagingCounter_;
+
+        scalar timeAvCounter_;
+
         label timeIndex_;
 
         scalarField molFluxZone_;

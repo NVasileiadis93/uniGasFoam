@@ -36,23 +36,28 @@ namespace Foam
 uspDynamicAdapter::uspDynamicAdapter
 (
     const dictionary& dict,
-    const fvMesh& mesh,
+    Time& time,
+    fvMesh& mesh,
     uspCloud& cloud
 )
 :
     dict_(dict),
+    time_(time),
     mesh_(mesh),
     cloud_(cloud),
     minSubcellLevels_(1),
     maxSubcellLevels_(10),
-    cellWeightAdaptation_(false),
+    timeStepAdaptation_(false),
     subcellAdaptation_(false),
+    cellWeightAdaptation_(false),
     adaptationInterval_(),
+    maxTimeStepMCTRatio_(),
+    maxCourantNumber_(),
     maxSubcellSizeMFPRatio_(),
     smoothingPasses_(25),
     theta_(0.1),
     timeSteps_(0),
-    nAvTimeSteps_(0),
+    timeAvCounter_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -63,7 +68,7 @@ uspDynamicAdapter::uspDynamicAdapter
     (
         IOobject
         (
-            "rhoN_",
+            "rhoN",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -77,7 +82,7 @@ uspDynamicAdapter::uspDynamicAdapter
     (
         IOobject
         (
-            "translationalT_",
+            "translationalT",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -91,7 +96,7 @@ uspDynamicAdapter::uspDynamicAdapter
     (
         IOobject
         (
-            "UMean_",
+            "UMean",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -115,11 +120,39 @@ uspDynamicAdapter::uspDynamicAdapter
         dimensionedScalar(dimless, Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
+    timeStepMCTRatio_
+    (
+        IOobject
+        (
+            "timeStepMCTRatio_",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    courantNumber_
+    (
+        IOobject
+        (
+            "courantNumber_",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimless, Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ), 
     cellSizeMFPRatio_
     (
         IOobject
         (
-            "cellSizeToMFPRatioAdapt",
+            "cellSizeToMFPRatio",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -133,7 +166,7 @@ uspDynamicAdapter::uspDynamicAdapter
     (
         IOobject
         (
-            "prevCellSizeMFPRatio_",
+            "prevCellSizeMFPRatio",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -159,14 +192,27 @@ uspDynamicAdapter::uspDynamicAdapter
 
     if (cloud_.adaptive())
     {
+
         dictionary adaptationDict = dict.subDict("adaptiveProperties");
+
+        timeStepAdaptation_ = adaptationDict.getOrDefault<bool>("timeStepAdaptation",false);
+        
         subcellAdaptation_ = adaptationDict.getOrDefault<bool>("subcellAdaptation",false);
+
         cellWeightAdaptation_ = adaptationDict.getOrDefault<bool>("cellWeightAdaptation",false);
+        
+        adaptationInterval_ = adaptationDict.get<label>("adaptationInterval");
+
+        if (timeStepAdaptation_)
+        {
+            maxTimeStepMCTRatio_ = adaptationDict.getOrDefault<scalar>("maxTimeStepMCTRatio", 0.2);
+            maxCourantNumber_ = adaptationDict.getOrDefault<scalar>("maxCourantNumber", 0.5);
+        }
         if (subcellAdaptation_)
         {
-            maxSubcellSizeMFPRatio_ = adaptationDict.get<scalar>("maxSubcellSizeMFPRatio");
+            maxSubcellSizeMFPRatio_ = adaptationDict.getOrDefault<scalar>("maxSubcellSizeMFPRatio",0.5);
         }
-        adaptationInterval_ = adaptationDict.get<label>("adaptationInterval");
+
     }
 
 }
@@ -177,25 +223,30 @@ uspDynamicAdapter::uspDynamicAdapter
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-vector uspDynamicAdapter::calculateCellSizeMFPRatio
+void uspDynamicAdapter::calculateAdaptationQuantities
 (
     const label& cell,
     const scalar& rhoN,
     const scalar& transT,
-    const scalarList& speciesRhoN
+    const vector& U,
+    const scalarList& speciesRhoN,
+    scalar& timeStepMCTRatio,
+    vector& courantNumber,
+    vector& cellSizeMFPRatio
 )
 {
 
     if (transT > SMALL)
     {
 
+        scalar u0 = 0.0;
+        scalarList speciesMCR(typeIds_.size(), 0.0);
         scalarList speciesMFP(typeIds_.size(), 0.0);
 
         forAll(typeIds_, iD)
         {
-            label qspec = 0;
-
-            for (qspec=0; qspec<typeIds_.size(); ++qspec)
+            
+            for (label qspec=0; qspec<typeIds_.size(); ++qspec)
             {
                 scalar dPQ = 0.5*(cloud_.constProps(typeIds_[iD]).d() + cloud_.constProps(typeIds_[qspec]).d());
 
@@ -206,14 +257,28 @@ vector uspDynamicAdapter::calculateCellSizeMFPRatio
                 if (speciesRhoN[qspec] > VSMALL && transT > VSMALL)
                 {
 
+                    scalar reducedMass = 
+                        cloud_.constProps(typeIds_[iD]).mass()*cloud_.constProps(typeIds_[qspec]).mass()
+                        /(cloud_.constProps(typeIds_[iD]).mass() + cloud_.constProps(typeIds_[qspec]).mass());
+
+                    // //Bird, eq (4.74)
+                    speciesMCR[iD] += 
+                        (2.0*sqrt(pi)*dPQ*dPQ*speciesRhoN[qspec]*pow(transT/cloud_.collTref(),1.0 - omegaPQ)*sqrt(2.0*physicoChemical::k.value()*cloud_.collTref()/reducedMass)); 
+
                     //Bird, eq (4.76)
                     speciesMFP[iD] += pi*dPQ*dPQ*speciesRhoN[qspec]*pow(cloud_.collTref()/transT,omegaPQ - 0.5)*sqrt(1.0 + massRatio);
 
                 }
             }
 
+            if (speciesRhoN[iD] > VSMALL)
+            {
+                u0 = max(u0,std::sqrt(2.0*Foam::constant::physicoChemical::k.value()/cloud_.constProps(typeIds_[iD]).mass()*transT));
+            }
+
         }
 
+        scalar MCR = 0.0;
         scalar MFP = 0.0;
         forAll(speciesMFP, iD)
         {
@@ -222,13 +287,16 @@ vector uspDynamicAdapter::calculateCellSizeMFPRatio
 
                 speciesMFP[iD] = 1.0/speciesMFP[iD];
 
+                //Bird, eq (1.38)
+                MCR += speciesMCR[iD]*speciesRhoN[iD]/rhoN;
+
                 //Bird, eq (4.77)
                 MFP += speciesMFP[iD]*speciesRhoN[iD]/rhoN;
 
             }
         }
 
-        // Calculate cell size to mean free path ratio
+        // Calculate cell dimensions
         point minPoint = vector(GREAT, GREAT, GREAT);
         point maxPoint = vector(-GREAT, -GREAT, -GREAT);
         const List<label>& cellNodes = mesh_.cellPoints()[cell];
@@ -244,15 +312,85 @@ vector uspDynamicAdapter::calculateCellSizeMFPRatio
             maxPoint.z() = max(maxPoint.z(),cellPoint.z());                
         }
 
-        return (maxPoint-minPoint)/MFP;
+        // Calculate time-step to mean collision time ratio
+        scalar deltaT = mesh_.time().deltaTValue();
+        timeStepMCTRatio = deltaT*MCR;
+
+        // Calculate Courant number
+        courantNumber.x() = max(u0,U.x())*deltaT/(maxPoint.x()-minPoint.x());
+        courantNumber.y() = max(u0,U.y())*deltaT/(maxPoint.y()-minPoint.y());
+        courantNumber.z() = max(u0,U.z())*deltaT/(maxPoint.z()-minPoint.z());
+
+        // Calculate cell size to mean free path ratio
+        cellSizeMFPRatio = (maxPoint-minPoint)/MFP;
 
     }
     else
     {
-        return prevCellSizeMFPRatio_[cell];
+        timeStepMCTRatio = 0.0;
+        courantNumber = vector::zero;
+        cellSizeMFPRatio = prevCellSizeMFPRatio_[cell];
     }
     
 }
+
+void uspDynamicAdapter::calculateTimeStep()
+{
+
+    // Calculate maximum time step to mean collision time ratio
+    scalar instMaxTimeStepMCTRatio = 0e0;
+    forAll(mesh_.cells(), cell)
+    {
+        if (cloud_.cellCollModel(cell) == cloud_.binCollModel() && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
+        { 
+            instMaxTimeStepMCTRatio = timeStepMCTRatio_[cell];
+        }
+    }
+
+    // Calculate maximum Courant number
+    scalar instMaxCourantNumber = 0e0;
+    forAll(mesh_.cells(), cell)
+    {
+        forAll(cloud_.solutionDimensions(), dim)
+        {
+            if (cloud_.solutionDimensions()[dim] && instMaxCourantNumber < courantNumber_[cell][dim])
+            {
+                instMaxCourantNumber = courantNumber_[cell][dim];
+            }
+        }
+    }
+
+    // Set time-step
+    scalar deltaT = mesh_.time().deltaTValue();
+    if (instMaxTimeStepMCTRatio > VSMALL && instMaxCourantNumber < VSMALL)
+    {
+        deltaT *= maxTimeStepMCTRatio_/instMaxTimeStepMCTRatio;
+    }
+    else if (instMaxTimeStepMCTRatio < VSMALL && instMaxCourantNumber > VSMALL)
+    {
+        deltaT *= maxCourantNumber_/instMaxCourantNumber;
+    }
+    else if (instMaxTimeStepMCTRatio > VSMALL && instMaxCourantNumber > VSMALL)
+    {
+        deltaT *= min(maxTimeStepMCTRatio_/instMaxTimeStepMCTRatio,maxCourantNumber_/instMaxCourantNumber);
+    }
+
+    // Find minimum time step  across all processors
+    if (Pstream::parRun())
+    {
+        reduce(deltaT, minOp<scalar>());
+    }
+    time_.setDeltaT(deltaT);
+
+    //Delete for release
+    if (Pstream::myProcNo() == 0 )
+    {
+        std::ofstream outfile;
+        outfile.open("timeStepHistory.log", std::ios_base::app);
+        outfile << deltaT << "\n";
+    }
+
+}  
 
 vector uspDynamicAdapter::calculateSubcellLevels
 (
@@ -370,9 +508,11 @@ void uspDynamicAdapter::smoothCellWeightFactor
 void uspDynamicAdapter::adapt()
 {
 
+    const scalar& deltaT = mesh_.time().deltaTValue();
+
     timeSteps_++;
 
-    nAvTimeSteps_++;
+    timeAvCounter_ += deltaT;
 
     // get cell measurements
     auto& cm = cloud_.cellPropMeasurements();
@@ -380,14 +520,14 @@ void uspDynamicAdapter::adapt()
     forAll(cm.rhoNMean(), iD)
     {
 
-        rhoNMean_ += cm.rhoNMean()[iD];
+        rhoNMean_ += deltaT*cm.rhoNMean()[iD];
 
-        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
-        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
-        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
-        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
+        rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
+        rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
+        momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
+        linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
 
-        nParcelsXnParticle_[iD] += cm.nParcelsXnParticle()[iD];
+        nParcelsXnParticle_[iD] += deltaT*cm.nParcelsXnParticle()[iD];
 
     }
 
@@ -404,13 +544,13 @@ void uspDynamicAdapter::adapt()
             if (rhoNMean_[cell] > VSMALL)
             {
 
-                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(meshV[cell]*nAvTimeSteps_);
+                rhoN_[cell] = rhoNMeanXnParticle_[cell]/(meshV[cell]*timeAvCounter_);
 
-                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(meshV[cell]*nAvTimeSteps_);
-                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*meshV[cell]*nAvTimeSteps_);
+                scalar rhoMMean = rhoMMeanXnParticle_[cell]/(meshV[cell]*timeAvCounter_);
+                UMean_[cell] = momentumMeanXnParticle_[cell]/(rhoMMean*meshV[cell]*timeAvCounter_);
 
-                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(meshV[cell]*nAvTimeSteps_);
-                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(meshV[cell]*nAvTimeSteps_);
+                scalar linearKEMean = 0.5*linearKEMeanXnParticle_[cell]/(meshV[cell]*timeAvCounter_);
+                scalar rhoNMean = rhoNMeanXnParticle_[cell]/(meshV[cell]*timeAvCounter_);
                 translationalT_[cell] =
                     2.0/(3.0*physicoChemical::k.value()*rhoNMean)
                    *(
@@ -434,24 +574,41 @@ void uspDynamicAdapter::adapt()
             scalarList speciesRhoN(typeIds_.size(), 0.0);
             forAll(typeIds_,iD)
             {
-                speciesRhoN[iD] = nParcelsXnParticle_[iD][cell]/(meshV[cell]*nAvTimeSteps_);
+                speciesRhoN[iD] = nParcelsXnParticle_[iD][cell]/(meshV[cell]*timeAvCounter_);
             }
 
-            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
-                                        (
-                                            cell,
-                                            rhoN_[cell], 
-                                            translationalT_[cell], 
-                                            speciesRhoN
-                                        );
+            calculateAdaptationQuantities
+                (
+                    cell,
+                    rhoN_[cell], 
+                    translationalT_[cell],
+                    UMean_[cell],
+                    speciesRhoN,
+                    timeStepMCTRatio_[cell],
+                    courantNumber_[cell],
+                    cellSizeMFPRatio_[cell]
+                );    
+        
         }
+        timeStepMCTRatio_.correctBoundaryConditions();
+        courantNumber_.correctBoundaryConditions();
         cellSizeMFPRatio_.correctBoundaryConditions();
 
-        // Smooth cell size to mean free path ratio
+        // Smooth macroscopic fields
         for (label pass = 1; pass <= smoothingPasses_; ++pass)
         {
+            timeStepMCTRatio_ = fvc::average(fvc::interpolate(timeStepMCTRatio_));
+            courantNumber_ = fvc::average(fvc::interpolate(courantNumber_));
             cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
+            timeStepMCTRatio_.correctBoundaryConditions();
+            courantNumber_.correctBoundaryConditions();
             cellSizeMFPRatio_.correctBoundaryConditions();
+        }
+
+        // Adapt time step
+        if (timeStepAdaptation_)
+        {                      
+            calculateTimeStep();
         }
 
         // Adapt subcell levels
@@ -499,7 +656,7 @@ void uspDynamicAdapter::adapt()
         // Reset
         timeSteps_ = 0;
         
-        nAvTimeSteps_ = 0;
+        timeAvCounter_ = 0.0;
 
         forAll(rhoN_, cell)
         {
@@ -526,46 +683,70 @@ void uspDynamicAdapter::adapt()
 void uspDynamicAdapter::setInitialConfiguration
 (
     const Field<scalar>& speciesRhoN,
-    const scalar& transT
+    const scalar& transT,
+    const vector& U
 )
 {
 
-        // Calculate total number density
-        scalar rhoN = 0.0;
-        forAll(typeIds_,iD)
-        {
-            rhoN += speciesRhoN[iD];
-        }
+    // Calculate total number density
+    scalar rhoN = 0.0;
+    forAll(typeIds_,iD)
+    {
+        rhoN += speciesRhoN[iD];
+    }
 
-        // Calculate cell size to mean free path ratio
+    // Calculate cell size to mean free path ratio
+    forAll(mesh_.cells(), cell)
+    {
+        calculateAdaptationQuantities
+            (
+                cell,
+                rhoN, 
+                transT, 
+                U,
+                speciesRhoN,
+                timeStepMCTRatio_[cell],
+                courantNumber_[cell],
+                cellSizeMFPRatio_[cell]
+            );
+    }
+    timeStepMCTRatio_.correctBoundaryConditions();
+    courantNumber_.correctBoundaryConditions();
+    cellSizeMFPRatio_.correctBoundaryConditions();
+
+    // Smooth cell size to mean free path ratio
+    for (label pass = 1; pass <= smoothingPasses_; ++pass)
+    {
+        timeStepMCTRatio_ = fvc::average(fvc::interpolate(timeStepMCTRatio_));
+        courantNumber_ = fvc::average(fvc::interpolate(courantNumber_));
+        cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
+        timeStepMCTRatio_.correctBoundaryConditions();
+        courantNumber_.correctBoundaryConditions();
+        cellSizeMFPRatio_.correctBoundaryConditions();
+    }
+
+    // Store old data
+    prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+    // Adapt time step
+    if (timeStepAdaptation_)
+    {                      
+        calculateTimeStep();
+    }
+
+    // Adapt subcell levels
+    if (subcellAdaptation_)
+    {
         forAll(mesh_.cells(), cell)
         {
-            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
-                                        (
-                                            cell,
-                                            rhoN, 
-                                            transT, 
-                                            speciesRhoN
-                                        );
-        }
-        cellSizeMFPRatio_.correctBoundaryConditions();
-
-        // Store old size to mean free path ratio
-        prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
-
-        // Adapt subcell levels
-        if (subcellAdaptation_)
-        {
-            forAll(mesh_.cells(), cell)
-            {
-                cloud_.subcellLevels()[cell] = calculateSubcellLevels
-                                                (
-                                                    cell,
-                                                    cellSizeMFPRatio_[cell]
-                                                );
-            }                           
-            cloud_.subcellLevels().correctBoundaryConditions();
-        }
+            cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                                            (
+                                                cell,
+                                                cellSizeMFPRatio_[cell]
+                                            );
+        }                           
+        cloud_.subcellLevels().correctBoundaryConditions();
+    }
 
 }
 
@@ -573,7 +754,8 @@ void uspDynamicAdapter::setInitialConfiguration
 (
     const cellZone& zone,
     const Field<scalar>& speciesRhoN,
-    const scalar& transT
+    const scalar& transT,
+    const vector& U
 )
 {
 
@@ -589,19 +771,32 @@ void uspDynamicAdapter::setInitialConfiguration
     {
         for (const label cell : zone)
         {
-            cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
-                                        (
-                                            cell,
-                                            rhoN, 
-                                            transT, 
-                                            speciesRhoN
-                                        );
+
+            calculateAdaptationQuantities
+              (
+                  cell,
+                  rhoN, 
+                  transT,
+                  U,
+                  speciesRhoN,
+                  timeStepMCTRatio_[cell],
+                  courantNumber_[cell],
+                  cellSizeMFPRatio_[cell]
+              );
         }
     }
+    timeStepMCTRatio_.correctBoundaryConditions();
+    courantNumber_.correctBoundaryConditions();
     cellSizeMFPRatio_.correctBoundaryConditions();
 
-    // Store old size to mean free path ratio
+    // Store old data
     prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+    // Adapt time step
+    if (timeStepAdaptation_)
+    {                      
+        calculateTimeStep();
+    }
 
     // Adapt subcell levels
     if (subcellAdaptation_)
@@ -625,7 +820,8 @@ void uspDynamicAdapter::setInitialConfiguration
 void uspDynamicAdapter::setInitialConfiguration
 (
     const List<autoPtr<volScalarField>>& speciesRhoNPtr,
-    const volScalarField& transT
+    const volScalarField& transT,
+    const volVectorField& U
 )
 {
 
@@ -661,18 +857,32 @@ void uspDynamicAdapter::setInitialConfiguration
             speciesRhoN[iD] = speciesRhoNID[cell];
         }
 
-        cellSizeMFPRatio_[cell] = calculateCellSizeMFPRatio
-                                    (
-                                        cell,
-                                        rhoN[cell], 
-                                        transT[cell], 
-                                        speciesRhoN
-                                    );
+        calculateAdaptationQuantities
+        (
+            cell,
+            rhoN[cell], 
+            transT[cell],
+            U[cell],
+            speciesRhoN,
+            timeStepMCTRatio_[cell],
+            courantNumber_[cell],
+            cellSizeMFPRatio_[cell]
+        );
+
+
     }
+    timeStepMCTRatio_.correctBoundaryConditions();
+    courantNumber_.correctBoundaryConditions();
     cellSizeMFPRatio_.correctBoundaryConditions();
 
-    // Store old size to mean free path ratio
+    // Store old data
     prevCellSizeMFPRatio_ = cellSizeMFPRatio_;
+
+    // Adapt time step
+    if (timeStepAdaptation_)
+    {                      
+        calculateTimeStep();
+    }
 
     // Adapt subcell levels
     if (subcellAdaptation_)

@@ -61,7 +61,7 @@ Foam::uspMassFluxSurface::uspMassFluxSurface
     molsZone_(0.0),
     massZone_(0.0),
     momentumZone_(0.0),
-    averagingCounter_(0.0),
+    timeAvCounter_(0.0),
     timeIndex_(0),
     molFluxZone_(1, 0.0),
     massFluxZone_(1, 0.0),
@@ -210,7 +210,7 @@ void Foam::uspMassFluxSurface::readIn()
     dict.readIfPresent("molsZone", molsZone_);
     dict.readIfPresent("massZone", massZone_);
     dict.readIfPresent("momentumZone", momentumZone_);
-    dict.readIfPresent("averagingCounter", averagingCounter_);
+    dict.readIfPresent("timeAvCounter", timeAvCounter_);
 
 }
 
@@ -236,7 +236,7 @@ void Foam::uspMassFluxSurface::writeOut()
         dict.add("molsZone", molsZone_);
         dict.add("massZone", massZone_);
         dict.add("momentumZone", momentumZone_);
-        dict.add("averagingCounter", averagingCounter_);
+        dict.add("timeAvCounter", timeAvCounter_);
 
         dict.regIOobject::writeObject
         (
@@ -253,13 +253,16 @@ void Foam::uspMassFluxSurface::createField()
 
 void Foam::uspMassFluxSurface::calculateField()
 {
-    // Call this function every time-step before the state and flux objects are
-    // cleaned
-    ++sampleCounter_;
+
+const scalar& deltaT = mesh_.time().deltaTValue();
+
+    sampleCounter_++;
 
     if (sampleInterval_ <= sampleCounter_)
     {
-        ++averagingCounter_;
+
+
+        timeAvCounter_ += deltaT;
 
         const List<scalarField>& molIdFlux = cloud_.tracker().parcelIdFlux();
         const List<scalarField>& massIdFlux = cloud_.tracker().massIdFlux();
@@ -322,15 +325,12 @@ void Foam::uspMassFluxSurface::calculateField()
             reduce(momentumZone, sumOp<scalar>());
         }
 
-        scalar deltaT = mesh_.time().deltaTValue();
-        scalar averagingTime = averagingCounter_*deltaT;
-
         if (zoneSurfaceArea_ > 0.0)
         {
-            molFluxZone_[timeIndex_] = molsZone/(averagingTime*zoneSurfaceArea_);
-            massFluxZone_[timeIndex_] = massZone/(averagingTime*zoneSurfaceArea_);
-            massFlowZone_[timeIndex_] = massZone/averagingTime;
-            momentumFlowZone_[timeIndex_] = momentumZone/averagingTime;
+            molFluxZone_[timeIndex_] = molsZone/(timeAvCounter_*zoneSurfaceArea_);
+            massFluxZone_[timeIndex_] = massZone/(timeAvCounter_*zoneSurfaceArea_);
+            massFlowZone_[timeIndex_] = massZone/timeAvCounter_;
+            momentumFlowZone_[timeIndex_] = momentumZone/timeAvCounter_;
         }
         else
         {
@@ -342,7 +342,7 @@ void Foam::uspMassFluxSurface::calculateField()
 
         if (resetFieldsAtOutput_ && mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT)
         {
-            averagingCounter_ = 0;
+            timeAvCounter_ = 0;
             molsZone_ = 0.0;
             massZone_ = 0.0;
             momentumZone_ = 0.0;
