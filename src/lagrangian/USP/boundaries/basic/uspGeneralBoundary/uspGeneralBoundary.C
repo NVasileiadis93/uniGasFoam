@@ -543,10 +543,8 @@ void Foam::uspGeneralBoundary::insertParcels
     const vector& velocity
 )
 {
-    Random& rndGen = cloud_.rndGen();
 
-    labelField parcelsInserted(typeIds_.size(), Zero);
-    labelField parcelsToAdd(typeIds_.size(), Zero);
+    Random& rndGen = cloud_.rndGen();
 
     // insert pacels
     forAll(faces_, f)
@@ -594,28 +592,27 @@ void Foam::uspGeneralBoundary::insertParcels
         vector t2 = n^t1;
         t2 /= mag(t2);
 
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            const label typeId = typeIds_[m];
+            const label typeId = typeIds_[iD];
 
-            scalar& faceAccumulator = accumulatedParcelsToInsert_[m][f];
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
             // Number of whole particles to insert
-            label nI = max(label(faceAccumulator), 0);
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
 
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
-            if ((faceAccumulator - nI) > rndGen.sample01<scalar>())
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
-                ++nI;
+                ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nI;
-            parcelsToAdd[m] += nI;
+            faceAccumulator -= nParcelsToInsert;
 
             const scalar mass = cloud_.constProps(typeId).mass();
 
-            for (label i = 0; i < nI; ++i)
+            for (label i = 0; i < nParcelsToInsert; ++i)
             {
                 // Choose a triangle to insert on, based on their relative
                 // area
@@ -760,7 +757,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                parcelsInserted[m] += 1.0;
             }
         }
     }
@@ -779,9 +775,6 @@ void Foam::uspGeneralBoundary::insertParcels
 )
 {
     Random& rndGen = cloud_.rndGen();
-
-    labelField parcelsInserted(typeIds_.size(), Zero);
-    labelField parcelsToAdd(typeIds_.size(), Zero);
 
     // insert pacels
     forAll(faces_, f)
@@ -831,34 +824,33 @@ void Foam::uspGeneralBoundary::insertParcels
 
         //Compute pressure of mixture based on number densities of all species
         scalar pressure=0.0;
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            pressure+=numDen[m];
+            pressure+=numDen[iD];
         }
         pressure*=physicoChemical::k.value()*transT;
 
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            const label typeId = typeIds_[m];
+            const label typeId = typeIds_[iD];
 
-            scalar& faceAccumulator = accumulatedParcelsToInsert_[m][f];
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
             // Number of whole particles to insert
-            label nI = max(label(faceAccumulator), 0);
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
 
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
-            if ((faceAccumulator - nI) > rndGen.sample01<scalar>())
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
-                ++nI;
+                ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nI;
-            parcelsToAdd[m] += nI;
+            faceAccumulator -= nParcelsToInsert;
 
             const scalar mass = cloud_.constProps(typeId).mass();
 
-            for (label i = 0; i < nI; ++i)
+            for (label i = 0; i < nParcelsToInsert; ++i)
             {
                 // Choose a triangle to insert on, based on their relative
                 // area
@@ -1007,7 +999,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                parcelsInserted[m] += 1.0;
             }
         }
     }
@@ -1023,9 +1014,6 @@ void Foam::uspGeneralBoundary::insertParcels
 )
 {
     Random& rndGen = cloud_.rndGen();
-
-    labelField parcelsInserted(typeIds_.size(), 0);
-    labelField parcelsToAdd(typeIds_.size(), 0);
 
     // Insert parcels
     forAll(faces_, f)
@@ -1077,28 +1065,27 @@ void Foam::uspGeneralBoundary::insertParcels
         vector t2 = n^t1;
         t2 /= mag(t2);
 
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            const label typeId = typeIds_[m];
+            const label typeId = typeIds_[iD];
 
-            scalar& faceAccumulator = accumulatedParcelsToInsert_[m][f];
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
             // Number of whole particles to insert
-            label nI = max(label(faceAccumulator), 0);
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
 
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
-            if ((faceAccumulator - nI) > rndGen.sample01<scalar>())
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
-                ++nI;
+                ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nI;
-            parcelsToAdd[m] += nI;
+            faceAccumulator -= nParcelsToInsert;
 
             scalar mass = cloud_.constProps(typeId).mass();
 
-            for (label i = 0; i < nI; ++i)
+            for (label i = 0; i < nParcelsToInsert; ++i)
             {
                 // Choose a triangle to insert on, based on their relative
                 // area
@@ -1238,7 +1225,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                parcelsInserted[m] += 1.0;
             }
         }
     }
@@ -1257,9 +1243,6 @@ void Foam::uspGeneralBoundary::insertParcels
 )
 {
     Random& rndGen = cloud_.rndGen();
-
-    labelField parcelsInserted(typeIds_.size(), 0);
-    labelField parcelsToAdd(typeIds_.size(), 0);
 
     // Insert parcels
     forAll(faces_, f)
@@ -1315,34 +1298,33 @@ void Foam::uspGeneralBoundary::insertParcels
 
         //Compute pressure of mixture based on number densities of all species
         scalar pressure=0.0;
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            pressure+=numDen[m][f];
+            pressure+=numDen[iD][f];
         }
         pressure*=physicoChemical::k.value()*faceTranslationalTemperature;
 
-        forAll(typeIds_, m)
+        forAll(typeIds_, iD)
         {
-            const label typeId = typeIds_[m];
+            const label typeId = typeIds_[iD];
 
-            scalar& faceAccumulator = accumulatedParcelsToInsert_[m][f];
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
             // Number of whole particles to insert
-            label nI = max(label(faceAccumulator), 0);
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
 
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
-            if ((faceAccumulator - nI) > rndGen.sample01<scalar>())
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
-                ++nI;
+                ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nI;
-            parcelsToAdd[m] += nI;
+            faceAccumulator -= nParcelsToInsert;
 
             scalar mass = cloud_.constProps(typeId).mass();
 
-            for (label i = 0; i < nI; ++i)
+            for (label i = 0; i < nParcelsToInsert; ++i)
             {
                 // Choose a triangle to insert on, based on their relative
                 // area
@@ -1451,7 +1433,6 @@ void Foam::uspGeneralBoundary::insertParcels
                 U=mostProbableSpeed*U+faceVelocity;
                 /////////////////////////////////////////////////////////////////////////
 
-
                 scalar ERot = cloud_.equipartitionRotationalEnergy
                 (
                     faceRotationalTemperature,
@@ -1496,7 +1477,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                parcelsInserted[m] += 1.0;
             }
         }
     }
@@ -1509,9 +1489,6 @@ void Foam::uspGeneralBoundary::insertParcels
 )
 {
     Random& rndGen = cloud_.rndGen();
-
-    label nTotalParcelsAdded = 0;
-    label nTotalParcelsToBeAdded = 0;
 
     // Loop over all species
     forAll(accumulatedParcelsToInsert_, iD)
@@ -1571,31 +1548,19 @@ void Foam::uspGeneralBoundary::insertParcels
 
             /* -------------------------------------------------------------*/
 
-            // generate Poisson distributed random number of particles to insert
-            // see Tysanner & Garcia, Int. J. Numer. Meth. Fluids 2050; 00:1-12
-            // this eliminates non - equilibrium behaviour that does not exist
-            // in the corresponding physical system
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
-            label k = 0;
+            // Number of whole particles to insert
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
 
-            const scalar target = exp(-accumulatedParcelsToInsert_[iD][f]);
-
-            scalar p = rndGen.sample01<scalar>();
-
-            while (p > target)
+            // Add another particle with a probability proportional to the
+            // remainder of taking the integer part of faceAccumulator
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
-                p *= rndGen.sample01<scalar>();
-                k += 1;
+                ++nParcelsToInsert;
             }
 
-            label nParcelsToInsert = k;
-
-            /* ----------------------------------------------------------*/
-            
-            accumulatedParcelsToInsert_[iD][f] -= nParcelsToInsert;
-            
-
-            nTotalParcelsToBeAdded += nParcelsToInsert;
+            faceAccumulator -= nParcelsToInsert;
 
             const label typeId = typeIds_[iD];
             const scalar pMass = cloud_.constProps(typeId).mass();
@@ -1742,7 +1707,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                ++nTotalParcelsAdded;
             }
         }
     }
@@ -1755,11 +1719,6 @@ void Foam::uspGeneralBoundary::insertParcels
 )
 {
     Random& rndGen = cloud_.rndGen();
-
-    label nTotalParcelsAdded = 0;
-    label nTotalParcelsToBeAdded = 0;
-
-    labelField parcelsInserted(typeIds_.size(), 0);
 
     // loop over all species
     forAll(accumulatedParcelsToInsert_, iD)
@@ -1827,8 +1786,6 @@ void Foam::uspGeneralBoundary::insertParcels
 
             // Note: remainder has been set
             accumulatedParcelsToInsert_[iD][f] -= nParcelsToInsert;
-
-            nTotalParcelsToBeAdded += nParcelsToInsert;
 
             const label typeId = typeIds_[iD];
             const scalar mass = cloud_.constProps(typeId).mass();
@@ -1976,8 +1933,6 @@ void Foam::uspGeneralBoundary::insertParcels
                     vibLevel
                 );
 
-                ++nTotalParcelsAdded;
-                ++parcelsInserted[iD];
             }
         }
     }
