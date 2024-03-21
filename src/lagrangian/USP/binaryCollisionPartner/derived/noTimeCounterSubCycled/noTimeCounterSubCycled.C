@@ -155,15 +155,7 @@ void noTimeCounterSubCycled::collide()
                         {
                             if (solutionDimensions[dim])
                             {
-                                for (label l = 0; l < label(subcellLevels[dim]); ++l)
-                                {
-
-                                    if (relPos[dim] <= (l+1)/subcellLevels[dim]*cellLength[dim])
-                                    {
-                                        dimPos[dim] = l;
-                                        break;
-                                    }
-                                }
+                                dimPos[dim] = label(subcellLevels[dim]*relPos[dim]/cellLength[dim]);
                             }
                         }
 
