@@ -397,10 +397,10 @@ Foam::scalar Foam::uspCloud::PSIm
 
 Foam::uspCloud::uspCloud
 (
-    Time& t,
     const word& cloudName,
-    fvMesh& mesh,
-    const IOdictionary& uspInitialiseDict
+    const IOdictionary& uspInitialiseDict,
+    Time& t,
+    fvMesh& mesh
 )
 :
     CloudWithModels<uspParcel>(mesh, cloudName, false),

@@ -289,10 +289,10 @@ public:
         //- reads them from file, else they are initialised
         uspCloud
         (
-            Time& t,
             const word& cloudName,
-            fvMesh& mesh,
-            const IOdictionary& uspInitialiseDict
+            const IOdictionary& uspInitialiseDict,
+            Time& t,
+            fvMesh& mesh
         );
 
     //- Destructor

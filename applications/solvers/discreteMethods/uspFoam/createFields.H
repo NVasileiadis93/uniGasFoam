@@ -14,7 +14,6 @@ IOstream::defaultPrecision(15);
 
 Info<< "Initialising usp for Time = " << runTime.timeName() << nl << endl;
 
-uspCloud usp(runTime, "usp", mesh, uspInitialiseDict);
+uspCloud usp("usp", uspInitialiseDict, runTime, mesh);
 
-Info<< nl << "ClockTime = " << runTime.elapsedClockTime() << " s"
-    << nl << endl;
+Info<< nl << "ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;

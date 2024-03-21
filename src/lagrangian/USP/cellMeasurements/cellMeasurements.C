@@ -318,21 +318,21 @@ void Foam::cellMeasurements::createFields()
 
     for (auto& f : nParcels_)
     {
-        f.setSize(mesh_.nCells());
+        f.setSize(mesh_.nCells(), 0.0);
     }
 
     nParcelsXnParticle_.setSize(typeIds_.size());
 
     for (auto& f : nParcelsXnParticle_)
     {
-        f.setSize(mesh_.nCells());
+        f.setSize(mesh_.nCells(), 0.0);
     }
 
     mccSpecies_.setSize(typeIds_.size());
 
     for (auto& f : mccSpecies_)
     {
-        f.setSize(mesh_.nCells());
+        f.setSize(mesh_.nCells(), 0.0);
     }
 
 }
