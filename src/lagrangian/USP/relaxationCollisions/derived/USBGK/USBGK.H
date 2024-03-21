@@ -26,7 +26,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unifiedSBGK
+    USBGK
 
 Description
     Relaxes particles to local unified Shakhov distribution
@@ -37,7 +37,7 @@ Usage
     Example of relaxation specification
 
     \verbatim
-    relaxationCollisionModel    unifiedSBGK;
+    relaxationCollisionModel    USBGK;
     collisionProperties
     {
         Tref                273;
@@ -47,12 +47,12 @@ Usage
     /endverbatim
     
 SourceFiles
-    unifiedSBGK.C
+    USBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unifiedSBGK_H
-#define unifiedSBGK_H
+#ifndef USBGK_H
+#define USBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -68,10 +68,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class unifiedSBGK Declaration
+                        class USBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class unifiedSBGK
+class USBGK
 :
     public relaxationCollisionModel
 {
@@ -144,10 +144,10 @@ class unifiedSBGK
 public:
 
     //- Runtime type information
-    TypeName("unifiedSBGK");
+    TypeName("USBGK");
 
     //- Construct from componentsonst label& cell
-    unifiedSBGK
+    USBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -155,7 +155,7 @@ public:
     );
 
     //- Destructor
-    virtual ~unifiedSBGK() = default;
+    virtual ~USBGK() = default;
 
     // Member Functions
 

@@ -347,6 +347,11 @@ Foam::SBGK::SBGK
         (
             cloud_.constProps(typeIds_[i]).vibrationalDoF()
         );
+
+        forAll(vibrationalETotal_[i], j)
+        {
+            vibrationalETotal_[i][j].setSize(mesh_.nCells(), 0.0);
+        }
     }
 
 }
@@ -548,32 +553,22 @@ void Foam::SBGK::calculateProperties()
             rotationalT_[cell] = 0.0;
         }
 
-         // Vibrational temperature
+        // Vibrational temperature
+        scalar vibT = 0.0;
+        scalar totalvDof = 0.0;
         scalarList degreesOfFreedomSpecies(typeIds_.size(), 0.0);
         scalarList vibTID(vibrationalETotal_.size(), 0.0);
-        scalarField vibT(mesh_.nCells(), scalar(0.0));
-        scalarField totalvDof(mesh_.nCells(), scalar(0.0));
-        scalarField totalvDofOverall(mesh_.nCells(), scalar(0.0));
-
         List<scalarList> dofMode;
         List<scalarList> vibTMode;
-
         dofMode.setSize(typeIds_.size());
         vibTMode.setSize(typeIds_.size());
 
         forAll(dofMode, iD)
         {
-            dofMode[iD].setSize
-            (
-                cloud_.constProps(typeIds_[iD]).vibrationalDoF(),
-                0.0
-            );
-
-            vibTMode[iD].setSize
-            (
-                cloud_.constProps(typeIds_[iD]).vibrationalDoF(),
-                0.0
-            );
+            const auto& constProp = cloud_.constProps(typeIds_[iD]);
+            
+            dofMode[iD].setSize(constProp.vibrationalDoF(), 0.0);
+            vibTMode[iD].setSize(constProp.vibrationalDoF(), 0.0);
         }
 
         forAll(vibrationalETotal_, iD)
@@ -587,8 +582,10 @@ void Foam::SBGK::calculateProperties()
                  && dofMode.size() > VSMALL
                 )
                 {
-                    scalar thetaV =
-                        cloud_.constProps(typeIds_[iD]).thetaV()[v];
+                    const auto& constProp = 
+                        cloud_.constProps(typeIds_[iD]);
+                    
+                    scalar thetaV = constProp.thetaV()[v];
 
                     scalar vibrationalEMean =
                         vibrationalETotal_[iD][v][cell]
@@ -603,6 +600,7 @@ void Foam::SBGK::calculateProperties()
                     dofMode[iD][v] =
                         (2.0*thetaV/vibTMode[iD][v])
                        /(exp(thetaV/vibTMode[iD][v]) - 1.0);
+
                 }
             }
 
@@ -622,8 +620,7 @@ void Foam::SBGK::calculateProperties()
                 }
             }
 
-
-            totalvDof[cell] += degreesOfFreedomSpecies[iD];
+            totalvDof += degreesOfFreedomSpecies[iD];
 
             if
             (
@@ -632,25 +629,13 @@ void Foam::SBGK::calculateProperties()
              && nParcels_[iD][cell] > VSMALL
             )
             {
-                scalar fraction =
-                    nParcels_[iD][cell]
-                   /rhoNMeanInt_[cell];
-
-                scalar fractionOverall =
-                    nParcels_[iD][cell]
-                   /rhoNMean_[cell];
-
-                totalvDofOverall[cell] +=
-                    totalvDof[cell]
-                   *(fractionOverall/fraction);
-
-                vibT[cell] += vibTID[iD]*fraction;
+                vibT += vibTID[iD]*nParcels_[iD][cell]/rhoNMeanInt_[cell];;
             }
         }
 
-        vibrationalT_[cell] = vibT[cell];
+        vibrationalT_[cell] = vibT;
 
-        // electronic temperature
+        // Electronic temperature
         scalar totalEDof = 0.0;
         scalar elecT = 0.0;
 
@@ -713,10 +698,10 @@ void Foam::SBGK::calculateProperties()
             (
                 (3.0*translationalT_[cell])
               + (nRotDof*rotationalT_[cell])
-              + (totalvDof[cell]*vibrationalT_[cell])
+              + (totalvDof*vibrationalT_[cell])
               + (totalEDof*electronicT_[cell])
             )
-           /(3.0 + nRotDof + totalvDof[cell] + totalEDof);
+           /(3.0 + nRotDof + totalvDof + totalEDof);
 
         // Relaxation frequency !!!Check mixtures and vibrational-electronic DoF
         Prandtl_[cell] = 0.0;
@@ -949,7 +934,7 @@ void Foam::SBGK::relax()
     {
         if (relaxations>0)
         {
-            Info<< "    Relaxations                      = "
+            Info<< "    Relaxations                     = "
                 << relaxations << nl
                 << endl;
             infoCounter_ = 0;

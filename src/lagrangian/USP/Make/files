@@ -44,7 +44,7 @@ relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
 relaxationCollisions/derived/BGK/BGK.C
 relaxationCollisions/derived/ESBGK/ESBGK.C
 relaxationCollisions/derived/SBGK/SBGK.C
-relaxationCollisions/derived/unifiedSBGK/unifiedSBGK.C
+relaxationCollisions/derived/USBGK/USBGK.C
 
 
 /* REACTIONS */
