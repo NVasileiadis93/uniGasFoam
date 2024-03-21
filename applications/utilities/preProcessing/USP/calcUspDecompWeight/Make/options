@@ -14,7 +14,7 @@ EXE_INC = \
 EXE_LIBS = \
     -L$(FOAM_USER_LIBBIN) \
         -lUSP \
-        -llagrangianCloudBase \
+        -llagrangianUspCloudBase \
     -ldecompositionMethods \
     -lmeshTools \
     -lsampling \
