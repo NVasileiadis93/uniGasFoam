@@ -80,10 +80,14 @@ Foam::SBGK::SBGK
     mccu_(mesh_.nCells(), 0.0),
     mccv_(mesh_.nCells(), 0.0),
     mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
+    eRotu_(mesh_.nCells(), 0.0),
+    eRotv_(mesh_.nCells(), 0.0),
+    eRotw_(mesh_.nCells(), 0.0),
+    eRot_(mesh_.nCells(), 0.0),
+    eVibu_(mesh_.nCells(), 0.0),
+    eVibv_(mesh_.nCells(), 0.0),
+    eVibw_(mesh_.nCells(), 0.0),
+    eVib_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
     nParcels_(),
@@ -363,50 +367,54 @@ void Foam::SBGK::calculateProperties()
 
     auto& cm = cloud_.cellPropMeasurements();
 
-    forAll(typeIds_, i)
+    forAll(typeIds_, iD)
     {
 
-        rhoNMean_ += cm.rhoNMean()[i];
-        rhoMMean_ += cm.rhoMMean()[i];
-        linearKEMean_ += cm.linearKEMean()[i];
-        momentumMean_ += cm.momentumMean()[i];
-        rotationalEMean_ += cm.rotationalEMean()[i];
-        rotationalDofMean_ += cm.rotationalDofMean()[i];
-        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[i];
-        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[i];
-        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[i];
-        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[i];
+        rhoNMean_ += cm.rhoNMean()[iD];
+        rhoMMean_ += cm.rhoMMean()[iD];
+        linearKEMean_ += cm.linearKEMean()[iD];
+        momentumMean_ += cm.momentumMean()[iD];
+        rotationalEMean_ += cm.rotationalEMean()[iD];
+        rotationalDofMean_ += cm.rotationalDofMean()[iD];
+        rhoNMeanXnParticle_ += cm.rhoNMeanXnParticle()[iD];
+        rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
+        momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
+        linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
 
-        muu_ += cm.muu()[i];
-        muv_ += cm.muv()[i];
-        muw_ += cm.muw()[i];
-        mvv_ += cm.mvv()[i];
-        mvw_ += cm.mvw()[i];
-        mww_ += cm.mww()[i];
-        mcc_ += cm.mcc()[i];
-        mccu_ += cm.mccu()[i];
-        mccv_ += cm.mccv()[i];
-        mccw_ += cm.mccw()[i];
+        muu_ += cm.muu()[iD];
+        muv_ += cm.muv()[iD];
+        muw_ += cm.muw()[iD];
+        mvv_ += cm.mvv()[iD];
+        mvw_ += cm.mvw()[iD];
+        mww_ += cm.mww()[iD];
+        mcc_ += cm.mcc()[iD];
+        mccu_ += cm.mccu()[iD];
+        mccv_ += cm.mccv()[iD];
+        mccw_ += cm.mccw()[iD];
 
-        eu_ += cm.eu()[i];
-        ev_ += cm.ev()[i];
-        ew_ += cm.ew()[i];
-        e_ += cm.e()[i];
+        eRotu_ += cm.eRotu()[iD];
+        eRotv_ += cm.eRotv()[iD];
+        eRotw_ += cm.eRotw()[iD];
+        eRot_ += cm.eRot()[iD];
+        eVibu_ += cm.eVibu()[iD];
+        eVibv_ += cm.eVibv()[iD];
+        eVibw_ += cm.eVibw()[iD];
+        eVib_ += cm.eVib()[iD];
 
-        rhoNMeanInt_ += cm.rhoNMeanInt()[i];
-        molsElec_ += cm.molsElec()[i];
+        rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
+        molsElec_ += cm.molsElec()[iD];
 
-        nParcels_[i] += cm.nParcels()[i];
-        nParcelsXnParticle_[i] += cm.nParcelsXnParticle()[i];
-        mccSpecies_[i] += cm.mccSpecies()[i];
+        nParcels_[iD] += cm.nParcels()[iD];
+        nParcelsXnParticle_[iD] += cm.nParcelsXnParticle()[iD];
+        mccSpecies_[iD] += cm.mccSpecies()[iD];
 
-        nGroundElectronicLevel_[i] += cm.nGroundElectronicLevel()[i];
-        nFirstElectronicLevel_[i] += cm.nFirstElectronicLevel()[i];
-        electronicETotal_[i] += cm.electronicETotal()[i];
+        nGroundElectronicLevel_[iD] += cm.nGroundElectronicLevel()[iD];
+        nFirstElectronicLevel_[iD] += cm.nFirstElectronicLevel()[iD];
+        electronicETotal_[iD] += cm.electronicETotal()[iD];
 
-        forAll(vibrationalETotal_[i], v)
+        forAll(vibrationalETotal_[iD], v)
         {
-            vibrationalETotal_[i][v] += cm.vibrationalETotal()[i][v];
+            vibrationalETotal_[iD][v] += cm.vibrationalETotal()[iD][v];
         }
 
     }
@@ -490,8 +498,8 @@ void Foam::SBGK::calculateProperties()
             (
                 0.5*(mccu_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].x() + eu_[cell]/(rhoNMean_[cell]) -
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].x()
+                UMean_[cell].x() + (eRotu_[cell]+eVibu_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].x()
             ) -
                 pressureTensor_[cell].xx()*UMean_[cell].x() -
                 pressureTensor_[cell].xy()*UMean_[cell].y() -
@@ -501,8 +509,8 @@ void Foam::SBGK::calculateProperties()
             (
                 0.5*(mccv_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].y() + ev_[cell]/(rhoNMean_[cell])-
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].y()
+                UMean_[cell].y() + (eRotv_[cell]+eVibv_[cell])/(rhoNMean_[cell])-
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].y()
             ) -
                 pressureTensor_[cell].yx()*UMean_[cell].x() -
                 pressureTensor_[cell].yy()*UMean_[cell].y() -
@@ -512,8 +520,8 @@ void Foam::SBGK::calculateProperties()
             (
                 0.5*(mccw_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].z() + ew_[cell]/(rhoNMean_[cell]) -
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].z()
+                UMean_[cell].z() + (eRotw_[cell]+eVibw_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].z()
             ) -
                 pressureTensor_[cell].zx()*UMean_[cell].x() -
                 pressureTensor_[cell].zy()*UMean_[cell].y() -
@@ -791,10 +799,14 @@ void Foam::SBGK::resetProperties()
         mccv_[cell] = 0.0;
         mccw_[cell] = 0.0;
 
-        eu_[cell] = 0.0;
-        ev_[cell] = 0.0;
-        ew_[cell] = 0.0;
-        e_[cell] = 0.0;
+        eRotu_[cell] = 0.0;
+        eRotv_[cell] = 0.0;
+        eRotw_[cell] = 0.0;
+        eRot_[cell] = 0.0;
+        eVibu_[cell] = 0.0;
+        eVibv_[cell] = 0.0;
+        eVibw_[cell] = 0.0;
+        eVib_[cell] = 0.0;
 
         rhoNMeanInt_[cell] = 0.0;
         molsElec_[cell] = 0.0;

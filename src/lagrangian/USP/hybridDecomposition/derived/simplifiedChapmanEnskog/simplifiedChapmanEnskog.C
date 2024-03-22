@@ -69,10 +69,14 @@ Foam::simplifiedChapmanEnskog::simplifiedChapmanEnskog
     mccu_(mesh_.nCells(), 0.0),
     mccv_(mesh_.nCells(), 0.0),
     mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
+    eRotu_(mesh_.nCells(), 0.0),
+    eRotv_(mesh_.nCells(), 0.0),
+    eRotw_(mesh_.nCells(), 0.0),
+    eRot_(mesh_.nCells(), 0.0),
+    eVibu_(mesh_.nCells(), 0.0),
+    eVibv_(mesh_.nCells(), 0.0),
+    eVibw_(mesh_.nCells(), 0.0),
+    eVib_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -239,35 +243,39 @@ void Foam::simplifiedChapmanEnskog::decompose()
     // get cell measurements
     auto& cm = cloud_.cellPropMeasurements();
 
-    forAll(cm.rhoNMean(), iD)
+    forAll(cm.rhoNMean(), i)
     {
 
-        rhoNMean_ += deltaT*cm.rhoNMean()[iD];
-        rhoMMean_  += deltaT*cm.rhoMMean()[iD];
-        linearKEMean_ += deltaT*cm.linearKEMean()[iD];
+        rhoNMean_ += deltaT*cm.rhoNMean()[i];
+        rhoMMean_  += deltaT*cm.rhoMMean()[i];
+        linearKEMean_ += deltaT*cm.linearKEMean()[i];
 
-        muu_ += deltaT*cm.muu()[iD];
-        muv_ += deltaT*cm.muv()[iD];
-        muw_ += deltaT*cm.muw()[iD];
-        mvv_ += deltaT*cm.mvv()[iD];
-        mvw_ += deltaT*cm.mvw()[iD];
-        mww_ += deltaT*cm.mww()[iD];
-        mcc_ += deltaT*cm.mcc()[iD];
-        mccu_ += deltaT*cm.mccu()[iD];
-        mccv_ += deltaT*cm.mccv()[iD];
-        mccw_ += deltaT*cm.mccw()[iD];
+        muu_ += deltaT*cm.muu()[i];
+        muv_ += deltaT*cm.muv()[i];
+        muw_ += deltaT*cm.muw()[i];
+        mvv_ += deltaT*cm.mvv()[i];
+        mvw_ += deltaT*cm.mvw()[i];
+        mww_ += deltaT*cm.mww()[i];
+        mcc_ += deltaT*cm.mcc()[i];
+        mccu_ += deltaT*cm.mccu()[i];
+        mccv_ += deltaT*cm.mccv()[i];
+        mccw_ += deltaT*cm.mccw()[i];
 
-        eu_ += deltaT*cm.eu()[iD];
-        ev_ += deltaT*cm.ev()[iD];
-        ew_ += deltaT*cm.ew()[iD];
-        e_ += deltaT*cm.e()[iD];
+        eRotu_ += cm.eRotu()[i];
+        eRotv_ += cm.eRotv()[i];
+        eRotw_ += cm.eRotw()[i];
+        eRot_ += cm.eRot()[i];
+        eVibu_ += cm.eVibu()[i];
+        eVibv_ += cm.eVibv()[i];
+        eVibw_ += cm.eVibw()[i];
+        eVib_ += cm.eVib()[i];
 
-        rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
-        rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
-        linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
-        momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
+        rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[i];
+        rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[i];
+        linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[i];
+        momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[i];
 
-        nParcels_[iD] += deltaT*cm.nParcels()[iD];
+        nParcels_[i] += deltaT*cm.nParcels()[i];
 
     }
 
@@ -359,8 +367,8 @@ void Foam::simplifiedChapmanEnskog::decompose()
                 (
                     0.5*(mccu_[cell]/(rhoNMean_[cell])) -
                     0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                    UMean_[cell].x() + eu_[cell]/(rhoNMean_[cell]) -
-                    (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].x()
+                    UMean_[cell].x() + (eRotu_[cell]+eVibu_[cell])/(rhoNMean_[cell]) -
+                    ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].x()
                 ) -
                     pressureTensor_[cell].xx()*UMean_[cell].x() -
                     pressureTensor_[cell].xy()*UMean_[cell].y() -
@@ -370,8 +378,8 @@ void Foam::simplifiedChapmanEnskog::decompose()
                 (
                     0.5*(mccv_[cell]/(rhoNMean_[cell])) -
                     0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                    UMean_[cell].y() + ev_[cell]/(rhoNMean_[cell])-
-                    (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].y()
+                    UMean_[cell].y() + (eRotv_[cell]+eVibv_[cell])/(rhoNMean_[cell])-
+                    ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].y()
                 ) -
                     pressureTensor_[cell].yx()*UMean_[cell].x() -
                     pressureTensor_[cell].yy()*UMean_[cell].y() -
@@ -381,8 +389,8 @@ void Foam::simplifiedChapmanEnskog::decompose()
                 (
                     0.5*(mccw_[cell]/(rhoNMean_[cell])) -
                     0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                    UMean_[cell].z() + ew_[cell]/(rhoNMean_[cell]) -
-                    (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].z()
+                    UMean_[cell].z() + (eRotw_[cell]+eVibw_[cell])/(rhoNMean_[cell]) -
+                    ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].z()
                 ) -
                     pressureTensor_[cell].zx()*UMean_[cell].x() -
                     pressureTensor_[cell].zy()*UMean_[cell].y() -
@@ -651,10 +659,14 @@ void Foam::simplifiedChapmanEnskog::decompose()
                 mccu_[cell] = 0.0;
                 mccv_[cell] = 0.0;
                 mccw_[cell] = 0.0;
-                eu_[cell] = 0.0;
-                ev_[cell] = 0.0;
-                ew_[cell] = 0.0;
-                e_[cell] = 0.0;
+                eRotu_[cell] = 0.0;
+                eRotv_[cell] = 0.0;
+                eRotw_[cell] = 0.0;
+                eRot_[cell] = 0.0;
+                eVibu_[cell] = 0.0;
+                eVibv_[cell] = 0.0;
+                eVibw_[cell] = 0.0;
+                eVib_[cell] = 0.0;
                 rhoNMeanXnParticle_[cell] = 0.0;
                 rhoMMeanXnParticle_[cell] = 0.0;
                 linearKEMeanXnParticle_[cell] = 0.0;

@@ -157,27 +157,50 @@ inline const List<scalarField>& cellMeasurements::mccw() const
 }
 
 
-inline const List<scalarField>& cellMeasurements::eu() const
+inline const List<scalarField>& cellMeasurements::eRotu() const
 {
-    return eu_;
+    return eRotu_;
 }
 
 
-inline const List<scalarField>& cellMeasurements::ev() const
+inline const List<scalarField>& cellMeasurements::eRotv() const
 {
-    return ev_;
+    return eRotv_;
 }
 
 
-inline const List<scalarField>& cellMeasurements::ew() const
+inline const List<scalarField>& cellMeasurements::eRotw() const
 {
-    return ew_;
+    return eRotw_;
 }
 
 
-inline const List<scalarField>& cellMeasurements::e() const
+inline const List<scalarField>& cellMeasurements::eRot() const
 {
-    return e_;
+    return eRot_;
+}
+
+inline const List<scalarField>& cellMeasurements::eVibu() const
+{
+    return eVibu_;
+}
+
+
+inline const List<scalarField>& cellMeasurements::eVibv() const
+{
+    return eVibv_;
+}
+
+
+inline const List<scalarField>& cellMeasurements::eVibw() const
+{
+    return eVibw_;
+}
+
+
+inline const List<scalarField>& cellMeasurements::eVib() const
+{
+    return eVib_;
 }
 
 

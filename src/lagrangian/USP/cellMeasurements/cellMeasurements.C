@@ -73,10 +73,14 @@ Foam::cellMeasurements::cellMeasurements
     mccu_(),
     mccv_(),
     mccw_(),
-    eu_(),
-    ev_(),
-    ew_(),
-    e_(),
+    eRotu_(),
+    eRotv_(),
+    eRotw_(),
+    eRot_(),
+    eVibu_(),
+    eVibv_(),
+    eVibw_(),
+    eVib_(),
     momentumMean_(),
     momentumMeanXnParticle_(),
     vibrationalETotal_(),
@@ -227,26 +231,50 @@ void Foam::cellMeasurements::createFields()
         f.setSize(mesh_.nCells(), 0.0);
     }
 
-    eu_.setSize(cloud_.typeIdList().size());
-    for (auto& f : eu_)
+    eRotu_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eRotu_)
     {
         f.setSize(mesh_.nCells(), 0.0);
     }
 
-    ev_.setSize(cloud_.typeIdList().size());
-    for (auto& f : ev_)
+    eRotv_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eRotv_)
     {
         f.setSize(mesh_.nCells(), 0.0);
     }
 
-    ew_.setSize(cloud_.typeIdList().size());
-    for (auto& f : ew_)
+    eRotw_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eRotw_)
     {
         f.setSize(mesh_.nCells(), 0.0);
     }
 
-    e_.setSize(cloud_.typeIdList().size());
-    for (auto& f : e_)
+    eRot_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eRot_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
+    }
+
+    eVibu_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eVibu_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
+    }
+
+    eVibv_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eVibv_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
+    }
+
+    eVibw_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eVibw_)
+    {
+        f.setSize(mesh_.nCells(), 0.0);
+    }
+
+    eVib_.setSize(cloud_.typeIdList().size());
+    for (auto& f : eVib_)
     {
         f.setSize(mesh_.nCells(), 0.0);
     }
@@ -355,10 +383,14 @@ void Foam::cellMeasurements::clean()
             mccv_[iD][cell] =  0.0;
             mccw_[iD][cell] =  0.0;
 
-            eu_[iD][cell] =  0.0;
-            ev_[iD][cell] =  0.0;
-            ew_[iD][cell] =  0.0;
-            e_[iD][cell] =  0.0;
+            eRotu_[iD][cell] =  0.0;
+            eRotv_[iD][cell] =  0.0;
+            eRotw_[iD][cell] =  0.0;
+            eRot_[iD][cell] =  0.0;
+            eVibu_[iD][cell] =  0.0;
+            eVibv_[iD][cell] =  0.0;
+            eVibw_[iD][cell] =  0.0;
+            eVib_[iD][cell] =  0.0;
 
             momentumMean_[iD][cell] =  vector::zero;
             momentumMeanXnParticle_[iD][cell] = vector::zero;
@@ -414,18 +446,17 @@ void Foam::cellMeasurements::calculateFields()
             {
                 forAll(EVib, i)
                 {
-                    EVib[i] =
-                        p.vibLevel()[i]
-                    *physicoChemical::k.value()
-                    *cloud_.constProps(p.typeId()).thetaV()[i];
-
-                    vibrationalETotal_[iD][i][cell] +=
-                        p.vibLevel()[i]
-                    *physicoChemical::k.value()
-                    *cloud_.constProps(p.typeId()).thetaV()[i];
+                    EVib[i] = p.vibLevel()[i]*physicoChemical::k.value()*cloud_.constProps(p.typeId()).thetaV()[i];
+                    vibrationalETotal_[iD][i][cell] += p.vibLevel()[i]*physicoChemical::k.value()*cloud_.constProps(p.typeId()).thetaV()[i];
                 }
             }
      
+            scalar vibEn = 0.0;
+            forAll(EVib, v)
+            {
+                vibEn += EVib[v];
+            }
+
             rhoNMean_[iD][cell] += 1.0;
             rhoNInstantaneous_[iD][cell] += 1.0;
             rhoMMean_[iD][cell] += mass;
@@ -454,17 +485,15 @@ void Foam::cellMeasurements::calculateFields()
             mccv_[iD][cell] += massByMagUsq*(yVel);
             mccw_[iD][cell] += massByMagUsq*(zVel);
 
-            scalar vibEn = 0.0;
+            eRotu_[iD][cell] += p.ERot()*xVel;
+            eRotv_[iD][cell] += p.ERot()*yVel;
+            eRotw_[iD][cell] += p.ERot()*zVel;
+            eRot_[iD][cell] += p.ERot();
 
-            forAll(EVib, v)
-            {
-                vibEn += EVib[v];
-            }
-
-            eu_[iD][cell] += (p.ERot() + vibEn)*xVel;
-            ev_[iD][cell] += (p.ERot() + vibEn)*yVel;
-            ew_[iD][cell] += (p.ERot() + vibEn)*zVel;
-            e_[iD][cell] += p.ERot() + vibEn;
+            eVibu_[iD][cell] += vibEn*xVel;
+            eVibv_[iD][cell] += vibEn*yVel;
+            eVibw_[iD][cell] += vibEn*zVel;
+            eVib_[iD][cell] += vibEn;
 
             if (rotationalDof > VSMALL)
             {

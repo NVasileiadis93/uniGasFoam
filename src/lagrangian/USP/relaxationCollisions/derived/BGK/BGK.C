@@ -66,20 +66,6 @@ Foam::BGK::BGK
     rhoMMeanXnParticle_(mesh_.nCells(), 0.0),
     momentumMeanXnParticle_(mesh_.nCells(), vector::zero),
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
-    muu_(mesh_.nCells(), 0.0),
-    muv_(mesh_.nCells(), 0.0),
-    muw_(mesh_.nCells(), 0.0),
-    mvv_(mesh_.nCells(), 0.0),
-    mvw_(mesh_.nCells(), 0.0),
-    mww_(mesh_.nCells(), 0.0),
-    mcc_(mesh_.nCells(), 0.0),
-    mccu_(mesh_.nCells(), 0.0),
-    mccv_(mesh_.nCells(), 0.0),
-    mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
     nParcels_(),
@@ -317,22 +303,6 @@ void Foam::BGK::calculateProperties()
         rhoMMeanXnParticle_ += cm.rhoMMeanXnParticle()[iD];
         momentumMeanXnParticle_ += cm.momentumMeanXnParticle()[iD];
         linearKEMeanXnParticle_ += cm.linearKEMeanXnParticle()[iD];
-
-        muu_ += cm.muu()[iD];
-        muv_ += cm.muv()[iD];
-        muw_ += cm.muw()[iD];
-        mvv_ += cm.mvv()[iD];
-        mvw_ += cm.mvw()[iD];
-        mww_ += cm.mww()[iD];
-        mcc_ += cm.mcc()[iD];
-        mccu_ += cm.mccu()[iD];
-        mccv_ += cm.mccv()[iD];
-        mccw_ += cm.mccw()[iD];
-
-        eu_ += cm.eu()[iD];
-        ev_ += cm.ev()[iD];
-        ew_ += cm.ew()[iD];
-        e_ += cm.e()[iD];
 
         rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
         molsElec_ += cm.molsElec()[iD];
@@ -630,22 +600,6 @@ void Foam::BGK::resetProperties()
         rhoMMeanXnParticle_[cell] = 0.0;
         momentumMeanXnParticle_[cell] = vector::zero;
         linearKEMeanXnParticle_[cell] = 0.0;
-
-        muu_[cell] = 0.0;
-        muv_[cell] = 0.0;
-        muw_[cell] = 0.0;
-        mvv_[cell] = 0.0;
-        mvw_[cell] = 0.0;
-        mww_[cell] = 0.0;
-        mcc_[cell] = 0.0;
-        mccu_[cell] = 0.0;
-        mccv_[cell] = 0.0;
-        mccw_[cell] = 0.0;
-
-        eu_[cell] = 0.0;
-        ev_[cell] = 0.0;
-        ew_[cell] = 0.0;
-        e_[cell] = 0.0;
 
         rhoNMeanInt_[cell] = 0.0;
         molsElec_[cell] = 0.0;

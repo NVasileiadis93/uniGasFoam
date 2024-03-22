@@ -76,10 +76,6 @@ Foam::ESBGK::ESBGK
     mccu_(mesh_.nCells(), 0.0),
     mccv_(mesh_.nCells(), 0.0),
     mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
     nParcels_(),
@@ -342,11 +338,6 @@ void Foam::ESBGK::calculateProperties()
         mccu_ += cm.mccu()[iD];
         mccv_ += cm.mccv()[iD];
         mccw_ += cm.mccw()[iD];
-
-        eu_ += cm.eu()[iD];
-        ev_ += cm.ev()[iD];
-        ew_ += cm.ew()[iD];
-        e_ += cm.e()[iD];
 
         rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
         molsElec_ += cm.molsElec()[iD];
@@ -702,11 +693,6 @@ void Foam::ESBGK::resetProperties()
         mccu_[cell] = 0.0;
         mccv_[cell] = 0.0;
         mccw_[cell] = 0.0;
-
-        eu_[cell] = 0.0;
-        ev_[cell] = 0.0;
-        ew_[cell] = 0.0;
-        e_[cell] = 0.0;
 
         rhoNMeanInt_[cell] = 0.0;
         molsElec_[cell] = 0.0;

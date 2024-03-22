@@ -109,10 +109,14 @@ class SBGK
         scalarField mccu_;
         scalarField mccv_;
         scalarField mccw_;
-        scalarField eu_;
-        scalarField ev_;
-        scalarField ew_;
-        scalarField e_;
+        scalarField eRotu_;
+        scalarField eRotv_;
+        scalarField eRotw_;
+        scalarField eRot_;
+        scalarField eVibu_;
+        scalarField eVibv_;
+        scalarField eVibw_;
+        scalarField eVib_;
         scalarField rhoNMeanInt_;
         scalarField molsElec_;
         List<scalarField> nParcels_;

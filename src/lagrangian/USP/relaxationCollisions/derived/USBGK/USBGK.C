@@ -80,10 +80,14 @@ Foam::USBGK::USBGK
     mccu_(mesh_.nCells(), 0.0),
     mccv_(mesh_.nCells(), 0.0),
     mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
+    eRotu_(mesh_.nCells(), 0.0),
+    eRotv_(mesh_.nCells(), 0.0),
+    eRotw_(mesh_.nCells(), 0.0),
+    eRot_(mesh_.nCells(), 0.0),
+    eVibu_(mesh_.nCells(), 0.0),
+    eVibv_(mesh_.nCells(), 0.0),
+    eVibw_(mesh_.nCells(), 0.0),
+    eVib_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
     nParcels_(),
@@ -403,10 +407,14 @@ void Foam::USBGK::calculateProperties()
         mccv_ += cm.mccv()[iD];
         mccw_ += cm.mccw()[iD];
 
-        eu_ += cm.eu()[iD];
-        ev_ += cm.ev()[iD];
-        ew_ += cm.ew()[iD];
-        e_ += cm.e()[iD];
+        eRotu_ += cm.eRotu()[iD];
+        eRotv_ += cm.eRotv()[iD];
+        eRotw_ += cm.eRotw()[iD];
+        eRot_ += cm.eRot()[iD];
+        eVibu_ += cm.eVibu()[iD];
+        eVibv_ += cm.eVibv()[iD];
+        eVibw_ += cm.eVibw()[iD];
+        eVib_ += cm.eVib()[iD];
 
         rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
         molsElec_ += cm.molsElec()[iD];
@@ -513,8 +521,8 @@ void Foam::USBGK::calculateProperties()
             (
                 0.5*(mccu_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].x() + eu_[cell]/(rhoNMean_[cell]) -
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].x()
+                UMean_[cell].x() + (eRotu_[cell]+eVibu_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].x()
             ) -
                 pressureTensor_[cell].xx()*UMean_[cell].x() -
                 pressureTensor_[cell].xy()*UMean_[cell].y() -
@@ -524,8 +532,8 @@ void Foam::USBGK::calculateProperties()
             (
                 0.5*(mccv_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].y() + ev_[cell]/(rhoNMean_[cell])-
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].y()
+                UMean_[cell].y() + (eRotv_[cell]+eVibv_[cell])/(rhoNMean_[cell])-
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].y()
             ) -
                 pressureTensor_[cell].yx()*UMean_[cell].x() -
                 pressureTensor_[cell].yy()*UMean_[cell].y() -
@@ -535,8 +543,8 @@ void Foam::USBGK::calculateProperties()
             (
                 0.5*(mccw_[cell]/(rhoNMean_[cell])) -
                 0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                UMean_[cell].z() + ew_[cell]/(rhoNMean_[cell]) -
-                (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].z()
+                UMean_[cell].z() + (eRotw_[cell]+eVibw_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].z()
             ) -
                 pressureTensor_[cell].zx()*UMean_[cell].x() -
                 pressureTensor_[cell].zy()*UMean_[cell].y() -
@@ -692,14 +700,12 @@ void Foam::USBGK::calculateProperties()
                         degeneracies[0]))
                     );
 
-
                 scalar fraction = nParcels_[iD][cell]/molsElec_[cell];
 
                 if (elecTID > VSMALL)
                 {
                     elecT += fraction*elecTID;
                 }
-
 
                 scalar eDof =
                     (
@@ -823,10 +829,14 @@ void Foam::USBGK::resetProperties()
         mccv_[cell] = 0.0;
         mccw_[cell] = 0.0;
 
-        eu_[cell] = 0.0;
-        ev_[cell] = 0.0;
-        ew_[cell] = 0.0;
-        e_[cell] = 0.0;
+        eRotu_[cell] = 0.0;
+        eRotv_[cell] = 0.0;
+        eRotw_[cell] = 0.0;
+        eRot_[cell] = 0.0;
+        eVibu_[cell] = 0.0;
+        eVibv_[cell] = 0.0;
+        eVibw_[cell] = 0.0;
+        eVib_[cell] = 0.0;
 
         rhoNMeanInt_[cell] = 0.0;
         molsElec_[cell] = 0.0;

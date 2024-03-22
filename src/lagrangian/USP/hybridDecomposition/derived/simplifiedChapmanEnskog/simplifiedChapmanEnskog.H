@@ -101,10 +101,14 @@ class simplifiedChapmanEnskog
         scalarField mccu_;
         scalarField mccv_;
         scalarField mccw_;
-        scalarField eu_;
-        scalarField ev_;
-        scalarField ew_;
-        scalarField e_;
+        scalarField eRotu_;
+        scalarField eRotv_;
+        scalarField eRotw_;
+        scalarField eRot_;
+        scalarField eVibu_;
+        scalarField eVibv_;
+        scalarField eVibw_;
+        scalarField eVib_;
         scalarField rhoNMeanXnParticle_;
         scalarField rhoMMeanXnParticle_;
         scalarField linearKEMeanXnParticle_;

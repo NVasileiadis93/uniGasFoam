@@ -112,13 +112,21 @@ class cellMeasurements
 
         List<scalarField> mccw_;
 
-        List<scalarField> eu_;
+        List<scalarField> eRotu_;
 
-        List<scalarField> ev_;
+        List<scalarField> eRotv_;
 
-        List<scalarField> ew_;
+        List<scalarField> eRotw_;
 
-        List<scalarField> e_;
+        List<scalarField> eRot_;
+
+        List<scalarField> eVibu_;
+
+        List<scalarField> eVibv_;
+
+        List<scalarField> eVibw_;
+
+        List<scalarField> eVib_;
 
         List<vectorField> momentumMean_;
 
@@ -213,13 +221,21 @@ public:
 
         inline const List<scalarField>& mccw() const;
 
-        inline const List<scalarField>& eu() const;
+        inline const List<scalarField>& eRotu() const;
 
-        inline const List<scalarField>& ev() const;
+        inline const List<scalarField>& eRotv() const;
 
-        inline const List<scalarField>& ew() const;
+        inline const List<scalarField>& eRotw() const;
 
-        inline const List<scalarField>& e() const;
+        inline const List<scalarField>& eRot() const;
+
+        inline const List<scalarField>& eVibu() const;
+
+        inline const List<scalarField>& eVibv() const;
+
+        inline const List<scalarField>& eVibw() const;
+
+        inline const List<scalarField>& eVib() const;
 
         inline const List<vectorField>& momentumMean() const;
 
