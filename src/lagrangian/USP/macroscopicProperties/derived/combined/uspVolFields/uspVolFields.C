@@ -56,7 +56,6 @@ Foam::uspVolFields::uspVolFields
     typeIds_(cloud_.getTypeIDs(propsDict_)),
     Tref_(propsDict_.get<scalar>("Tref")),
     densityOnly_(propsDict_.getOrDefault<bool>("densityOnly",false)),
-    measureHeatFluxShearStress_(propsDict_.getOrDefault<bool>("measureHeatFluxShearStress",false)),
     measureMeanFreePath_(propsDict_.getOrDefault<bool>("measureMeanFreePath",false)),
     measureErrors_(propsDict_.getOrDefault<bool>("measureErrors",false)),
     averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
@@ -378,47 +377,6 @@ Foam::uspVolFields::uspVolFields
         mesh_,
         dimensionedVector(dimensionSet(1, -1, -2, 0, 0), Zero)
     ),
-    heatFluxVector_
-    (
-        IOobject
-        (
-            "heatFluxVector_" + fieldName_,
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedVector(dimensionSet(1, 0, -3, 0, 0), Zero)
-    ),
-    pressureTensor_
-    (
-        IOobject
-        (
-            "pressureTensor_" + fieldName_,
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedTensor(dimPressure, Zero)
-    ),
-    shearStressTensor_
-    (
-        IOobject
-        (
-            "shearStressTensor_" + fieldName_,
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedTensor(dimPressure, Zero)
-    ),
-    binCoeff_(mesh_.nCells(), 0.0),
-    relCoeff_(mesh_.nCells(), 0.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoNInstantaneous_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
@@ -430,21 +388,6 @@ Foam::uspVolFields::uspVolFields
     linearKEMeanXnParticle_(mesh_.nCells(), 0.0),
     rotationalEMean_(mesh_.nCells(), 0.0),
     rotationalDofMean_(mesh_.nCells(), 0.0),
-    muu_(mesh_.nCells(), 0.0),
-    muv_(mesh_.nCells(), 0.0),
-    muw_(mesh_.nCells(), 0.0),
-    mvv_(mesh_.nCells(), 0.0),
-    mvw_(mesh_.nCells(), 0.0),
-    mww_(mesh_.nCells(), 0.0),
-    mcc_(mesh_.nCells(), 0.0),
-    mccu_(mesh_.nCells(), 0.0),
-    mccv_(mesh_.nCells(), 0.0),
-    mccw_(mesh_.nCells(), 0.0),
-    eu_(mesh_.nCells(), 0.0),
-    ev_(mesh_.nCells(), 0.0),
-    ew_(mesh_.nCells(), 0.0),
-    e_(mesh_.nCells(), 0.0),
-    nColls_(mesh_.nCells(), 0.0),
     momentumMean_(mesh.nCells(), Zero),
     momentumMeanXnParticle_(mesh.nCells(), Zero),
     boundaryCells_(),
@@ -637,8 +580,6 @@ void Foam::uspVolFields::readIn()
 
     dict.readIfPresent("nTimeSteps", nAvTimeSteps_);
     dict.readIfPresent("timeCounter", timeAvCounter_);
-    dict.readIfPresent("binCoeff", binCoeff_);
-    dict.readIfPresent("relCoeff", relCoeff_);
     dict.readIfPresent("rhoNMean", rhoNMean_);
     dict.readIfPresent("rhoNInstantaneous", rhoNInstantaneous_);
     dict.readIfPresent("rhoNMeanXnParticle", rhoNMeanXnParticle_);
@@ -650,21 +591,6 @@ void Foam::uspVolFields::readIn()
     dict.readIfPresent("linearKEMeanXnParticle", linearKEMeanXnParticle_);
     dict.readIfPresent("rotationalEMean", rotationalEMean_);
     dict.readIfPresent("rotationalDofMean", rotationalDofMean_);
-    dict.readIfPresent("muu", muu_);
-    dict.readIfPresent("muv", muv_);
-    dict.readIfPresent("muw", muw_);
-    dict.readIfPresent("mvv", mvv_);
-    dict.readIfPresent("mvw", mvw_);
-    dict.readIfPresent("mww", mww_);
-    dict.readIfPresent("mcc", mcc_);
-    dict.readIfPresent("mccu", mccu_);
-    dict.readIfPresent("mccv", mccv_);
-    dict.readIfPresent("mccw", mccw_);
-    dict.readIfPresent("eu", eu_);
-    dict.readIfPresent("ev", ev_);
-    dict.readIfPresent("ew", ew_);
-    dict.readIfPresent("e", e_);
-    dict.readIfPresent("nColls", nColls_);
     dict.readIfPresent("momentumMean", momentumMean_);
     dict.readIfPresent("momentumMeanXnParticle", momentumMeanXnParticle_);
     dict.readIfPresent("vibrationalETotal", vibrationalETotal_);
@@ -713,8 +639,6 @@ void Foam::uspVolFields::writeOut()
 
         dict.add("nTimeSteps", nAvTimeSteps_);
         dict.add("timeCounter", timeAvCounter_);
-        dict.add("binCoeff", binCoeff_);
-        dict.add("relCoeff", relCoeff_);
         dict.add("rhoNMean", rhoNMean_);
         dict.add("rhoNInstantaneous", rhoNInstantaneous_);
         dict.add("rhoNMeanXnParticle", rhoNMeanXnParticle_);
@@ -726,21 +650,6 @@ void Foam::uspVolFields::writeOut()
         dict.add("linearKEMeanXnParticle", linearKEMeanXnParticle_);
         dict.add("rotationalEMean", rotationalEMean_);
         dict.add("rotationalDofMean", rotationalDofMean_);
-        dict.add("muu", muu_);
-        dict.add("muv", muv_);
-        dict.add("muw", muw_);
-        dict.add("mvv", mvv_);
-        dict.add("mvw", mvw_);
-        dict.add("mww", mww_);
-        dict.add("mcc", mcc_);
-        dict.add("mccu", mccu_);
-        dict.add("mccv", mccv_);
-        dict.add("mccw", mccw_);
-        dict.add("eu", eu_);
-        dict.add("ev", ev_);
-        dict.add("ew", ew_);
-        dict.add("e", e_);
-        dict.add("nColls", nColls_);
         dict.add("momentumMean", momentumMean_);
         dict.add("momentumMeanXnParticle", momentumMeanXnParticle_);
         dict.add("vibrationalETotal", vibrationalETotal_);
@@ -868,8 +777,6 @@ void Foam::uspVolFields::calculateField()
 
                 const label iD = typeIds_.find(i);
 
-                binCoeff_ += deltaT*cm.binCoeff()[iD];
-                relCoeff_ += deltaT*cm.relCoeff()[iD];
                 rhoNMean_ += deltaT*cm.rhoNMean()[iD];
                 rhoNInstantaneous_ += deltaT*cm.rhoNInstantaneous()[iD];
                 rhoMMean_ += deltaT*cm.rhoMMean()[iD];
@@ -882,22 +789,6 @@ void Foam::uspVolFields::calculateField()
                 rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
                 momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
                 linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
-
-                muu_ += deltaT*cm.muu()[iD];
-                muv_ += deltaT*cm.muv()[iD];
-                muw_ += deltaT*cm.muw()[iD];
-                mvv_ += deltaT*cm.mvv()[iD];
-                mvw_ += deltaT*cm.mvw()[iD];
-                mww_ += deltaT*cm.mww()[iD];
-                mcc_ += deltaT*cm.mcc()[iD];
-                mccu_ += deltaT*cm.mccu()[iD];
-                mccv_ += deltaT*cm.mccv()[iD];
-                mccw_ += deltaT*cm.mccw()[iD];
-
-                eu_ += deltaT*cm.eu()[iD];
-                ev_ += deltaT*cm.ev()[iD];
-                ew_ += deltaT*cm.ew()[iD];
-                e_ += deltaT*cm.e()[iD];
 
                 rhoNMeanInt_ += deltaT*cm.rhoNMeanInt()[iD];
                 molsElec_ += deltaT*cm.molsElec()[iD];
@@ -913,8 +804,6 @@ void Foam::uspVolFields::calculateField()
                 {
                     vibrationalETotal_[iD][v] += deltaT*cm.vibrationalETotal()[iD][v];
                 }
-
-                nColls_ += deltaT*cm.nColls();
 
             }
 
@@ -1202,6 +1091,7 @@ void Foam::uspVolFields::calculateField()
                     nRotDof = rotationalDofMean_[cell] / rhoNMean_[cell];
                 }
 
+                // Overall temperature
                 overallT_[cell] =
                     (
                         (3.0*translationalT_[cell])
@@ -1211,148 +1101,7 @@ void Foam::uspVolFields::calculateField()
                     )
                    /(3.0 + nRotDof + totalvDof + totalEDof);
 
-                if (measureHeatFluxShearStress_)
-                {
-
-                    if (rhoNMean_[cell] > VSMALL)
-                    {
-
-                        pressureTensor_[cell].xx() = rhoN_[cell]*
-                        (
-                            muu_[cell]/(rhoNMean_[cell]) -
-                            (
-                                (rhoMMean_[cell]/(rhoNMean_[cell]))
-                                *UMean_[cell].x()*UMean_[cell].x()
-                            )
-                        );
-                        pressureTensor_[cell].xy() = rhoN_[cell]*
-                        (
-                            muv_[cell]/(rhoNMean_[cell]) -
-                            ((rhoMMean_[cell]/(rhoNMean_[cell])))
-                            *UMean_[cell].x()*UMean_[cell].y()
-
-                        );
-                        pressureTensor_[cell].xz() = rhoN_[cell]*
-                        (
-                            muw_[cell]/(rhoNMean_[cell]) -
-                            ((rhoMMean_[cell]/(rhoNMean_[cell]))
-                            *UMean_[cell].x()*UMean_[cell].z())
-                        );
-                        pressureTensor_[cell].yx() = pressureTensor_[cell].xy();
-                        pressureTensor_[cell].yy() = rhoN_[cell]*
-                        (
-                            mvv_[cell]/(rhoNMean_[cell]) -
-                            ((rhoMMean_[cell]/(rhoNMean_[cell])))
-                            *UMean_[cell].y()*UMean_[cell].y()
-                        );
-                        pressureTensor_[cell].yz() = rhoN_[cell]*
-                        (
-                            mvw_[cell]/(rhoNMean_[cell]) -
-                            ((rhoMMean_[cell]/(rhoNMean_[cell]))
-                            *UMean_[cell].y()*UMean_[cell].z())
-                        );
-                        pressureTensor_[cell].zx() = pressureTensor_[cell].xz();
-                        pressureTensor_[cell].zy() = pressureTensor_[cell].yz();
-                        pressureTensor_[cell].zz() = rhoN_[cell]*
-                        (
-                            mww_[cell]/(rhoNMean_[cell]) -
-                            ((rhoMMean_[cell]/(rhoNMean_[cell]))
-                            *UMean_[cell].z()*UMean_[cell].z())
-                        );
-
-                        scalar scalarPressure = (1.0/3.0)*
-                                                (pressureTensor_[cell].xx() +
-                                                pressureTensor_[cell].yy() +
-                                                pressureTensor_[cell].zz());
-
-                        shearStressTensor_[cell] = -pressureTensor_[cell];
-                        shearStressTensor_[cell].xx() += scalarPressure;
-                        shearStressTensor_[cell].yy() += scalarPressure;
-                        shearStressTensor_[cell].zz() += scalarPressure;
-
-                        //terms involving pressure tensor should not be
-                        //multiplied by the number density (see Bird corrigendum)
-
-                        heatFluxVector_[cell].x() = rhoN_[cell]*
-                        (
-                            0.5*(mccu_[cell]/(rhoNMean_[cell])) -
-                            0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                            UMean_[cell].x() + eu_[cell]/(rhoNMean_[cell]) -
-                            (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].x()
-                        ) -
-                            pressureTensor_[cell].xx()*UMean_[cell].x() -
-                            pressureTensor_[cell].xy()*UMean_[cell].y() -
-                            pressureTensor_[cell].xz()*UMean_[cell].z();
-
-                        heatFluxVector_[cell].y() = rhoN_[cell]*
-                        (
-                            0.5*(mccv_[cell]/(rhoNMean_[cell])) -
-                            0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                            UMean_[cell].y() + ev_[cell]/(rhoNMean_[cell])-
-                            (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].y()
-                        ) -
-                            pressureTensor_[cell].yx()*UMean_[cell].x() -
-                            pressureTensor_[cell].yy()*UMean_[cell].y() -
-                            pressureTensor_[cell].yz()*UMean_[cell].z();
-
-                        heatFluxVector_[cell].z() = rhoN_[cell]*
-                        (
-                            0.5*(mccw_[cell]/(rhoNMean_[cell])) -
-                            0.5*(mcc_[cell]/(rhoNMean_[cell]))*
-                            UMean_[cell].z() + ew_[cell]/(rhoNMean_[cell]) -
-                            (e_[cell]/(rhoNMean_[cell]))*UMean_[cell].z()
-                        ) -
-                            pressureTensor_[cell].zx()*UMean_[cell].x() -
-                            pressureTensor_[cell].zy()*UMean_[cell].y() -
-                            pressureTensor_[cell].zz()*UMean_[cell].z();
-
-                        // Rescale non-conserved quantities for USP scheme
-                        // Currently only works for single species
-                        if (cloud_.relaxationCollisionModelName() == "unifiedShakhov")
-                        {
-                            scalar Prandtl = 0.0;
-                            scalar viscosity = 0.0;
-                            if (translationalT_[cell] > VSMALL)
-                            {
-                                forAll(typeIds_, iD)
-                                {
-
-                                    const scalar& mass = cloud_.constProps(iD).mass();
-                                    const scalar& omega = cloud_.constProps(iD).omega();
-                                    const scalar& a = cloud_.constProps(iD).alpha();
-                                    const scalar& d = cloud_.constProps(iD).d();
-                                    const scalar& rotDoF = cloud_.constProps(iD).rotationalDoF();
-
-                                    scalar speciesViscRef = 
-                                        1.25*(1.0+a)*(2.0+a)*sqrt(mass*physicoChemical::k.value()*Tref_)
-                                        /(a*(5.0-2.0*omega)*(7.0-2.0*omega)*sqrt(mathematical::pi)*sqr(d));
-                                        
-                                    viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
-
-                                    Prandtl += nParcels_[iD][cell]*(5+rotDoF)/(7.5+rotDoF);
-
-                                }
-                                viscosity /= rhoNMean_[cell];
-                                Prandtl /= rhoNMean_[cell]; 
-                            
-                                scalar tau = 0.5*p_[cell]/viscosity*deltaT;
-
-                                heatFluxVector_[cell] = (binCoeff_[cell]*heatFluxVector_[cell]+relCoeff_[cell]*heatFluxVector_[cell]/(1.0 + Prandtl*tau))/(binCoeff_[cell]+relCoeff_[cell]);
-                                pressureTensor_[cell] = (binCoeff_[cell]*pressureTensor_[cell]+relCoeff_[cell]*pressureTensor_[cell]/(1.0 + tau))/(binCoeff_[cell]+relCoeff_[cell]);
-                                shearStressTensor_[cell] = (binCoeff_[cell]*shearStressTensor_[cell]+relCoeff_[cell]*shearStressTensor_[cell]/(1.0 + tau))/(binCoeff_[cell]+relCoeff_[cell]);
-                            
-                            }
-                        }
-
-                    }
-                    else
-                    {
-                        pressureTensor_[cell] = tensor::zero;
-                        shearStressTensor_[cell] = tensor::zero;
-                        heatFluxVector_[cell] = vector::zero;
-                    }
-                }
-
+                // Mach number
                 scalar Cp = 0.0;
                 scalar Cv = 0.0;
                 scalar molecularMass = 0.0;
@@ -1655,12 +1404,6 @@ void Foam::uspVolFields::calculateField()
                             MCT_.boundaryFieldRef()[j][k] = MCT_[bCs[k]];
                             dtMCT_.boundaryFieldRef()[j][k] = dtMCT_[bCs[k]];
                         }
-                        if (measureHeatFluxShearStress_)
-                        {
-                            shearStressTensor_.boundaryFieldRef()[j][k] = shearStressTensor_[bCs[k]];
-                            heatFluxVector_.boundaryFieldRef()[j][k] = heatFluxVector_[bCs[k]];
-                            pressureTensor_.boundaryFieldRef()[j][k] = pressureTensor_[bCs[k]];
-                        }
 
                         if (!isA<wallPolyPatch>(patch))
                         {
@@ -1693,13 +1436,6 @@ void Foam::uspVolFields::calculateField()
                 pressureError_.write();
             }
 
-            if (measureHeatFluxShearStress_)
-            {
-                heatFluxVector_.write();
-                pressureTensor_.write();
-                shearStressTensor_.write();
-            }
-
             uspRhoN_.write();
             uspRhoNMean_.write();
             rhoN_.write();
@@ -1728,8 +1464,6 @@ void Foam::uspVolFields::calculateField()
 
             forAll(rhoNMean_, cell)
             {
-                binCoeff_[cell] = 0.0;
-                relCoeff_[cell] = 0.0;
                 rhoNMean_[cell] = 0.0;
                 rhoMMean_[cell] = 0.0;
                 linearKEMean_[cell] = 0.0;
@@ -1738,21 +1472,6 @@ void Foam::uspVolFields::calculateField()
                 rotationalDofMean_[cell] = 0.0;
                 rhoNMeanInt_[cell] = 0.0;
                 molsElec_[cell] = 0.0,
-                nColls_[cell] = 0.0;
-                muu_[cell] = 0.0;
-                muv_[cell] = 0.0;
-                muw_[cell] = 0.0;
-                mvv_[cell] = 0.0;
-                mvw_[cell] = 0.0;
-                mww_[cell] = 0.0;
-                mcc_[cell] = 0.0;
-                mccu_[cell] = 0.0;
-                mccv_[cell] = 0.0;
-                mccw_[cell] = 0.0;
-                eu_[cell] = 0.0;
-                ev_[cell] = 0.0;
-                ew_[cell] = 0.0;
-                e_[cell] = 0.0;
                 rhoNMeanXnParticle_[cell] = 0.0;
                 rhoMMeanXnParticle_[cell] = 0.0;
                 momentumMeanXnParticle_[cell] = vector::zero;
@@ -1839,12 +1558,6 @@ void Foam::uspVolFields::updateProperties(const dictionary& dict)
     if (densityOnly_)
     {
         Info<< nl << "densityOnly initiated." << nl << endl;
-    }
-
-    propsDict_.readIfPresent("measureHeatFluxShearStress",measureHeatFluxShearStress_);
-    if (measureHeatFluxShearStress_)
-    {
-        Info << "measureHeatFluxShearStress initiated." << endl;
     }
 
     propsDict_.readIfPresent("measureMeanFreePath", measureMeanFreePath_);

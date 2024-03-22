@@ -56,7 +56,6 @@ Usage
             typeIds                     (Ar);
             measureMeanFreePath         true;
             Tref                        1000;
-            measureHeatFluxShearStress  true;
             measureErrors				true;
             averagingAcrossManyRuns     true;
         }
@@ -97,7 +96,6 @@ class uspVolFields
         labelList typeIds_;
         scalar Tref_;
         bool densityOnly_;
-        bool measureHeatFluxShearStress_;
         bool measureMeanFreePath_;
         bool measureErrors_;
         bool averagingAcrossManyRuns_;
@@ -135,13 +133,8 @@ class uspVolFields
         volScalarField pressureError_;
         volVectorField UMean_;
         volVectorField fD_;
-        volVectorField heatFluxVector_;
-        volTensorField pressureTensor_;
-        volTensorField shearStressTensor_;
         
         // Cell measurements
-        scalarField binCoeff_;
-        scalarField relCoeff_;
         scalarField rhoNMean_;
         scalarField rhoNInstantaneous_;
         scalarField rhoNMeanXnParticle_;
@@ -153,21 +146,6 @@ class uspVolFields
         scalarField linearKEMeanXnParticle_;
         scalarField rotationalEMean_;
         scalarField rotationalDofMean_;
-        scalarField muu_;
-        scalarField muv_;
-        scalarField muw_;
-        scalarField mvv_;
-        scalarField mvw_;
-        scalarField mww_;
-        scalarField mcc_;
-        scalarField mccu_;
-        scalarField mccv_;
-        scalarField mccw_;
-        scalarField eu_;
-        scalarField ev_;
-        scalarField ew_;
-        scalarField e_;
-        scalarField nColls_;
         vectorField momentumMean_;
         vectorField momentumMeanXnParticle_;
         List<labelList> boundaryCells_;

@@ -2,8 +2,6 @@
 
 set -e
 
-userName=`whoami`
-
 currentDir=`pwd`
 sendingDir="$WM_PROJECT_USER_DIR"
 
@@ -25,7 +23,7 @@ mkdir -p $sendingDir
 
 # copy new files --------------------------------------------------------------
 foldersSrc="lagrangian"
-foldersApp="solvers utilities"
+foldersApp="solvers"
 
 for folder in $foldersSrc
 do
@@ -50,10 +48,5 @@ wclean all
 # compile new executables
 #---- solvers ----
 cd $sendingDir/applications/solvers/discreteMethods/uspFoam
-wclean
-wmake
-
-#---- utilities ----
-cd $sendingDir/applications/utilities/preProcessing/USP/calcUspDecompWeight
 wclean
 wmake

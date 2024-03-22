@@ -70,10 +70,6 @@ class cellMeasurements
 
         labelList typeIds_;
 
-        List<scalarField>  binCoeff_;
-
-        List<scalarField>  relCoeff_;
-
         List<scalarField> rhoNMean_;
 
         List<scalarField> rhoNInstantaneous_;
@@ -128,8 +124,6 @@ class cellMeasurements
 
         List<vectorField> momentumMeanXnParticle_;
 
-        scalarField nColls_;
-
         List<List<scalarField>> vibrationalETotal_;
 
         List<scalarField> electronicETotal_;
@@ -176,10 +170,6 @@ public:
         void calculateFields();
 
         void clean();
-
-        inline const List<scalarField>& relCoeff() const;
-
-        inline const List<scalarField>& binCoeff() const;
 
         inline const List<scalarField>& rhoNMean() const;
 
@@ -234,10 +224,6 @@ public:
         inline const List<vectorField>& momentumMean() const;
 
         inline const List<vectorField>& momentumMeanXnParticle() const;
-
-        inline const scalarField& nColls() const;
-
-        inline scalarField& nColls();
 
         inline const List<List<scalarField>>& vibrationalETotal() const;
 

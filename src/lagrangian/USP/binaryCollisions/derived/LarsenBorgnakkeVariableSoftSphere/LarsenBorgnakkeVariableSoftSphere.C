@@ -423,8 +423,6 @@ void Foam::LarsenBorgnakkeVariableSoftSphere::collide
 
     UQ = Ucm - postCollisionRelU*mP/(mP + mQ);
 
-    cloud_.cellPropMeasurements().nColls()[cellI]++;
-
 }
 
 

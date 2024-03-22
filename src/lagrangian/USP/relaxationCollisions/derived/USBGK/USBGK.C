@@ -955,7 +955,6 @@ void Foam::USBGK::relax()
                 }
 
                 relaxations++;
-                cloud_.cellPropMeasurements().nColls()[cell]++;
                 
             }
 
