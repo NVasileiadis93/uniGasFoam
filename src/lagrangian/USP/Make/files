@@ -14,7 +14,6 @@ dynamicAdaptation/uspDynamicAdapter.C
 /* HYBRID DECOMPOSITION */
 hybridDecomposition/basic/uspHybridDecomposition.C
 hybridDecomposition/derived/localKnudsen/localKnudsen.C
-hybridDecomposition/derived/simplifiedChapmanEnskog/simplifiedChapmanEnskog.C
 
 /* INITIALISE USP */
 initialiseUspParcels/basic/uspConfiguration/uspConfiguration.C

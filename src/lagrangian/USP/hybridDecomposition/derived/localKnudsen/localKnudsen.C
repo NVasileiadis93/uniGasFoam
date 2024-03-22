@@ -286,7 +286,6 @@ void Foam::localKnudsen::decompose()
         // smooth macroscopic quantities
         for (label pass=1; pass<=smoothingPasses_; pass++)
         {
-
             rhoM_ = fvc::average(fvc::interpolate(rhoM_));
             p_ = fvc::average(fvc::interpolate(p_));
             translationalT_ = fvc::average(fvc::interpolate(translationalT_));
@@ -295,16 +294,11 @@ void Foam::localKnudsen::decompose()
             p_.correctBoundaryConditions();
             translationalT_.correctBoundaryConditions();
             UMean_.correctBoundaryConditions();
-
         }
 
         scalarField maxMagGradRho(mesh_.nCells());
         scalarField maxMagGradT(mesh_.nCells());
         scalarField maxMagGradU(mesh_.nCells());
-
-        //maxMagGradRho = mag(fvc::grad(rhoM_));
-        //maxMagGradT = mag(fvc::grad(translationalT_));
-        //maxMagGradU = mag(fvc::grad(UMean_));
 
         forAll(mesh_.cells(), cell)
         {
