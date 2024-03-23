@@ -534,7 +534,6 @@ void uspDynamicAdapter::adapt()
     if (timeSteps_ == adaptationInterval_)
     {
 
-        const auto& meshCC = mesh_.cellCentres();
         const auto& meshV = mesh_.V();
 
         // Computing internal fields
@@ -597,11 +596,7 @@ void uspDynamicAdapter::adapt()
         // Smooth macroscopic fields
         for (label pass = 1; pass <= smoothingPasses_; ++pass)
         {
-            timeStepMCTRatio_ = fvc::average(fvc::interpolate(timeStepMCTRatio_));
-            courantNumber_ = fvc::average(fvc::interpolate(courantNumber_));
             cellSizeMFPRatio_ = fvc::average(fvc::interpolate(cellSizeMFPRatio_));
-            timeStepMCTRatio_.correctBoundaryConditions();
-            courantNumber_.correctBoundaryConditions();
             cellSizeMFPRatio_.correctBoundaryConditions();
         }
 
