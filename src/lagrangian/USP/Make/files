@@ -2,7 +2,6 @@
 parcels/uspParcel.C
 parcels/uspParcelIO.C
 
-
 /* CLOUD */
 clouds/uspCloud.C
 
@@ -108,9 +107,9 @@ boundaries/derived/cyclicBoundaries/uspReflectiveParticleMembranePatch/uspReflec
 
 
 /* MACROSCOPIC PROPERTIES */
-macroscopicProperties/derived/combined/uspVolFields/uspVolFields.C
+macroscopicProperties/derived/force/uspForceSurface/uspForceSurface.C
 macroscopicProperties/derived/massFlux/uspMassFluxSurface/uspMassFluxSurface.C
-
+macroscopicProperties/derived/volumetric/uspVolFields/uspVolFields.C
 
 /* LOAD BALANCING */
 dynamicLoadBalancing/uspDynamicLoadBalancing.C
