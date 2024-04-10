@@ -261,7 +261,6 @@ const scalar& deltaT = mesh_.time().deltaTValue();
     if (sampleInterval_ <= sampleCounter_)
     {
 
-
         timeAvCounter_ += deltaT;
 
         const List<scalarField>& molIdFlux = cloud_.tracker().parcelIdFlux();
@@ -285,16 +284,11 @@ const scalar& deltaT = mesh_.time().deltaTValue();
                 if (typeIds_.find(id) != -1)
                 {
 
-                    //fix for non-uniform cell weighting
-                    label faceOwner= mesh_.owner()[faceI];
-
                     const scalar& nParticle = cloud_.nParticle();
-                    const scalar& CWF = cloud_.cellWF(faceOwner);
-                    const scalar& RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-                    molFlux += (molIdFlux[id][faceI]*nParticle*CWF*RWF*nF) & fluxDirection_;
-                    massFlux += (massIdFlux[id][faceI]*nParticle*CWF*RWF*nF) & fluxDirection_;
-                    momentumFlux += (momentumIdFlux[id][faceI]*nParticle*CWF*RWF) & fluxDirection_;
+                    molFlux += (molIdFlux[id][faceI]*nParticle*nF) & fluxDirection_;
+                    massFlux += (massIdFlux[id][faceI]*nParticle*nF) & fluxDirection_;
+                    momentumFlux += (momentumIdFlux[id][faceI]*nParticle) & fluxDirection_;
 
                 }
             }

@@ -741,7 +741,7 @@ void Foam::uspGeneralBoundary::insertParcels
                 scalar RWF = cloud_.axiRWF(cloud_.mesh().cellCentres()[cellI]);
                 
                 // Apply tracking correction towards cell centre
-                p += 1e-5*(mesh_.cellCentres()[cellI] - p);
+                p += VSMALL*(mesh_.cellCentres()[cellI] - p);
 
                 cloud_.addNewParcel
                 (
@@ -983,7 +983,7 @@ void Foam::uspGeneralBoundary::insertParcels
                 scalar RWF = cloud_.axiRWF(cloud_.mesh().cellCentres()[cellI]);
                 
                 // Apply tracking correction towards cell centre
-                p += 1e-5*(mesh_.cellCentres()[cellI] - p);
+                p += VSMALL*(mesh_.cellCentres()[cellI] - p);
 
                 cloud_.addNewParcel
                 (
@@ -1209,7 +1209,7 @@ void Foam::uspGeneralBoundary::insertParcels
                 scalar RWF = cloud_.axiRWF(cloud_.mesh().cellCentres()[cellI]);
                 
                 // Apply tracking correction towards cell centre
-                p += 1e-5*(mesh_.cellCentres()[cellI] - p);
+                p += VSMALL*(mesh_.cellCentres()[cellI] - p);
 
                 cloud_.addNewParcel
                 (
@@ -1461,7 +1461,7 @@ void Foam::uspGeneralBoundary::insertParcels
                 scalar RWF = cloud_.axiRWF(cloud_.mesh().cellCentres()[cellI]);
                 
                 // Apply tracking correction towards cell centre
-                p += 1e-5*(mesh_.cellCentres()[cellI] - p);
+                p += VSMALL*(mesh_.cellCentres()[cellI] - p);
 
                 cloud_.addNewParcel
                 (
@@ -1488,6 +1488,7 @@ void Foam::uspGeneralBoundary::insertParcels
     const vectorField& velocity
 )
 {
+
     Random& rndGen = cloud_.rndGen();
 
     // Loop over all species
@@ -1552,7 +1553,7 @@ void Foam::uspGeneralBoundary::insertParcels
 
             // Number of whole particles to insert
             label nParcelsToInsert = max(label(faceAccumulator), 0);
-
+            
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
             if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
@@ -1917,7 +1918,7 @@ void Foam::uspGeneralBoundary::insertParcels
                 scalar RWF = cloud_.axiRWF(cloud_.mesh().cellCentres()[cellI]);
                 
                 // Apply tracking correction towards cell centre
-                p += 1e-5*(mesh_.cellCentres()[cellI] - p);
+                p += VSMALL*(mesh_.cellCentres()[cellI] - p);
 
                 cloud_.addNewParcel
                 (

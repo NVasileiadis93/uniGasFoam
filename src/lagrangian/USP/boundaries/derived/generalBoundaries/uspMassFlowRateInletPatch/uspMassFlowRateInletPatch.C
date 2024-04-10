@@ -187,29 +187,21 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
 
         forAll(moleFractions_, iD)
         {
-
-            scalar CWF = cloud_.cellWF(cellI);
-            scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
-            parcelsOut_[iD] += parcelIdFlux[iD][faceI]*CWF*RWF;
-
+            parcelsOut_[iD] += parcelIdFlux[iD][faceI];
         }
 
         const List<uspParcel*>& parcelsInCell = cellOccupancy[cellI];
 
         // compute cell instantaneous numberDensity and velocity
-
         for (uspParcel* p : parcelsInCell)
         {
             const label iD = p->typeId();
             
             const scalar pMass = nParticle*cloud_.constProps(iD).mass();
 
-            scalar CWF = cloud_.cellWF(cellI);
-            scalar RWF = cloud_.axiRWF(p->position());
-
             inletNumberDensity_[iD][c] += 1;
-            momentum[c] += pMass*CWF*RWF*p->U();
-            mass[c] += pMass*CWF*RWF;
+            momentum[c] += pMass*p->U();
+            mass[c] += pMass;
 
         }
 
@@ -231,13 +223,11 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
             inletVelocity_[c] = previousInletVelocity_[c];
         }
 
+        scalar CWF = cloud_.cellWF(cellI);
+        scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
         forAll(moleFractions_, iD)
         {
-
-            scalar CWF = cloud_.cellWF(cellI);
-            scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
             inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*nParticle*CWF*RWF/mesh_.V()[cellI] ;
-
         }
 
     }
@@ -300,6 +290,7 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
 
     parcelsIn_ = moleFlowRate_*deltaT/nParticle + parcelsOut_;
 
+    
     forAll(cells_, c)
     {
         forAll(moleFractions_, iD)

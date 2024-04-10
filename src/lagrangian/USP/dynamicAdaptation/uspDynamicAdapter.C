@@ -55,7 +55,7 @@ uspDynamicAdapter::uspDynamicAdapter
     maxCourantNumber_(),
     maxSubcellSizeMFPRatio_(),
     smoothingPasses_(25),
-    theta_(0.1),
+    theta_(0.2),
     timeSteps_(0),
     timeAvCounter_(0),
     rhoNMean_(mesh_.nCells(), 0.0),
@@ -537,6 +537,8 @@ void uspDynamicAdapter::adapt()
         const auto& meshV = mesh_.V();
 
         // Computing internal fields
+        scalar minRhoN = VGREAT;
+        scalar minTranslationalT = VGREAT;
         forAll(rhoNMean_, cell)
         {
 
@@ -556,6 +558,18 @@ void uspDynamicAdapter::adapt()
                         linearKEMean
                       - 0.5*rhoMMean*(UMean_[cell] & UMean_[cell])
                     );
+
+                if (translationalT_[cell] > VSMALL)
+                {
+                    if (minRhoN >  rhoN_[cell])
+                    {
+                        minRhoN = rhoN_[cell];
+                    }
+                    if (minTranslationalT >  translationalT_[cell])
+                    {
+                        minTranslationalT = translationalT_[cell];
+                    }
+                }
             }
             else
             {
@@ -564,6 +578,19 @@ void uspDynamicAdapter::adapt()
                 UMean_[cell] = vector::zero;
             }
 
+        }
+
+        // set zero density and temperature to the smallest non-zero ones to avoid errors in cell weighting factors
+        forAll(rhoNMean_, cell)
+        {
+            if (rhoN_[cell] == 0.0)
+            {
+                rhoN_[cell] = minRhoN;
+            }
+            if (translationalT_[cell] == 0.0)
+            {
+                translationalT_[cell] = minTranslationalT;
+            }
         }
 
         // Calculate cell size to mean free path ratio

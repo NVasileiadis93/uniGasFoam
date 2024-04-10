@@ -76,7 +76,6 @@ uspFaceTracker::uspFaceTracker
 void uspFaceTracker::clean()
 {
     // clean geometric fields
-
     forAll(parcelIdFlux_, i)
     {
         parcelIdFlux_[i] = scalar(0.0);
@@ -94,9 +93,10 @@ void uspFaceTracker::updateFields
     const label crossedFace = p.face();
     const label typeId = p.typeId();
     const uspParcel::constantProperties& constProp = cloud_.constProps(typeId);
-    const scalar mass = constProp.mass();
-    const vector& U = p.U();
-//     const vector mom = p.U()*mass;
+    const scalar& CWF = p.CWF();
+    const scalar& RWF = cloud_.axiRWF(p.position());
+    const scalar& mass = constProp.mass();
+    const vector& U = p.U();        
 
     // check which patch was hit
     const label patchId = mesh_.boundaryMesh().whichPatch(crossedFace);
@@ -112,43 +112,26 @@ void uspFaceTracker::updateFields
 
         const label faceIndex = crossedFace-patch.start();
  
-        if (isA<cyclicPolyPatch>(patch))
+        if (isA<cyclicPolyPatch>(patch)) // boundary cyclic faces
         {
-            // correct cyclic patches
+            label coupledFace = refCast<const cyclicPolyPatch>(patch).neighbPatch().start() + faceIndex;
 
-            label coupledFace = refCast<const cyclicPolyPatch>
-            (
-                patch
-            ).neighbPatch().start() + faceIndex;
-
-            parcelIdFlux_[typeId][coupledFace] += 1.0;
-            massIdFlux_[typeId][coupledFace] += mass;
-            momentumIdFlux_[typeId][coupledFace] += mass*U;
+            parcelIdFlux_[typeId][coupledFace] += CWF*RWF;
+            massIdFlux_[typeId][coupledFace] += mass*CWF*RWF;
+            momentumIdFlux_[typeId][coupledFace] += mass*U*CWF*RWF;
         }
-        else if(isA<processorPolyPatch>(patch))
+        else  // boundary non-cyclic faces
         {
-            // molecular properties are appended to the face of the leaving
-            // processor only. Normal vector points out from the domain.
-            parcelIdFlux_[typeId][crossedFace] += sgn*1.0;
-            massIdFlux_[typeId][crossedFace] += sgn*mass;
-            momentumIdFlux_[typeId][crossedFace] += mass*U;
-
-        }
-        else
-        {
-            parcelIdFlux_[typeId][crossedFace] += sgn*1.0;
-            massIdFlux_[typeId][crossedFace] += sgn*mass;
-            momentumIdFlux_[typeId][crossedFace] += mass*U;
+            parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
+            massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
+            momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;
         }
     }
-    else // internal face
+    else // internal faces
     {
-        // properties
-        parcelIdFlux_[typeId][crossedFace] += sgn*1.0;
-        massIdFlux_[typeId][crossedFace] += sgn*mass;
-        momentumIdFlux_[typeId][crossedFace] += mass*U;
-        
-        //Info << "massIdFlux_ = " << massIdFlux_ << endl;
+        parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
+        massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
+        momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;
     }
 
 }
