@@ -385,10 +385,10 @@ void Foam::localKnudsen::decompose()
             }
             else
             {
-                    instKnRho = GREAT;
-                    instKnT = GREAT;
-                    instKnU = GREAT;
-                    instKnGLL = GREAT;
+                    instKnRho = 2.0*breakdownMax_;
+                    instKnT = 2.0*breakdownMax_;
+                    instKnU = 2.0*breakdownMax_;
+                    instKnGLL = 2.0*breakdownMax_;
             }
 
             // time average macroscopic quantities
