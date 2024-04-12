@@ -109,7 +109,6 @@ class uspVolFields
         List<vectorField> t1_;
         List<vectorField> t2_;
 
-        volScalarField uspRhoN_;
         volScalarField uspRhoNMean_;
         volScalarField rhoN_;
         volScalarField rhoM_;
@@ -136,7 +135,6 @@ class uspVolFields
         
         // Cell measurements
         scalarField rhoNMean_;
-        scalarField rhoNInstantaneous_;
         scalarField rhoNMeanXnParticle_;
         scalarField rhoNMeanInt_;
         scalarField molsElec_;

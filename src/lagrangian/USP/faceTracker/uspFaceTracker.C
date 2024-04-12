@@ -122,12 +122,13 @@ void uspFaceTracker::updateFields
         }
         else  // boundary non-cyclic faces
         {
+
             parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
             massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
             momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;
         }
     }
-    else // internal faces
+    else // internal face
     {
         parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
         massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;

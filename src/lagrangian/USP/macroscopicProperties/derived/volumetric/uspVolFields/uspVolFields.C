@@ -65,19 +65,6 @@ Foam::uspVolFields::uspVolFields
     n_(),
     t1_(),
     t2_(),
-    uspRhoN_
-    (
-        IOobject
-        (
-            "uspRhoN_" + fieldName_,
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh_,
-        dimensionedScalar(dimless/dimVolume, Zero)
-    ),
     uspRhoNMean_
     (
         IOobject
@@ -378,7 +365,6 @@ Foam::uspVolFields::uspVolFields
         dimensionedVector(dimensionSet(1, -1, -2, 0, 0), Zero)
     ),
     rhoNMean_(mesh_.nCells(), 0.0),
-    rhoNInstantaneous_(mesh_.nCells(), 0.0),
     rhoNMeanXnParticle_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
@@ -581,7 +567,6 @@ void Foam::uspVolFields::readIn()
     dict.readIfPresent("nTimeSteps", nAvTimeSteps_);
     dict.readIfPresent("timeCounter", timeAvCounter_);
     dict.readIfPresent("rhoNMean", rhoNMean_);
-    dict.readIfPresent("rhoNInstantaneous", rhoNInstantaneous_);
     dict.readIfPresent("rhoNMeanXnParticle", rhoNMeanXnParticle_);
     dict.readIfPresent("rhoNMeanInt", rhoNMeanInt_);
     dict.readIfPresent("molsElec", molsElec_);
@@ -640,7 +625,6 @@ void Foam::uspVolFields::writeOut()
         dict.add("nTimeSteps", nAvTimeSteps_);
         dict.add("timeCounter", timeAvCounter_);
         dict.add("rhoNMean", rhoNMean_);
-        dict.add("rhoNInstantaneous", rhoNInstantaneous_);
         dict.add("rhoNMeanXnParticle", rhoNMeanXnParticle_);
         dict.add("rhoNMeanInt", rhoNMeanInt_);
         dict.add("molsElec", molsElec_);
@@ -742,8 +726,6 @@ void Foam::uspVolFields::calculateField()
 
     const scalar& deltaT = mesh_.time().deltaTValue();
 
-    rhoNInstantaneous_ = 0.0;
-
     if (sampleInterval_ <= sampleCounter_)
     {
 
@@ -764,7 +746,6 @@ void Foam::uspVolFields::calculateField()
                 if (iD != -1)
                 {
                     rhoNMean_ += deltaT*cm.rhoNMean()[iD];
-                    rhoNInstantaneous_ += deltaT*cm.rhoNInstantaneous()[iD];
                     rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
                     rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
                 }
@@ -783,7 +764,6 @@ void Foam::uspVolFields::calculateField()
                 if (iD != -1)
                 {
                     rhoNMean_ += deltaT*cm.rhoNMean()[iD];
-                    rhoNInstantaneous_ += deltaT*cm.rhoNInstantaneous()[iD];
                     rhoMMean_ += deltaT*cm.rhoMMean()[iD];
                     linearKEMean_ += deltaT*cm.linearKEMean()[iD];
                     momentumMean_ += deltaT*cm.momentumMean()[iD];
@@ -877,14 +857,6 @@ void Foam::uspVolFields::calculateField()
                     rhoM_[cell] = 0.0;
                 }
 
-                if (rhoNInstantaneous_[cell] > VSMALL)
-                {
-                    uspRhoN_[cell] = rhoNInstantaneous_[cell]/timeAvCounter_;
-                }
-                else
-                {
-                    uspRhoN_[cell] = 0.0;
-                }
             }
         }
         else
@@ -935,15 +907,6 @@ void Foam::uspVolFields::calculateField()
                     UMean_[cell] = vector::zero;
                     translationalT_[cell] = 0.0;
                     p_[cell] = 0.0;
-                }
-
-                if (rhoNInstantaneous_[cell] > VSMALL)
-                {
-                    uspRhoN_[cell] = rhoNInstantaneous_[cell]/timeAvCounter_;
-                }
-                else
-                {
-                    uspRhoN_[cell] = 0.001;
                 }
 
                 // Rotational temperature
@@ -1446,7 +1409,6 @@ void Foam::uspVolFields::calculateField()
                 pressureError_.write();
             }
 
-            uspRhoN_.write();
             uspRhoNMean_.write();
             rhoN_.write();
             rhoM_.write();

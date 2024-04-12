@@ -456,6 +456,9 @@ void uspDynamicAdapter::smoothCellWeightFactor
 )
 {
 
+    //Initial smoothing
+    fvc::smooth(cellWeightFactor, 1.1);
+
     scalar maxCellWeightRatio;
     label smoothingPasses = 0;
     do
@@ -580,18 +583,6 @@ void uspDynamicAdapter::adapt()
 
         }
 
-        // set zero density and temperature to the smallest non-zero ones to avoid errors in cell weighting factors
-        forAll(rhoNMean_, cell)
-        {
-            if (rhoN_[cell] == 0.0)
-            {
-                rhoN_[cell] = minRhoN;
-            }
-            if (translationalT_[cell] == 0.0)
-            {
-                translationalT_[cell] = minTranslationalT;
-            }
-        }
 
         // Calculate cell size to mean free path ratio
         forAll(mesh_.cells(), cell)
@@ -602,6 +593,20 @@ void uspDynamicAdapter::adapt()
             {
                 speciesRhoN[iD] = nParcelsXnParticle_[iD][cell]/(meshV[cell]*timeAvCounter_);
             }
+
+            // set zero density and temperature to the smallest non-zero ones to avoid errors in cell weighting factors
+            if (rhoN_[cell] == 0.0)
+            {
+                rhoN_[cell] = minRhoN;
+                forAll(typeIds_,iD)
+                {
+                    speciesRhoN[iD] = rhoN_[cell]/typeIds_.size();
+                }
+            }
+            if (translationalT_[cell] == 0.0)
+            {
+                translationalT_[cell] = minTranslationalT;
+            }          
 
             calculateAdaptationQuantities
                 (

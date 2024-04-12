@@ -97,20 +97,24 @@ class uspMassFlowRateInletPatch
         
         scalar inletTemperature_;
         
+        scalar initialNumberDensity_;
+
         vector initialVelocity_;
         
         scalar theta_;
 
         scalarField moleFlowRate_;
         
-        scalarField parcelsIn_;
-        
-        scalarField parcelsOut_;
+        List<scalarField> parcelsIn_;
+
+        scalarField parcelsInTotal_;
         
         scalarField parcelsToInsert_;
         
         List<scalarField> inletNumberDensity_;
         
+        List<scalarField> previousInletNumberDensity_;
+
         vectorField inletVelocity_;
         
         vectorField previousInletVelocity_;

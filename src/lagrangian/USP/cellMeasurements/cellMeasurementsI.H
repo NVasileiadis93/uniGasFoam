@@ -37,12 +37,6 @@ inline const List<scalarField>& cellMeasurements::rhoNMean() const
 }
 
 
-inline const List<scalarField>& cellMeasurements::rhoNInstantaneous() const
-{
-    return rhoNInstantaneous_;
-}
-
-
 inline const List<scalarField>& cellMeasurements::rhoNMeanXnParticle() const
 {
     return rhoNMeanXnParticle_;

@@ -53,7 +53,6 @@ Foam::cellMeasurements::cellMeasurements
     cloud_(cloud),
     typeIds_(),
     rhoNMean_(),
-    rhoNInstantaneous_(),
     rhoNMeanXnParticle_(),
     rhoNMeanInt_(),
     molsElec_(),
@@ -107,12 +106,6 @@ void Foam::cellMeasurements::createFields()
 
     rhoNMean_.setSize(cloud_.typeIdList().size());
     for (auto& f : rhoNMean_)
-    {
-        f.setSize(mesh_.nCells(), 0.0);
-    }
-
-    rhoNInstantaneous_.setSize(cloud_.typeIdList().size());
-    for (auto& f : rhoNInstantaneous_)
     {
         f.setSize(mesh_.nCells(), 0.0);
     }
@@ -361,7 +354,6 @@ void Foam::cellMeasurements::clean()
         {
 
             rhoNMean_[iD][cell] = 0.0;
-            rhoNInstantaneous_[iD][cell] =  0.0;
             rhoNMeanXnParticle_[iD][cell] =  0.0;
             rhoNMeanInt_[iD][cell] =  0.0;
             molsElec_[iD][cell] =  0.0;
@@ -416,7 +408,6 @@ void Foam::cellMeasurements::clean()
 void Foam::cellMeasurements::calculateFields()
 {
 
-    const scalar deltaT = mesh_.time().deltaTValue();
     const scalar nParticle = cloud_.nParticle();
 
     // Calculate parcel properties sums
@@ -458,7 +449,6 @@ void Foam::cellMeasurements::calculateFields()
             }
 
             rhoNMean_[iD][cell] += 1.0;
-            rhoNInstantaneous_[iD][cell] += 1.0;
             rhoMMean_[iD][cell] += mass;
             linearKEMean_[iD][cell] += mass*(U & U);
             momentumMean_[iD][cell] += mass*U;

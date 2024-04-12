@@ -61,15 +61,17 @@ Foam::uspMassFlowRateInletPatch::uspMassFlowRateInletPatch
     moleFractions_(),
     massFlowRate_(propsDict_.get<scalar>("massFlowRate")),
     inletTemperature_(propsDict_.get<scalar>("inletTemperature")),
-    initialVelocity_(propsDict_.get<vector>("initialVelocity")),
+    initialNumberDensity_(propsDict_.get<scalar>("initialNumberDensity")),
+    initialVelocity_(propsDict_.getOrDefault<vector>("initialVelocity",vector::zero)),
     theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
     moleFlowRate_(),
     parcelsIn_(),
-    parcelsOut_(),
+    parcelsInTotal_(),
     parcelsToInsert_(),
     inletNumberDensity_(),
-    inletVelocity_(faces_.size(), Zero),
-    previousInletVelocity_(faces_.size(), Zero)
+    previousInletNumberDensity_(),
+    inletVelocity_(faces_.size(), initialVelocity_),
+    previousInletVelocity_(faces_.size(), initialVelocity_)
 {
     writeInTimeDir_ = false;
     writeInCase_ = true;
@@ -99,24 +101,32 @@ Foam::uspMassFlowRateInletPatch::uspMassFlowRateInletPatch
     }
 
     inletNumberDensity_.setSize(typeIds_.size());
-
+    
     forAll(inletNumberDensity_, m)
     {
         inletNumberDensity_[m].setSize(faces_.size(), 0.0);
     }
 
+    previousInletNumberDensity_.setSize(typeIds_.size());
+
+    forAll(previousInletNumberDensity_, m)
+    {
+        previousInletNumberDensity_[m].setSize(faces_.size(), initialNumberDensity_);
+    }
+
     moleFlowRate_.setSize(typeIds_.size()); 
     
+    parcelsInTotal_.setSize(typeIds_.size());
+
     parcelsIn_.setSize(typeIds_.size());
     
-    parcelsOut_.setSize(typeIds_.size());
+    forAll(parcelsIn_, m)
+    {
+        parcelsIn_[m].setSize(faces_.size(), 0.0);
+    }
     
     parcelsToInsert_.setSize(typeIds_.size());
 
-    //sorts issues with the velocity pointing out of the mesh
-    inletVelocity_ = initialVelocity_;
-
-    previousInletVelocity_ = initialVelocity_;
 }
 
 
@@ -133,8 +143,18 @@ void Foam::uspMassFlowRateInletPatch::calculateProperties()
 void Foam::uspMassFlowRateInletPatch::controlParcelsBeforeMove()
 {
 
+    previousInletNumberDensity_ = inletNumberDensity_;
+
     previousInletVelocity_ = inletVelocity_;
+
     inletVelocity_ = vector::zero;
+
+    computeParcelsToInsert
+    (
+        inletNumberDensity_,
+        inletTemperature_,
+        inletVelocity_
+    );
 
     insertParcels
     (
@@ -175,7 +195,7 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
     forAll(moleFractions_, iD)
     {
         inletNumberDensity_[iD] = 0.0;
-        parcelsOut_[iD] = 0.0;
+        parcelsInTotal_[iD] = 0.0;
         moleFlowRate_[iD] = moleFractions_[iD]*(massFlowRate_ / totalMass);
     }
 
@@ -185,12 +205,18 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
         const label faceI = faces_[c];
         const label cellI = cells_[c];
 
+        const scalar& CWF = cloud_.cellWF(cellI);
+        const scalar& RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
+
         forAll(moleFractions_, iD)
         {
-            parcelsOut_[iD] += parcelIdFlux[iD][faceI];
+            parcelsIn_[iD][c] = moleFlowRate_[iD]*deltaT/nParticle/CWF/RWF + parcelIdFlux[iD][faceI]/CWF/RWF;
+            parcelsInTotal_[iD] += parcelsIn_[iD][c];
         }
 
         const List<uspParcel*>& parcelsInCell = cellOccupancy[cellI];
+
+        Info << "Parcels In/Out: " << parcelsIn_[0][c] << " / " << parcelIdFlux[0][faceI] << " " << parcelsInCell.size() << endl;
 
         // compute cell instantaneous numberDensity and velocity
         for (uspParcel* p : parcelsInCell)
@@ -223,11 +249,9 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
             inletVelocity_[c] = previousInletVelocity_[c];
         }
 
-        scalar CWF = cloud_.cellWF(cellI);
-        scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
         forAll(moleFractions_, iD)
         {
-            inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*nParticle*CWF*RWF/mesh_.V()[cellI] ;
+            inletNumberDensity_[iD][c] *= (nParticle*CWF*RWF/mesh_.V()[cellI]);
         }
 
     }
@@ -284,27 +308,20 @@ void Foam::uspMassFlowRateInletPatch::controlParcelsAfterCollisions()
 
     if (Pstream::parRun())
     {
-        reduce(parcelsOut_, sumOp<scalarField>());
+        reduce(parcelsInTotal_, sumOp<scalarField>());
         reduce(parcelsToInsert_, sumOp<scalarField>());
     }
 
-    parcelsIn_ = moleFlowRate_*deltaT/nParticle + parcelsOut_;
+    Info << "Parcels: " << parcelsInTotal_ << " " << parcelsToInsert_ << endl;
+    //std::cin.get();
 
-    
     forAll(cells_, c)
     {
         forAll(moleFractions_, iD)
         {
-            inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*(parcelsIn_[iD]/parcelsToInsert_[iD]);
+            inletNumberDensity_[iD][c] = inletNumberDensity_[iD][c]*(parcelsInTotal_[iD]/parcelsToInsert_[iD]);// + (1-theta_)*previousInletNumberDensity_[iD][c];
         }
     }
-
-    computeParcelsToInsert
-    (
-        inletNumberDensity_,
-        inletTemperature_,
-        inletVelocity_
-    );
 
 }
 

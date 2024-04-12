@@ -72,8 +72,6 @@ class cellMeasurements
 
         List<scalarField> rhoNMean_;
 
-        List<scalarField> rhoNInstantaneous_;
-
         List<scalarField> rhoNMeanXnParticle_;
 
         List<scalarField> rhoNMeanInt_;
@@ -180,8 +178,6 @@ public:
         void clean();
 
         inline const List<scalarField>& rhoNMean() const;
-
-        inline const List<scalarField>& rhoNInstantaneous() const;
 
         inline const List<scalarField>& rhoNMeanXnParticle() const;
 
