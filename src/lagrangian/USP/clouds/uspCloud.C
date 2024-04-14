@@ -422,10 +422,8 @@ Foam::uspCloud::uspCloud
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
     radialExtent_(0.0),
     maxRWF_(1.0),
-    nTerminalOutputs_
-    (
-        mesh.time().controlDict().get<label>("nTerminalOutputs")
-    ),
+    nTerminalOutputs_(mesh.time().controlDict().get<label>("nTerminalOutputs")),
+    previousTimeDirs_(),
     rhoNMeanElectron_(mesh_.nCells(), 0.0),
     rhoMMeanElectron_(mesh_.nCells(), 0.0),
     rhoMMean_(mesh_.nCells(), 0.0),
@@ -573,13 +571,13 @@ Foam::uspCloud::uspCloud
     }
 
     // Check for existing lagrangian data
-    word lagrangianFieldsDirectory = t.timeName()+"/lagrangian/";
+    word lagrangianDirectory = t.timeName()+"/lagrangian/";
     if (Pstream::parRun())
     {
-       lagrangianFieldsDirectory = "processor0/"+t.timeName()+"/lagrangian/";
+       lagrangianDirectory = "processor0/"+t.timeName()+"/lagrangian/";
     }
 
-    if (exists(lagrangianFieldsDirectory))
+    if (exists(lagrangianDirectory))
     {
 
         // Read time-step
@@ -1600,6 +1598,33 @@ void Foam::uspCloud::axisymmetricCellWeighting()
             }
         }
     }
+}
+
+void Foam::uspCloud::cleanLagrangian()
+{
+
+    previousTimeDirs_.append(mesh_.time().timeName());
+ 
+    if (previousTimeDirs_.size() >= 2)
+    {
+
+        word lagrangianDirectory;
+        if (!Pstream::parRun())
+        {
+            lagrangianDirectory = previousTimeDirs_[previousTimeDirs_.size()-2] + "/lagrangian/"; 
+        }
+        else
+        {
+            lagrangianDirectory = "processor" + Foam::name(Pstream::myProcNo()) + "/" + previousTimeDirs_[previousTimeDirs_.size()-2] + "/lagrangian/";
+        }
+
+        if (exists(lagrangianDirectory))
+        {
+            fileHandler().rmDir(lagrangianDirectory);
+        }
+
+    }
+
 }
 
 // ************************************************************************* //

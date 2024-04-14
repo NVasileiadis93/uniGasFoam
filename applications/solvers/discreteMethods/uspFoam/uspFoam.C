@@ -43,8 +43,16 @@ Description
 
 int main(int argc, char *argv[])
 {
+
     #define NO_CONTROL
     #include "postProcess.H"
+ 
+     argList::addBoolOption
+    (
+        "keep-lagrangian", 
+        "Keeping lagrangian data in all write directories"
+    );
+ 
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createMesh.H"
@@ -53,7 +61,14 @@ int main(int argc, char *argv[])
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     Info<< "\nStarting time loop\n" << endl;
+
+    const bool cleanLagrangian = !args.found("keep-lagrangian");
     
+    if (cleanLagrangian)
+    {
+        usp.cleanLagrangian();
+    }
+
     label infoCounter = 0;
 
     while (runTime.loop())
@@ -88,6 +103,11 @@ int main(int argc, char *argv[])
             infoCounter = 0;
         }
     
+        if (cleanLagrangian && runTime.write())
+        {
+            usp.cleanLagrangian();
+        }
+
     }
 
     Info<< "End\n" << endl;

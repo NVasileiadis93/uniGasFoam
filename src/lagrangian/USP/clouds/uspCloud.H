@@ -158,6 +158,9 @@ private:
         //- Write out the information to terminal every nTerminalOutputs
         label nTerminalOutputs_;
 
+        //- Stack of previous write directories
+       DynamicList<word> previousTimeDirs_;
+
         //- A data structure holding electron number density
         scalarList rhoNMeanElectron_;
 
@@ -630,6 +633,12 @@ public:
             {
                 return functions_;
             }
+
+        // System functions
+
+            void cleanLagrangian();
+
+
 };
 
 
