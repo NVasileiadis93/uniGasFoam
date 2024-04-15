@@ -457,7 +457,7 @@ void uspDynamicAdapter::smoothCellWeightFactor
 {
 
     //Initial smoothing
-    fvc::smooth(cellWeightFactor, 1.1);
+    fvc::smooth(cellWeightFactor, 1.5);
 
     scalar maxCellWeightRatio;
     label smoothingPasses = 0;
