@@ -714,6 +714,7 @@ Foam::uspCloud::uspCloud
         {
             Info << "Simulation collision model is: binary" << nl << endl;
             cellCollisionModel_ = binCollModel_;
+            cellCollisionModel_.correctBoundaryConditions();
             binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
             binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_ -> initialConfiguration();    
@@ -723,6 +724,7 @@ Foam::uspCloud::uspCloud
             Info << "Simulation collision model is: relaxation" << nl << endl;
             relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
             cellCollisionModel_ = relCollModel_;
+            cellCollisionModel_.correctBoundaryConditions();
             relaxationCollisionModel_ = relaxationCollisionModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
@@ -730,6 +732,7 @@ Foam::uspCloud::uspCloud
             Info << "Simulation collision model is: hybrid" << nl << endl;
             relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
             cellCollisionModel_ = relCollModel_;
+            cellCollisionModel_.correctBoundaryConditions();
             binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
             binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
             binaryCollisionPartnerModel_ -> initialConfiguration();

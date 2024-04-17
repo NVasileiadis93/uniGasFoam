@@ -1,4 +1,4 @@
-Check whats wrong with adaptive schemes in cylinder case
+Correct boundarycoditions collisionModel()
 
 Check previous dsmcFoam cases
 
@@ -6,4 +6,4 @@ Check what's up with totalvDofBF_ and overall temperature
 
 Fix non-surface boundary measurements
 
-Fix mass flow rate with non-uniform cell weighting
+Fix mass flow rate inlet BC

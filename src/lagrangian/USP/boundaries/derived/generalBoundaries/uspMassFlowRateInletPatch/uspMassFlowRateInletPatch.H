@@ -90,34 +90,24 @@ class uspMassFlowRateInletPatch
     // Private data
 
         dictionary propsDict_;
-
-        scalarField moleFractions_;
-        
-        scalar massFlowRate_;
-        
-        scalar inletTemperature_;
-        
-        scalar initialNumberDensity_;
-
-        vector initialVelocity_;
-        
         scalar theta_;
-
+        scalar inletTemperature_;
+        scalar massFlowRate_;
+        vector initialVelocity_;
+        scalarField moleFractions_;
+        scalar patchSurfaceArea_;
         scalarField moleFlowRate_;
-        
-        List<scalarField> parcelsIn_;
-
-        scalarField parcelsInTotal_;
-        
+        scalarField parcelsIn_;
         scalarField parcelsToInsert_;
-        
         List<scalarField> inletNumberDensity_;
-        
-        List<scalarField> previousInletNumberDensity_;
-
         vectorField inletVelocity_;
-        
         vectorField previousInletVelocity_;
+
+
+    // Private Member Functions
+
+        void setProperties();
+
 
 public:
 
@@ -167,5 +157,3 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif
-
-// ************************************************************************* //

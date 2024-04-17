@@ -95,7 +95,7 @@ class uspForceSurface
 
         labelList typeIds_;
 
-        word patch_;  
+        word patchName_;  
 
         bool averagingAcrossManyRuns_;
 

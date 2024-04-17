@@ -370,7 +370,7 @@ void Foam::uspMassFluxSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "faceFlux_" + faceZoneName_ + "_"+fieldName_ + "_N.log",
+                "particleFlux_" + faceZoneName_ + "_"+fieldName_ + ".log",
                 timeField,
                 molFluxZone_,
                 true
@@ -379,7 +379,7 @@ void Foam::uspMassFluxSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "faceFlux_" + faceZoneName_ + "_" + fieldName_ + "_M.log",
+                "massFlux_" + faceZoneName_ + "_" + fieldName_ + ".log",
                 timeField,
                 massFluxZone_,
                 true
@@ -388,7 +388,7 @@ void Foam::uspMassFluxSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "faceMassFlowRate_" + faceZoneName_ + "_"+fieldName_ + ".log",
+                "massFlowRate_" + faceZoneName_ + "_"+fieldName_ + ".log",
                 timeField,
                 massFlowZone_,
                 true
@@ -397,7 +397,7 @@ void Foam::uspMassFluxSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "faceMomentumFlowRate_" + faceZoneName_ + "_"+fieldName_ + ".log",
+                "thrust_" + faceZoneName_ + "_"+fieldName_ + ".log",
                 timeField,
                 momentumFlowZone_,
                 true

@@ -60,7 +60,6 @@ uspFaceTracker::uspFaceTracker
     parcelIdFlux_(cloud_.typeIdList().size()),
     massIdFlux_(cloud_.typeIdList().size()),
     momentumIdFlux_(cloud_.typeIdList().size())
-
 {
     forAll(parcelIdFlux_, i)
     {
@@ -122,7 +121,6 @@ void uspFaceTracker::updateFields
         }
         else  // boundary non-cyclic faces
         {
-
             parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
             massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
             momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;

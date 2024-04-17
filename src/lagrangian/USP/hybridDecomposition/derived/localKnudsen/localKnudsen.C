@@ -543,6 +543,9 @@ void Foam::localKnudsen::decompose()
                 }
             }
         }
+        
+        // correct boundary conditions
+        cloud_.cellCollModel().correctBoundaryConditions();
 
         // reset
         timeSteps_ = 0;

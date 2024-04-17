@@ -52,7 +52,7 @@ Foam::uspForceSurface::uspForceSurface
     propsDict_(dict.subDict(typeName + "Properties")),
     fieldName_(propsDict_.get<word>("field")),
     typeIds_(cloud_.getTypeIDs(propsDict_)),
-    patch_(propsDict_.get<word>("patch")),
+    patchName_(propsDict_.get<word>("patch")),
     averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
     sampleCounter_(0),
     patchId(-1),
@@ -76,7 +76,7 @@ Foam::uspForceSurface::uspForceSurface
 
         const word& patchName = mesh_.boundary()[patchI].name();
 
-        if (patch_ == patchName)
+        if (patchName_ == patchName)
         {
             patchId = patchI;
         }
@@ -93,7 +93,7 @@ void Foam::uspForceSurface::readIn()
     (
         IOobject
         (
-            "forceSurface_" + fieldName_ + "_" + patch_,
+            "forceSurface_" + fieldName_ + "_" + patchName_,
             mesh_.time().timeName(),
             "uniform",
             mesh_.time(),
@@ -116,7 +116,7 @@ void Foam::uspForceSurface::writeOut()
         (
             IOobject
             (
-                "forceSurface_" + fieldName_ + "_" + patch_,
+                "forceSurface_" + fieldName_ + "_" + patchName_,
                 mesh_.time().timeName(),
                 "uniform",
                 mesh_.time(),
@@ -232,7 +232,7 @@ void Foam::uspForceSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "force_" + patch_ + "_"+fieldName_ + ".log",
+                "force_" + patchName_ + "_"+fieldName_ + ".log",
                 timeField,
                 forcePatch_,
                 true
