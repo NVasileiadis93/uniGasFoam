@@ -383,11 +383,13 @@ void uspDynamicAdapter::calculateTimeStep()
     time_.setDeltaT(deltaT);
 
     //Delete for release
+    label nUspParticles = cloud_.size();
+    reduce(nUspParticles, sumOp<label>());
     if (Pstream::myProcNo() == 0 )
     {
         std::ofstream outfile;
         outfile.open("timeStepHistory.log", std::ios_base::app);
-        outfile << deltaT << "\n";
+        outfile << mesh_.time().timeName() << " " << nUspParticles << " " << deltaT << "\n";
     }
 
 }  
@@ -457,7 +459,7 @@ void uspDynamicAdapter::smoothCellWeightFactor
 {
 
     //Initial smoothing
-    fvc::smooth(cellWeightFactor, 1.25);
+    fvc::smooth(cellWeightFactor, 1.3);
 
     scalar maxCellWeightRatio;
     label smoothingPasses = 0;
