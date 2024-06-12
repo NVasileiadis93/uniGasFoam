@@ -1,9 +1,9 @@
+Add maxCollProbability in adaptive time-stepping
+
+make vectors eRotU and eVibU?
+
 Correct boundarycoditions collisionModel()
 
 Check previous dsmcFoam cases
 
 Check what's up with totalvDofBF_ and overall temperature
-
-Fix non-surface boundary measurements
-
-Fix mass flow rate inlet BC

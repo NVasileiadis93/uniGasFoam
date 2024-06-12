@@ -1061,14 +1061,11 @@ Foam::vector Foam::USBGK::samplePostRelaxationVelocity
 )
 {
 
+
     scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
     scalar tau = 0.5*rF*cloud_.mesh().time().deltaTValue();
-    //scalar coeffQ = 2.0*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
-    //scalar coeffS = (1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
-
-    scalar factor = exp(-0.1/(2.0*tau));
-    scalar coeffQ = 2.0*(factor*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0))) + (1.0-factor)*(exp(2.0*(1.0-Pr)*tau)-1.0)/(exp(2.0*tau)-1.0));
-    scalar coeffS = factor*(1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+    scalar coeffQ = 2.0*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+    scalar coeffS = (1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
 
     vector v;
     scalar prob;

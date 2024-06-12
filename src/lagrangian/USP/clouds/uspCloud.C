@@ -558,8 +558,8 @@ Foam::uspCloud::uspCloud
     if (cellWeighted_)
     {
         dictionary cellWeightedDict = particleProperties_.subDict("cellWeightedProperties");
-        minParticlesPerSubcell_ = cellWeightedDict.get<label>("minParticlesPerSubcell");
         particlesPerSubcell_ = cellWeightedDict.get<label>("particlesPerSubcell");
+        minParticlesPerSubcell_ = cellWeightedDict.getOrDefault<label>("minParticlesPerSubcell",particlesPerSubcell_);
     }
 
     // Axisymmetric weighting
@@ -1618,6 +1618,8 @@ void Foam::uspCloud::cleanLagrangian()
         }
         else
         {
+            label myProcNo = Pstream::myProcNo();
+            reduce(myProcNo,sumOp<label>());
             lagrangianDirectory = "processor" + Foam::name(Pstream::myProcNo()) + "/" + previousTimeDirs_[previousTimeDirs_.size()-2] + "/lagrangian/";
         }
 
