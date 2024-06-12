@@ -1,9 +1,9 @@
 # Prerequisites
 * OpenFOAM-v2112 or later
 
-# Compiling uspFoam
+# Compiling uniGasFoam
 [//]: # (source openFOAM bashrc)
 * source [FOAM_INSTALL_DIR]/etc/bashrc
 
-[//]: # (compile uspFoam)
+[//]: # (compile uniGasFoam)
 * ./Allwmake [nprocs]

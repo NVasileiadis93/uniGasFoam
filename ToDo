@@ -1,6 +1,6 @@
-Add maxCollProbability in adaptive time-stepping
+Set up tutorial cases
 
-make vectors eRotU and eVibU?
+Add maxCollProbability in adaptive time-stepping
 
 Correct boundarycoditions collisionModel()
 

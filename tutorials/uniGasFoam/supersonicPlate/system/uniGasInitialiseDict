@@ -1,0 +1,33 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2306                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      uniGasInitialiseDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+configurations
+(
+    configuration
+    {
+        type                        uniGasMeshFill;
+        typeIdList                  (Ar);
+        numberDensities{Ar          3.416E+22;};
+		translationalTemperature    300;
+		rotationalTemperature       0;
+		vibrationalTemperature      0;
+        electronicTemperature       0;
+		velocity		            (484 0 0); 
+    }
+);
+
+// ************************************************************************* //

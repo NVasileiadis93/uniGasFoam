@@ -16,5 +16,5 @@ then
 fi
 
 wmake -j $nProcs CloudWithModels
-wmake -j $nProcs USP
+wmake -j $nProcs uniGas
 

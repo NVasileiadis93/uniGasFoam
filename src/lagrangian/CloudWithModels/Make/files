@@ -1,3 +1,3 @@
 cloudSolution/cloudSolution.C
 
-LIB = $(FOAM_USER_LIBBIN)//liblagrangianUspCloudBase
+LIB = $(FOAM_USER_LIBBIN)//liblagrangianUniGasCloudBase

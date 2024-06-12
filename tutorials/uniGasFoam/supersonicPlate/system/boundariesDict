@@ -1,0 +1,99 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2206                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      boundariesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+uniGasPatchBoundaries
+(
+
+    boundary
+    {
+        patchBoundaryProperties
+        {
+            patch       plate;
+        }
+
+        boundaryModel   uniGasDiffuseWallPatch;
+
+        uniGasDiffuseWallPatchProperties
+        {
+            velocity 	    (0 0 0);
+            temperature     300;
+        }
+    }
+
+	boundary
+    {
+        patchBoundaryProperties
+        {
+            patch       inlet;
+        }
+
+        boundaryModel   uniGasDeletionPatch;
+
+        uniGasDeletionPatchProperties
+        {
+          allSpecies        yes;
+        }
+    }
+
+	boundary
+    {
+        patchBoundaryProperties
+        {
+            patch       outlet;
+        }
+
+        boundaryModel   uniGasDeletionPatch;
+
+        uniGasDeletionPatchProperties
+        {
+          allSpecies        yes;
+        }
+    }
+
+);
+
+uniGasGeneralBoundaries
+(
+
+    boundary
+    {
+        generalBoundaryProperties
+        {
+            patch       inlet;
+        }
+
+        boundaryModel   uniGasFreeStreamInflowPatch;
+
+        uniGasFreeStreamInflowPatchProperties
+        {
+            translationalTemperature    300;
+			rotationalTemperature		300;
+			vibrationalTemperature		300;
+            electronicTemperature       300;
+            velocity 			        (484 0 0);
+			typeIds				        (Ar);
+			numberDensities{Ar	        3.416E+22;}
+        }
+    }
+
+);
+
+uniGasCyclicBoundaries
+(
+);
+
+// ************************************************************************* //

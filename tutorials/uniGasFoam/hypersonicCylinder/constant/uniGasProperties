@@ -1,0 +1,114 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2306                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      uniGasProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solution
+{
+    active          yes;
+    coupled         yes;
+    cellValueSourceCorrection no;
+    calcFrequency   1;
+    maxTrackTime    1e9;
+    sourceTerms
+    {
+        resetOnStartup  no;
+        schemes
+        {}
+    }
+}
+
+// General Properties
+// ~~~~~~~~~~~~~~~~~~
+nEquivalentParticles            5.85E+11;
+chemicalReactions				false;
+chargedParticles                false;
+adsorption                      false;
+
+// Cell Weighting Properties
+// ~~~~~~~~~~~~~~~~~~
+cellWeightedSimulation      	true;
+cellWeightedProperties
+{
+    minParticlesPerSubcell	20;
+    particlesPerSubcell         20;
+}
+
+// Axisymmetric Properties
+// ~~~~~~~~~~~~~~~~~~
+axisymmetricSimulation          false;
+axisymmetricProperties
+{
+}
+
+// Dynamic Adaptation
+// ~~~~~~~~~~~~~~~~~~
+adaptiveSimulation		     	true;
+adaptiveProperties
+{
+    timeStepAdaptation          true;
+	subcellAdaptation		    true;
+	cellWeightAdaptation		true;
+	adaptationInterval			100;
+    maxTimeStepMCTRatio         0.2;
+    maxCourantNumber            0.5;
+	maxSubcellSizeMFPRatio		0.5;
+}
+
+// Collision Models
+// ~~~~~~~~~~~~~~~~~~~~~~
+collisionModel              hybrid; //binary, relaxation, hybrid
+relaxationCollisionModel    USBGK;
+binaryCollisionPartnerModel noTimeCounter;
+binaryCollisionModel        variableHardSphere;
+collisionProperties
+{
+    Tref                    1000;
+    macroInterpolation      true;
+    theta                   0.1;
+}
+
+// Chemical Reactions Model
+//~~~~~~~~~~~~~~~~~~~~~~~~~
+//ChemicalReactionModel          QuantumKineticModel;
+
+// Molecular species
+// ~~~~~~~~~~~~~~~~~
+typeIdList  (Ar);
+
+moleculeProperties
+{
+  	Ar
+    {
+        mass                            		66.3e-27;
+        diameter                        		3.595E-10;
+        rotationalDegreesOfFreedom        		0;
+		vibrationalModes        				0;
+        omega                           		0.734;
+        alpha                                   1.0;
+		characteristicVibrationalTemperature	();
+        dissociationTemperature            		();
+        ionisationTemperature            		0;
+		charDissQuantumLevel					();
+		Zref 									();
+		referenceTempForZref                    ();
+        charge                                  0;
+        numberOfElectronicLevels                1;
+        electronicEnergyList                    (0);
+        degeneracyList                          (1);
+    }
+}
+
+// ************************************************************************* //

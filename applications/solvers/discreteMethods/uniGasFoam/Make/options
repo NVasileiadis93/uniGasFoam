@@ -1,0 +1,28 @@
+DEV_PATH = ../../../
+
+EXE_INC = \
+    -I$(WM_PROJECT_USER_DIR)/src/lagrangian/uniGas/lnInclude \
+    -I$(WM_PROJECT_USER_DIR)/src/lagrangian/CloudWithModels/lnInclude  \
+    \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/lagrangian/basic/lnInclude \
+    -I$(LIB_SRC)/lagrangian/CloudWithModels/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/parallel/decompose/decompositionMethods/lnInclude
+
+EXE_LIBS = \
+    -L$(FOAM_USER_LIBBIN) \
+        -lUniGas \
+        -llagrangianUniGasCloudBase \
+    -lmeshTools \
+    -lsampling \
+    -lfiniteVolume \
+    -ldecompositionMethods \
+    -llagrangian \
+    -ldynamicMesh \
+    -ldynamicFvMesh \
+    -ltopoChangerFvMesh

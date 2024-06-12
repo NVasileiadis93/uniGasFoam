@@ -1,0 +1,114 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     1.5;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale 1e-3;
+
+
+vertices
+(
+
+(0.0   0.0    0.01)
+(0.0   5.0    0.01)
+(0.5   5.0    0.01)
+(1.5   5.0    0.01)
+(3.0   5.0    0.01)
+(3.0   0.0    0.01)
+(1.5   0.0    0.01)
+(0.5   0.0    0.01)
+(0.0   0.0   -0.01)
+(0.0   5.0   -0.01)
+(0.5   5.0   -0.01)
+(1.5   5.0   -0.01)
+(3.0   5.0   -0.01)
+(3.0   0.0   -0.01)
+(1.5   0.0   -0.01)
+(0.5   0.0   -0.01)
+
+);
+
+blocks
+(
+
+    hex (0 7 15 8 1 2 10 9) dsmcZone (50 1 200) simpleGrading (1 1 5)
+    hex (7 6 14 15 2 3 11 10) dsmcZone (100 1 200) simpleGrading (1 1 5)
+    hex (6 5 13 14 3 4 12 11) dsmcZone (75 1 200) simpleGrading (4 1 5)
+
+);
+
+boundary
+(
+
+    inlet
+    {
+        type patch;
+        faces (
+              (0 1 9 8)
+              (1 2 10 9)
+              (2 3 11 10)
+              (3 4 12 11)
+              );
+    }
+    outlet
+    {
+        type patch;
+        faces (
+              (4 5 13 12)
+              );
+    }
+    plate
+    {
+        type wall;
+        faces (
+              (7 15 14 6)
+              );
+    }
+    symmetryFront
+    {
+        type symmetry;
+        faces (
+              (0 8 15 7)
+              );
+    }
+    symmetryBack
+    {
+        type symmetry;
+        faces (
+              (6 14 13 5)
+              );
+    }
+    emptyBoundaries
+    {
+        type empty;
+        faces (
+              (0 7 2 1)
+              (7 6 3 2)
+              (6 5 4 3)
+              (8 9 10 15)
+              (15 10 11 14)
+              (14 11 12 13)
+              );    
+    }
+ 
+
+);
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

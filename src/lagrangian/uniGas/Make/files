@@ -1,0 +1,123 @@
+/* PARCEL */
+parcels/uniGasParcel.C
+parcels/uniGasParcelIO.C
+
+/* CLOUD */
+clouds/uniGasCloud.C
+
+
+/* DYNAMIC ADAPTATION */
+dynamicAdaptation/uniGasDynamicAdapter.C
+
+
+/* HYBRID DECOMPOSITION */
+hybridDecomposition/basic/uniGasHybridDecomposition.C
+hybridDecomposition/derived/localKnudsen/localKnudsen.C
+
+/* INITIALISE */
+initialiseUniGasParcels/basic/uniGasConfiguration/uniGasConfiguration.C
+initialiseUniGasParcels/basic/uniGasAllConfigurations/uniGasAllConfigurations.C
+initialiseUniGasParcels/derived/uniGasMeshFill/uniGasMeshFill.C
+initialiseUniGasParcels/derived/uniGasZoneFill/uniGasZoneFill.C
+initialiseUniGasParcels/derived/uniGasMeshFieldFill/uniGasMeshFieldFill.C
+
+
+/* BINARY COLLISIONS */
+binaryCollisions/basic/binaryCollisionModel/binaryCollisionModel.C
+binaryCollisions/derived/noBinaryCollision/noBinaryCollision.C
+binaryCollisions/derived/variableHardSphere/variableHardSphere.C
+binaryCollisions/derived/variableSoftSphere/variableSoftSphere.C
+binaryCollisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
+binaryCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
+
+
+/* BINARY COLLISION PARTNER SELECTION ROUTINES */
+binaryCollisionPartner/basic/binaryCollisionPartner.C
+binaryCollisionPartner/derived/noTimeCounter/noTimeCounter.C
+binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
+
+
+/* RELAXATIONS COLLISIONS */
+relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
+relaxationCollisions/derived/BGK/BGK.C
+relaxationCollisions/derived/ESBGK/ESBGK.C
+relaxationCollisions/derived/SBGK/SBGK.C
+relaxationCollisions/derived/USBGK/USBGK.C
+
+
+/* REACTIONS */
+reactions/basic/uniGasReactions/uniGasReactions.C
+reactions/basic/uniGasReaction/uniGasReaction.C
+reactions/derived/moleculeAtomDissociationIonisation/moleculeAtomDissociationIonisation.C
+reactions/derived/moleculeElectronDissociationIonisation/moleculeElectronDissociationIonisation.C
+reactions/derived/atomElectronIonisation/atomElectronIonisation.C
+reactions/derived/atomAtomIonisationSameSpecies/atomAtomIonisationSameSpecies.C
+reactions/derived/atomAtomIonisationDissimilarSpecies/atomAtomIonisationDissimilarSpecies.C
+reactions/derived/atomIonIonisation/atomIonIonisation.C
+reactions/derived/moleculeIonDissociationIonisation/moleculeIonDissociationIonisation.C
+reactions/derived/forwardAssociativeIonisation/forwardAssociativeIonisation.C
+reactions/derived/forwardAssociativeIonisationDissimilarSpecies/forwardAssociativeIonisationDissimilarSpecies.C
+reactions/derived/reverseAssociativeIonisation/reverseAssociativeIonisation.C
+reactions/derived/chargeExchange/chargeExchange.C
+reactions/derived/dissociationIonisationTypeISameSpecies/dissociationIonisationTypeISameSpecies.C
+reactions/derived/dissociationIonisationTypeIDissimilarSpecies/dissociationIonisationTypeIDissimilarSpecies.C
+reactions/derived/dissociationIonisationExchange/dissociationIonisationExchange.C
+
+
+/* FIELD MEASUREMENTS */
+macroscopicProperties/basic/uniGasFieldProperties/uniGasFieldProperties.C
+macroscopicProperties/basic/uniGasField/uniGasField.C
+faceTracker/uniGasFaceTracker.C
+boundaryMeasurements/boundaryMeasurements.C
+cellMeasurements/cellMeasurements.C
+
+
+/* BOUNDARIES */
+boundaries/basic/uniGasBoundaries/uniGasBoundaries.C
+boundaries/basic/uniGasBoundaryBase/uniGasBoundaryBase.C
+boundaries/basic/uniGasCyclicBoundary/uniGasCyclicBoundary.C
+boundaries/basic/uniGasGeneralBoundary/uniGasGeneralBoundary.C
+boundaries/basic/uniGasPatchBoundary/uniGasPatchBoundary.C
+
+
+/* PATCH BOUNDARY MODELS */
+boundaries/derived/patchBoundaries/uniGasDeletionPatch/uniGasDeletionPatch.C
+boundaries/derived/patchBoundaries/uniGasSpecularWallPatch/uniGasSpecularWallPatch.C
+boundaries/derived/patchBoundaries/uniGasDiffuseWallPatch/uniGasDiffuseWallPatch.C
+boundaries/derived/patchBoundaries/uniGasDiffuseWallFieldPatch/uniGasDiffuseWallFieldPatch.C
+boundaries/derived/patchBoundaries/uniGasMixedDiffuseSpecularWallPatch/uniGasMixedDiffuseSpecularWallPatch.C
+boundaries/derived/patchBoundaries/uniGasMixedDiffuseSpecularWallFieldPatch/uniGasMixedDiffuseSpecularWallFieldPatch.C
+boundaries/derived/patchBoundaries/uniGasCLLWallPatch/uniGasCLLWallPatch.C
+boundaries/derived/patchBoundaries/uniGasCLLWallFieldPatch/uniGasCLLWallFieldPatch.C
+
+
+/* GENERAL BOUNDARY MODELS */
+boundaries/derived/generalBoundaries/uniGasFreeStreamInflowPatch/uniGasFreeStreamInflowPatch.C
+boundaries/derived/generalBoundaries/uniGasChapmanEnskogFreeStreamInflowPatch/uniGasChapmanEnskogFreeStreamInflowPatch.C
+boundaries/derived/generalBoundaries/uniGasFreeStreamInflowFieldPatch/uniGasFreeStreamInflowFieldPatch.C
+boundaries/derived/generalBoundaries/uniGasChapmanEnskogFreeStreamInflowFieldPatch/uniGasChapmanEnskogFreeStreamInflowFieldPatch.C
+boundaries/derived/generalBoundaries/uniGasLiouFangPressureInletPatch/uniGasLiouFangPressureInletPatch.C
+boundaries/derived/generalBoundaries/uniGasLiouFangPressureOutletPatch/uniGasLiouFangPressureOutletPatch.C
+boundaries/derived/generalBoundaries/uniGasWangPressureInletPatch/uniGasWangPressureInletPatch.C
+boundaries/derived/generalBoundaries/uniGasMassFlowRateInletPatch/uniGasMassFlowRateInletPatch.C
+
+
+/* CYCLIC BOUNDARY MODELS */
+boundaries/derived/cyclicBoundaries/uniGasReflectiveParticleMembranePatch/uniGasReflectiveParticleMembranePatch.C
+
+
+/* MACROSCOPIC PROPERTIES */
+macroscopicProperties/derived/force/uniGasForceSurface/uniGasForceSurface.C
+macroscopicProperties/derived/massFlux/uniGasMassFluxSurface/uniGasMassFluxSurface.C
+macroscopicProperties/derived/volumetric/uniGasVolFields/uniGasVolFields.C
+
+/* LOAD BALANCING */
+dynamicLoadBalancing/uniGasDynamicLoadBalancing.C
+
+/* SUB MODELS */
+clouds/uniGasCloudFunctionObjects.C
+
+/* INPOUT OUTPOUT */
+IO/writeTimeData/writeTimeData.C
+
+LIB = $(FOAM_USER_LIBBIN)/libUniGas

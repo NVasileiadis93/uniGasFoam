@@ -38,7 +38,7 @@ do
 done
 
 mkdir -p $sendingDir/run
-cp -r $currentDir/tutorials/uspFoam $sendingDir/run/MNF-2306-tutorials
+cp -r $currentDir/tutorials/uniGasFoam $sendingDir/run/MNF-2306-tutorials
 
 # compile libraries
 cd $sendingDir/src/lagrangian/
@@ -47,6 +47,6 @@ wclean all
 
 # compile new executables
 #---- solvers ----
-cd $sendingDir/applications/solvers/discreteMethods/uspFoam
+cd $sendingDir/applications/solvers/discreteMethods/uniGasFoam
 wclean
 wmake

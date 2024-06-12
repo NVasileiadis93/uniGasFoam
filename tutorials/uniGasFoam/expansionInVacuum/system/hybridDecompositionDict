@@ -1,0 +1,31 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2306                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      hybridDecompositionDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+decompositionModel          localKnudsen;
+
+timeProperties
+{
+    decompositionInterval           20;
+    resetAtDecomposition            on;
+}
+
+localKnudsenProperties
+{
+    breakdownMax                    0.05;
+    theta                           0.5;
+    smoothingPasses	                100;
+}

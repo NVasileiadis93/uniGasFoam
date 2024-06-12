@@ -1,0 +1,64 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2306                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fieldPropertiesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+uniGasFields
+(	 
+
+     field
+     {
+         fieldModel          	uniGasVolFields;
+ 
+         timeProperties
+         {
+            sampleInterval              1;
+         	resetAtOutput               on;
+         }
+ 
+         uniGasVolFieldsProperties
+         {
+            field	                    Ar;
+            typeIds                     (Ar);
+            measureMeanFreePath         true;
+            Tref                        273;
+            measureErrors				true;
+         }
+     }
+
+     field
+     {
+         fieldModel             uniGasMassFluxSurface;
+
+         timeProperties
+         {
+            sampleInterval              1;
+                resetAtOutput               on;
+         }
+
+         uniGasMassFluxSurfaceProperties
+         {
+            field                           Ar;
+            typeIds                     (Ar);
+            faceZone                    orificeFaceZone;
+            fluxDirection               (1 0 0);
+	 }
+     }
+
+
+);
+
+// ************************************************************************* //

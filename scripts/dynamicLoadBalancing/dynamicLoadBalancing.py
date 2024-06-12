@@ -120,7 +120,7 @@ def getRunInfo():
                     endTime=float(string)
                     break
                 
-    #get number of cfd and usp processors
+    #get number of cfd and uniGas processors
     pathToFile="./system/decomposeParDict"
     with open(pathToFile, "r") as inFile:
             lines = inFile.readlines()
@@ -275,8 +275,8 @@ def runSolver():
 #user defined variables
 maxAllowedImbalance = 10.0    #maximum allowed imbalance between processors in percententage
 weightField = ""              #load balancing weight field name
-logFile = "log.uspFoam"      #output logfile name
-solver = "uspFoam"           #solver 
+logFile = "log.uniGasFoam"      #output logfile name
+solver = "uniGasFoam"           #solver 
 
 #initialize global variables
 isEndTime=False

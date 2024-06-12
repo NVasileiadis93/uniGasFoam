@@ -1,0 +1,16 @@
+set ytics nomirror
+set y2tics nomirror
+
+set form "%g"
+
+set xlabel "Timestep"
+set ylabel "Number of particles"
+set y2label "Average linear kinetic energy/[J]"
+
+#set y2range [1e-20:2e-20]
+
+plot \
+"< cat log.uniGasFoam | grep 'Number of particles' | cut -d '=' -f 2"  w l axis x1y1 t "Number of particles", \
+"< cat log.uniGasFoam | grep 'Average linear kinetic energy' | cut -d '=' -f 2"  w l axis x1y2 t "Average linear kinetic energy"
+pause 60
+reread 
