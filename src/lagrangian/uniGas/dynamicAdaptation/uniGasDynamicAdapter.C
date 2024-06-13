@@ -45,15 +45,15 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
     time_(time),
     mesh_(mesh),
     cloud_(cloud),
-    minSubcellLevels_(1),
-    maxSubcellLevels_(10),
+    minSubCellLevels_(1),
+    maxSubCellLevels_(10),
     timeStepAdaptation_(false),
-    subcellAdaptation_(false),
+    subCellAdaptation_(false),
     cellWeightAdaptation_(false),
     adaptationInterval_(),
     maxTimeStepMCTRatio_(),
     maxCourantNumber_(),
-    maxSubcellSizeMFPRatio_(),
+    maxSubCellSizeMFPRatio_(),
     smoothingPasses_(25),
     theta_(0.2),
     timeSteps_(0),
@@ -197,7 +197,7 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
 
         timeStepAdaptation_ = adaptationDict.getOrDefault<bool>("timeStepAdaptation",false);
         
-        subcellAdaptation_ = adaptationDict.getOrDefault<bool>("subcellAdaptation",false);
+        subCellAdaptation_ = adaptationDict.getOrDefault<bool>("subCellAdaptation",false);
 
         cellWeightAdaptation_ = adaptationDict.getOrDefault<bool>("cellWeightAdaptation",false);
         
@@ -208,9 +208,9 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
             maxTimeStepMCTRatio_ = adaptationDict.getOrDefault<scalar>("maxTimeStepMCTRatio", 0.2);
             maxCourantNumber_ = adaptationDict.getOrDefault<scalar>("maxCourantNumber", 0.5);
         }
-        if (subcellAdaptation_)
+        if (subCellAdaptation_)
         {
-            maxSubcellSizeMFPRatio_ = adaptationDict.getOrDefault<scalar>("maxSubcellSizeMFPRatio",0.5);
+            maxSubCellSizeMFPRatio_ = adaptationDict.getOrDefault<scalar>("maxSubCellSizeMFPRatio",0.5);
         }
 
     }
@@ -394,14 +394,14 @@ void uniGasDynamicAdapter::calculateTimeStep()
 
 }  
 
-vector uniGasDynamicAdapter::calculateSubcellLevels
+vector uniGasDynamicAdapter::calculateSubCellLevels
 (
     const label& cell,
     const vector& cellSizeMFPRatio
 )
 {
 
-    vector subcellLevels;
+    vector subCellLevels;
 
     if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
     { 
@@ -409,11 +409,11 @@ vector uniGasDynamicAdapter::calculateSubcellLevels
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = label(min(maxSubcellLevels_,max(minSubcellLevels_,std::ceil(cellSizeMFPRatio[dim]/maxSubcellSizeMFPRatio_))));
+                subCellLevels[dim] = label(min(maxSubCellLevels_,max(minSubCellLevels_,std::ceil(cellSizeMFPRatio[dim]/maxSubCellSizeMFPRatio_))));
             }
             else
             {
-                subcellLevels[dim] = label(1.0);
+                subCellLevels[dim] = label(1.0);
             }
         }
     }
@@ -423,16 +423,16 @@ vector uniGasDynamicAdapter::calculateSubcellLevels
         {
             if (cloud_.solutionDimensions()[dim])
             {
-                subcellLevels[dim] = label(minSubcellLevels_);
+                subCellLevels[dim] = label(minSubCellLevels_);
             }
             else
             {
-                subcellLevels[dim] = label(1.0);
+                subCellLevels[dim] = label(1.0);
             }
         }    
     }  
 
-    return subcellLevels;
+    return subCellLevels;
 
 }
 
@@ -444,10 +444,10 @@ scalar uniGasDynamicAdapter::calculateCellWeightFactor
 {
 
     scalar RWF = cloud_.axiRWF(mesh_.C()[cell]);
-    const vector& subcellLevels = cloud_.subcellLevels()[cell];
-    const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+    const vector& subCellLevels = cloud_.subCellLevels()[cell];
+    const scalar nSubCells = subCellLevels.x()*subCellLevels.y()*subCellLevels.z();
 
-    return (rhoN*mesh_.V()[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+    return (rhoN*mesh_.V()[cell])/(cloud_.particlesPerSubCell()*nSubCells*cloud_.nParticle()*RWF);
 
 }  
 
@@ -475,10 +475,10 @@ void uniGasDynamicAdapter::smoothCellWeightFactor
         {
 
             scalar RWF = cloud_.axiRWF(mesh_.C()[cell]);
-            const vector& subcellLevels = cloud_.subcellLevels()[cell];
-            const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+            const vector& subCellLevels = cloud_.subCellLevels()[cell];
+            const scalar nSubCells = subCellLevels.x()*subCellLevels.y()*subCellLevels.z();
             cellWeightFactor[cell] = 
-                max(min((rhoN[cell]*mesh_.V()[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cellWeightFactor[cell]),SMALL);
+                max(min((rhoN[cell]*mesh_.V()[cell])/(cloud_.minParticlesPerSubCell()*nSubCells*cloud_.nParticle()*RWF),cellWeightFactor[cell]),SMALL);
 
         }
         cellWeightFactor.correctBoundaryConditions();
@@ -640,18 +640,18 @@ void uniGasDynamicAdapter::adapt()
             calculateTimeStep();
         }
 
-        // Adapt subcell levels
-        if (subcellAdaptation_)
+        // Adapt subCell levels
+        if (subCellAdaptation_)
         {
             forAll(mesh_.cells(), cell)
             {
-                cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                cloud_.subCellLevels()[cell] = calculateSubCellLevels
                                                 (
                                                     cell,
                                                     cellSizeMFPRatio_[cell]
                                                 );
             }                           
-            cloud_.subcellLevels().correctBoundaryConditions();
+            cloud_.subCellLevels().correctBoundaryConditions();
         }
 
         // Adapt cell weight factor
@@ -667,7 +667,7 @@ void uniGasDynamicAdapter::adapt()
                                                 rhoN_[cell]
                                             );
             }                           
-            cloud_.subcellLevels().correctBoundaryConditions();
+            cloud_.subCellLevels().correctBoundaryConditions();
 
             // Smooth cell weight factor
             smoothCellWeightFactor
@@ -763,18 +763,18 @@ void uniGasDynamicAdapter::setInitialConfiguration
         calculateTimeStep();
     }
 
-    // Adapt subcell levels
-    if (subcellAdaptation_)
+    // Adapt subCell levels
+    if (subCellAdaptation_)
     {
         forAll(mesh_.cells(), cell)
         {
-            cloud_.subcellLevels()[cell] = calculateSubcellLevels
+            cloud_.subCellLevels()[cell] = calculateSubCellLevels
                                             (
                                                 cell,
                                                 cellSizeMFPRatio_[cell]
                                             );
         }                           
-        cloud_.subcellLevels().correctBoundaryConditions();
+        cloud_.subCellLevels().correctBoundaryConditions();
     }
 
 }
@@ -827,21 +827,21 @@ void uniGasDynamicAdapter::setInitialConfiguration
         calculateTimeStep();
     }
 
-    // Adapt subcell levels
-    if (subcellAdaptation_)
+    // Adapt subCell levels
+    if (subCellAdaptation_)
     {
         if (zone.size())
         {
             for (const label cell : zone)
             {
-                cloud_.subcellLevels()[cell] = calculateSubcellLevels
+                cloud_.subCellLevels()[cell] = calculateSubCellLevels
                                                 (
                                                     cell,
                                                     cellSizeMFPRatio_[cell]
                                                 );
             }            
         }               
-        cloud_.subcellLevels().correctBoundaryConditions();
+        cloud_.subCellLevels().correctBoundaryConditions();
     }
 
 }
@@ -913,18 +913,18 @@ void uniGasDynamicAdapter::setInitialConfiguration
         calculateTimeStep();
     }
 
-    // Adapt subcell levels
-    if (subcellAdaptation_)
+    // Adapt subCell levels
+    if (subCellAdaptation_)
     {
         forAll(mesh_.cells(), cell)
         {
-            cloud_.subcellLevels()[cell] = calculateSubcellLevels
+            cloud_.subCellLevels()[cell] = calculateSubCellLevels
                                             (
                                                 cell,
                                                 cellSizeMFPRatio_[cell]
                                             );
         }                           
-        cloud_.subcellLevels().correctBoundaryConditions();
+        cloud_.subCellLevels().correctBoundaryConditions();
     }
 
 }

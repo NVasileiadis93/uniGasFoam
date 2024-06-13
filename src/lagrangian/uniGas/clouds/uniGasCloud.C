@@ -460,11 +460,11 @@ Foam::uniGasCloud::uniGasCloud
         dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
-    subcellLevels_
+    subCellLevels_
     (
         IOobject
         (
-            this->name() + "SubcellLevels",
+            this->name() + "SubCellLevels",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -534,22 +534,22 @@ Foam::uniGasCloud::uniGasCloud
         solutionDimensions_[2] = false;
     }    
 
-    // Set initial subcell levels (changes while creating particles for dynamic simulation)
+    // Set initial subCell levels (changes while creating particles for dynamic simulation)
     forAll(mesh_.cells(), cell)
     {
         forAll(solutionDimensions_, dim)
         {
             if (solutionDimensions_[dim])
             {
-                subcellLevels_[cell][dim] = dynamicAdapter().minSubcellLevels();
+                subCellLevels_[cell][dim] = dynamicAdapter().minSubCellLevels();
             }
             else
             {
-                subcellLevels_[cell][dim] = label(1.0);
+                subCellLevels_[cell][dim] = label(1.0);
             }
         }
     }
-    subcellLevels_.correctBoundaryConditions();  
+    subCellLevels_.correctBoundaryConditions();  
 
     // Build particle constant properties
     buildConstProps();
@@ -558,8 +558,8 @@ Foam::uniGasCloud::uniGasCloud
     if (cellWeighted_)
     {
         dictionary cellWeightedDict = particleProperties_.subDict("cellWeightedProperties");
-        particlesPerSubcell_ = cellWeightedDict.get<label>("particlesPerSubcell");
-        minParticlesPerSubcell_ = cellWeightedDict.getOrDefault<label>("minParticlesPerSubcell",particlesPerSubcell_);
+        particlesPerSubCell_ = cellWeightedDict.get<label>("particlesPerSubCell");
+        minParticlesPerSubCell_ = cellWeightedDict.getOrDefault<label>("minParticlesPerSubCell",particlesPerSubCell_);
     }
 
     // Axisymmetric weighting
@@ -595,12 +595,12 @@ Foam::uniGasCloud::uniGasCloud
         );
         t.setDeltaT(tDict.get<scalar>("deltaT"));
 
-        // Read subcell levels
-        volVectorField fetchSubcellLevels
+        // Read subCell levels
+        volVectorField fetchSubCellLevels
         (
             IOobject
             (
-                this->name() + "SubcellLevels",
+                this->name() + "SubCellLevels",
                 mesh_.time().timeName(),
                 mesh_,
                 IOobject::MUST_READ,
@@ -608,7 +608,7 @@ Foam::uniGasCloud::uniGasCloud
             ),
             mesh_
         );
-        subcellLevels_ = fetchSubcellLevels;
+        subCellLevels_ = fetchSubCellLevels;
 
         // Read cell weight
         volScalarField fetchCellWeightFactor

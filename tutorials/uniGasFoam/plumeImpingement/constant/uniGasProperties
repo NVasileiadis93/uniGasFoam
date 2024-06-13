@@ -42,8 +42,8 @@ adsorption                      false;
 cellWeightedSimulation      	true;
 cellWeightedProperties
 {
-    minParticlesPerSubcell		20;
-    particlesPerSubcell         20;
+    minParticlesPerSubCell		20;
+    particlesPerSubCell         20;
 }
 
 // Axisymmetric Properties
@@ -61,12 +61,12 @@ adaptiveSimulation		     	true;
 adaptiveProperties
 {
     timeStepAdaptation		    true;
-	subcellAdaptation		    true;
+	subCellAdaptation		    true;
 	cellWeightAdaptation		true;
 	adaptationInterval			10;
     maxTimeStepMCTRatio         0.2;
     maxCourantNumber            0.5;
-	maxSubcellSizeMFPRatio		1.0;
+	maxSubCellSizeMFPRatio		1.0;
 }
 
 // Collision Models

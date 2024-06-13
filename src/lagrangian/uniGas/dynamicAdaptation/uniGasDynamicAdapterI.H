@@ -31,15 +31,15 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const label& uniGasDynamicAdapter::minSubcellLevels() const
+inline const label& uniGasDynamicAdapter::minSubCellLevels() const
 {
-    return minSubcellLevels_;
+    return minSubCellLevels_;
 }
 
 
-inline const label& uniGasDynamicAdapter::maxSubcellLevels() const
+inline const label& uniGasDynamicAdapter::maxSubCellLevels() const
 {
-    return maxSubcellLevels_;
+    return maxSubCellLevels_;
 }
 
 
@@ -49,15 +49,15 @@ inline const bool& uniGasDynamicAdapter::cellWeightAdaptation() const
 }
 
 
-inline const bool& uniGasDynamicAdapter::subcellAdaptation() const
+inline const bool& uniGasDynamicAdapter::subCellAdaptation() const
 {
-    return subcellAdaptation_;
+    return subCellAdaptation_;
 }
 
 
-inline const scalar& uniGasDynamicAdapter::maxSubcellSizeMFPRatio() const
+inline const scalar& uniGasDynamicAdapter::maxSubCellSizeMFPRatio() const
 {
-    return maxSubcellSizeMFPRatio_;
+    return maxSubCellSizeMFPRatio_;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

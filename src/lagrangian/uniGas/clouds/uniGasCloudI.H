@@ -78,14 +78,14 @@ inline bool Foam::uniGasCloud::cellWeighted() const
     return cellWeighted_;
 }
 
-inline Foam::label Foam::uniGasCloud::particlesPerSubcell() const
+inline Foam::label Foam::uniGasCloud::particlesPerSubCell() const
 {
-    return particlesPerSubcell_;
+    return particlesPerSubCell_;
 }
 
-inline Foam::label Foam::uniGasCloud::minParticlesPerSubcell() const
+inline Foam::label Foam::uniGasCloud::minParticlesPerSubCell() const
 {
-    return minParticlesPerSubcell_;
+    return minParticlesPerSubCell_;
 }
 
 inline Foam::scalar Foam::uniGasCloud::maxCellWeightRatio() const
@@ -139,9 +139,9 @@ inline Foam::label Foam::uniGasCloud::nTerminalOutputs() const
     return nTerminalOutputs_;
 }
 
-inline Foam::volVectorField& Foam::uniGasCloud::subcellLevels()
+inline Foam::volVectorField& Foam::uniGasCloud::subCellLevels()
 {
-    return subcellLevels_;
+    return subCellLevels_;
 }
 
 inline Foam::volScalarField& Foam::uniGasCloud::cellWeightFactor()

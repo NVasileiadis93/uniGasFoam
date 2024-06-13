@@ -225,7 +225,7 @@ Foam::uniGasVolFields::uniGasVolFields
     (
         IOobject
         (
-            "subcellSizeMFPRatio_" + fieldName_,
+            "subCellSizeMFPRatio_" + fieldName_,
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -1220,7 +1220,7 @@ void Foam::uniGasVolFields::calculateField()
                         const boolVector& solutionDimensions = cloud_.solutionDimensions();
                         forAll(solutionDimensions, dim)
                         {
-                            scalar cellDimension = (maxPoint[dim]-minPoint[dim])/cloud_.subcellLevels()[cell][dim];
+                            scalar cellDimension = (maxPoint[dim]-minPoint[dim])/cloud_.subCellLevels()[cell][dim];
                             if (solutionDimensions[dim] && largestCellDimension < cellDimension)
                             {
                                 largestCellDimension = cellDimension;

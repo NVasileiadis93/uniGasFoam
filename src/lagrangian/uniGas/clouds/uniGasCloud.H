@@ -123,7 +123,7 @@ private:
 
         // dynamic simulation set-ups
 
-            //- Bool to identify is this is a subcell dynamic simulation
+            //- Bool to identify is this is a subCell dynamic simulation
             bool adaptive_;
 
         // Cell weighted set-ups
@@ -131,11 +131,11 @@ private:
             //  Movements dealt differently if true
             bool cellWeighted_;
 
-            //- Desired number of particles per subcell
-            label particlesPerSubcell_;
+            //- Desired number of particles per subCell
+            label particlesPerSubCell_;
 
-            //- Minimum allowed number of particles per subcell
-            label minParticlesPerSubcell_;
+            //- Minimum allowed number of particles per subCell
+            label minParticlesPerSubCell_;
 
             //- Maximum allowed cell weight ratio between adjacent cells
             const scalar maxCellWeightRatio_;
@@ -194,8 +194,8 @@ private:
         //  start/restart.
         volScalarField sigmaTcRMax_;
 
-        // A field containing the number of subcells in each directions
-        volVectorField subcellLevels_;
+        // A field containing the number of subCells in each directions
+        volVectorField subCellLevels_;
 
         // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
         volScalarField cellCollisionModel_;
@@ -329,18 +329,18 @@ public:
         //- Return the number of real particles represented by one parcel
         inline scalar collTref() const;
 
-        //- Return the bool to identify if this is an dynamic subcell simulation
+        //- Return the bool to identify if this is an dynamic subCell simulation
         inline bool adaptive() const;
 
         //- Return the bool to identify if this is a cell weighted simulation
         //  Measurements, etc dealt differently if true
         inline bool cellWeighted() const;
 
-        //- Return the desired number of particles per subcell
-        inline label particlesPerSubcell() const;
+        //- Return the desired number of particles per subCell
+        inline label particlesPerSubCell() const;
 
-        //- Return the minimum allowed number of particles per subcell
-        inline label minParticlesPerSubcell() const;
+        //- Return the minimum allowed number of particles per subCell
+        inline label minParticlesPerSubCell() const;
 
         //- Return the maximum allowed cell weight ratio between adjacent cells
         inline scalar maxCellWeightRatio() const;
@@ -370,9 +370,9 @@ public:
         //- Return the number of timesteps to write out to terminal at
         inline label nTerminalOutputs() const;
 
-        //- Return the subcellLevels field.  non - const access to allow
+        //- Return the subCellLevels field.  non - const access to allow
         //- definition during initialisation and adaptation.
-        inline volVectorField& subcellLevels();
+        inline volVectorField& subCellLevels();
 
         //- Return the cellWeight field.  non - const access to allow
         //- definition during initialisation.

@@ -95,17 +95,17 @@ void Foam::noTimeCounter::collide()
             {
 
                 // Temporary storage for subCells
-                scalar subcellLevelsProduct = 1.0; 
+                scalar subCellLevelsProduct = 1.0; 
                 vector dimWeight = vector::zero;
                 const boolVector& solutionDimensions = cloud_.solutionDimensions(); 
-                const vector& subcellLevels = cloud_.subcellLevels()[cellI];
+                const vector& subCellLevels = cloud_.subCellLevels()[cellI];
 
                 forAll(solutionDimensions, dim)
                 {
                     if (solutionDimensions[dim])
                     {
-                        dimWeight[dim] = subcellLevelsProduct;
-                        subcellLevelsProduct *= subcellLevels[dim];
+                        dimWeight[dim] = subCellLevelsProduct;
+                        subCellLevelsProduct *= subCellLevels[dim];
                     }
                 }
 
@@ -126,12 +126,12 @@ void Foam::noTimeCounter::collide()
 
                 const vector cellLength = maxCellPoint - minCellPoint;
 
-                const label nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+                const label nSubCells = subCellLevels.x()*subCellLevels.y()*subCellLevels.z();
 
-                List<DynamicList<label>> subCells(nSubcells);
+                List<DynamicList<label>> subCells(nSubCells);
                            
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // Assign particles to one of the virtual cartesian subcells
+                // Assign particles to one of the virtual cartesian subCells
 
                 // Inverse addressing specifying which subCell a parcel is in
                 List<label> whichSubCell(cellParcels.size());
@@ -148,7 +148,7 @@ void Foam::noTimeCounter::collide()
                     {
                         if (solutionDimensions[dim])
                         {
-                            dimPos[dim] = label(subcellLevels[dim]*relPos[dim]/cellLength[dim]);
+                            dimPos[dim] = label(subCellLevels[dim]*relPos[dim]/cellLength[dim]);
                         }
                     }
 

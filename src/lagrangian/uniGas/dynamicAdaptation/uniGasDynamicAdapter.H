@@ -73,13 +73,13 @@ class uniGasDynamicAdapter
 
         uniGasCloud& cloud_;
 
-        const label minSubcellLevels_;
+        const label minSubCellLevels_;
 
-        const label maxSubcellLevels_;
+        const label maxSubCellLevels_;
 
         bool timeStepAdaptation_;
 
-        bool subcellAdaptation_;
+        bool subCellAdaptation_;
 
         bool cellWeightAdaptation_;
 
@@ -89,7 +89,7 @@ class uniGasDynamicAdapter
 
         scalar maxCourantNumber_;
 
-        scalar maxSubcellSizeMFPRatio_;
+        scalar maxSubCellSizeMFPRatio_;
 
         label smoothingPasses_;
 
@@ -174,7 +174,7 @@ public:
 
     void calculateTimeStep();
 
-    vector calculateSubcellLevels
+    vector calculateSubCellLevels
     (
         const label& cell,
         const vector& cellSizeMFPRatio
@@ -195,17 +195,17 @@ public:
     void adapt();
 
     // Acess
-    inline const label& minSubcellLevels() const;
+    inline const label& minSubCellLevels() const;
 
-    inline const label& maxSubcellLevels() const;
+    inline const label& maxSubCellLevels() const;
 
     inline const bool& timeStepAdaptation() const;
 
     inline const bool& cellWeightAdaptation() const;
 
-    inline const bool& subcellAdaptation() const;
+    inline const bool& subCellAdaptation() const;
 
-    inline const scalar& maxSubcellSizeMFPRatio() const;
+    inline const scalar& maxSubCellSizeMFPRatio() const;
 
 };
 

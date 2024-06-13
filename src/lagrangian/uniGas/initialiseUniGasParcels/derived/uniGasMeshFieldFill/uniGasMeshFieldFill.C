@@ -160,7 +160,7 @@ void Foam::uniGasMeshFieldFill::setInitialConfiguration()
     const auto& meshCC = cloud_.mesh().cellCentres();
     const auto& meshV = cloud_.mesh().V();
 
-    // Initialise subcells and time-step in case of adaptive simulation
+    // Initialise subCells and time-step in case of adaptive simulation
     if (cloud_.adaptive())
     {
         cloud_.dynamicAdapter().setInitialConfiguration
@@ -185,9 +185,9 @@ void Foam::uniGasMeshFieldFill::setInitialConfiguration()
             }
 
             scalar RWF = cloud_.axiRWF(meshCC[cell]);
-            const vector& subcellLevels = cloud_.subcellLevels()[cell];
-            const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
-            cloud_.cellWeightFactor()[cell] = (totalNumberDensity*meshV[cell])/(cloud_.particlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF);
+            const vector& subCellLevels = cloud_.subCellLevels()[cell];
+            const scalar nSubCells = subCellLevels.x()*subCellLevels.y()*subCellLevels.z();
+            cloud_.cellWeightFactor()[cell] = (totalNumberDensity*meshV[cell])/(cloud_.particlesPerSubCell()*nSubCells*cloud_.nParticle()*RWF);
 
         }
         cloud_.cellWeightFactor().correctBoundaryConditions();
@@ -213,10 +213,10 @@ void Foam::uniGasMeshFieldFill::setInitialConfiguration()
                 }
 
                 scalar RWF = cloud_.axiRWF(meshCC[cell]);
-                const vector& subcellLevels = cloud_.subcellLevels()[cell];
-                const scalar nSubcells = subcellLevels.x()*subcellLevels.y()*subcellLevels.z();
+                const vector& subCellLevels = cloud_.subCellLevels()[cell];
+                const scalar nSubCells = subCellLevels.x()*subCellLevels.y()*subCellLevels.z();
                 cloud_.cellWeightFactor()[cell] = 
-                    max(min((totalNumberDensity*meshV[cell])/(cloud_.minParticlesPerSubcell()*nSubcells*cloud_.nParticle()*RWF),cloud_.cellWeightFactor()[cell]),SMALL);
+                    max(min((totalNumberDensity*meshV[cell])/(cloud_.minParticlesPerSubCell()*nSubCells*cloud_.nParticle()*RWF),cloud_.cellWeightFactor()[cell]),SMALL);
 
             }
             cloud_.cellWeightFactor().correctBoundaryConditions();
