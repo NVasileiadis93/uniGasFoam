@@ -51,7 +51,7 @@ Foam::localKnudsen::localKnudsen
 :
     uniGasHybridDecomposition(t, mesh, cloud),
     propsDict_(hybridDecompositionDict_.subDict(typeName + "Properties")),
-    breakdownMax_(propsDict_.get<scalar>("breakdownMax")),
+    breakdownMax_(propsDict_.getOrDefault<scalar>("breakdownMax",0.05)),
     theta_(propsDict_.getOrDefault<scalar>("theta",1.0)),
     smoothingPasses_(propsDict_.getOrDefault<scalar>("smoothingPasses",0)),    
     timeSteps_(0),

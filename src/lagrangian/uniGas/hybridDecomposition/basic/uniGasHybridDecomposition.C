@@ -67,7 +67,7 @@ Foam::uniGasHybridDecomposition::uniGasHybridDecomposition
         )
     ),
     timeDict_(hybridDecompositionDict_.subDict("timeProperties")),
-    decompositionInterval_(timeDict_.get<label>("decompositionInterval")),
+    decompositionInterval_(timeDict_.getOrDefault<label>("decompositionInterval",100)),
     resetAtDecomposition_(timeDict_.getOrDefault<bool>("resetAtDecomposition",true)),
     resetAtDecompositionUntilTime_(timeDict_.getOrDefault<scalar>("resetAtDecompositionUntilTime",VGREAT)),
     refinementPasses_(3),

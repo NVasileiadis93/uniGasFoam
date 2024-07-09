@@ -54,7 +54,7 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
     maxTimeStepMCTRatio_(),
     maxCourantNumber_(),
     maxSubCellSizeMFPRatio_(),
-    smoothingPasses_(25),
+    smoothingPasses_(),
     theta_(0.2),
     timeSteps_(0),
     timeAvCounter_(0),
@@ -201,7 +201,9 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
 
         cellWeightAdaptation_ = adaptationDict.getOrDefault<bool>("cellWeightAdaptation",false);
         
-        adaptationInterval_ = adaptationDict.get<label>("adaptationInterval");
+        adaptationInterval_ = adaptationDict.getOrDefault<label>("adaptationInterval",20);
+
+        smoothingPasses_ = adaptationDict.getOrDefault<label>("smoothingPasses",25);
 
         if (timeStepAdaptation_)
         {
