@@ -26,10 +26,10 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    Foam::BGK
+    stochasticParticleSBGK
 
 Description
-    Relaxes particles to the local Maxwellian distribution
+    Relaxes particles to the local SBGK distribution
 
     Use in uniGasProperties file.
 
@@ -37,21 +37,22 @@ Usage
     Example of relaxation specification
 
     \verbatim
-    relaxationCollisionModel    BGK;
+    relaxationCollisionModel    stochasticParticleSBGK;
     collisionProperties
     {
         Tref                273;
         macroInterpolation  true;
+        theta               0.5;
     }
     /endverbatim
 
 SourceFiles
-    BGK.C
+    stochasticParticleSBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BGK_H
-#define BGK_H
+#ifndef stochasticParticleSBGK_H
+#define stochasticParticleSBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -67,10 +68,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class BGK Declaration
+                        class stochasticParticleSBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class BGK
+class stochasticParticleSBGK
 :
     public relaxationCollisionModel
 {
@@ -78,13 +79,16 @@ class BGK
     
         const dictionary propertiesDict_;
         const scalar Tref_;
+        const scalar theta_;
         const bool macroInterpolation_;
-        
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
+        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
+        boolField maxProbReset_;
+        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -95,6 +99,24 @@ class BGK
         scalarField rhoMMeanXnParticle_;
         vectorField momentumMeanXnParticle_ ;
         scalarField linearKEMeanXnParticle_;
+        scalarField muu_;
+        scalarField muv_;
+        scalarField muw_;
+        scalarField mvv_;
+        scalarField mvw_;
+        scalarField mww_;
+        scalarField mcc_;
+        scalarField mccu_;
+        scalarField mccv_;
+        scalarField mccw_;
+        scalarField eRotu_;
+        scalarField eRotv_;
+        scalarField eRotw_;
+        scalarField eRot_;
+        scalarField eVibu_;
+        scalarField eVibv_;
+        scalarField eVibw_;
+        scalarField eVib_;
         scalarField rhoNMeanInt_;
         scalarField molsElec_;
         List<scalarField> nParcels_;
@@ -115,16 +137,20 @@ class BGK
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
+        volVectorField heatFluxVector_;
+        volVectorField heatFluxVectorPrevious_;
+        volTensorField pressureTensor_;
+        volTensorField pressureTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("BGK");
+    TypeName("stochasticParticleSBGK");
 
     //- Construct from componentsonst label& cell
-    BGK
+    stochasticParticleSBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -132,7 +158,7 @@ public:
     );
 
     //- Destructor
-    virtual ~BGK() = default;
+    virtual ~stochasticParticleSBGK() = default;
 
     // Member Functions
 
@@ -154,9 +180,13 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
+            const label& cell,
             const scalar& m,
+            const scalar& Pr,
+            const scalar& p,
             const scalar& T,
-            const vector& U
+            const vector& U,
+            const vector& q
         );
 
 };

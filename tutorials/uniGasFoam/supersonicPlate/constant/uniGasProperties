@@ -70,7 +70,7 @@ adaptiveProperties
 // Collision Models
 // ~~~~~~~~~~~~~~~~~~~~~~
 collisionModel              hybrid; //binary, relaxation, hybrid
-relaxationCollisionModel    USBGK;
+relaxationCollisionModel    unifiedStochasticParticleSBGK;
 binaryCollisionPartnerModel noTimeCounter;
 binaryCollisionModel        variableHardSphere;
 collisionProperties

@@ -26,10 +26,10 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    ESBGK
+    Foam::stochasticParticleBGK
 
 Description
-    Relaxes particles to the local Ellipsoidal-Statistical distribution
+    Relaxes particles to the local Maxwellian distribution
 
     Use in uniGasProperties file.
 
@@ -37,7 +37,7 @@ Usage
     Example of relaxation specification
 
     \verbatim
-    relaxationCollisionModel    ESBGK;
+    relaxationCollisionModel    stochasticParticleBGK;
     collisionProperties
     {
         Tref                273;
@@ -46,12 +46,12 @@ Usage
     /endverbatim
 
 SourceFiles
-    ESBGK.C
+    stochasticParticleBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ESBGK_H
-#define ESBGK_H
+#ifndef stochasticParticleBGK_H
+#define stochasticParticleBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -67,10 +67,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class ESBGK Declaration
+                        class stochasticParticleBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class ESBGK
+class stochasticParticleBGK
 :
     public relaxationCollisionModel
 {
@@ -79,7 +79,7 @@ class ESBGK
         const dictionary propertiesDict_;
         const scalar Tref_;
         const bool macroInterpolation_;
-
+        
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
@@ -95,16 +95,6 @@ class ESBGK
         scalarField rhoMMeanXnParticle_;
         vectorField momentumMeanXnParticle_ ;
         scalarField linearKEMeanXnParticle_;
-        scalarField muu_;
-        scalarField muv_;
-        scalarField muw_;
-        scalarField mvv_;
-        scalarField mvw_;
-        scalarField mww_;
-        scalarField mcc_;
-        scalarField mccu_;
-        scalarField mccv_;
-        scalarField mccw_;
         scalarField rhoNMeanInt_;
         scalarField molsElec_;
         List<scalarField> nParcels_;
@@ -125,17 +115,16 @@ class ESBGK
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
-        volTensorField pressureTensor_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("ESBGK");
+    TypeName("stochasticParticleBGK");
 
     //- Construct from componentsonst label& cell
-    ESBGK
+    stochasticParticleBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -143,7 +132,7 @@ public:
     );
 
     //- Destructor
-    virtual ~ESBGK() = default;
+    virtual ~stochasticParticleBGK() = default;
 
     // Member Functions
 
@@ -166,11 +155,8 @@ public:
         vector samplePostRelaxationVelocity
         (   
             const scalar& m,
-            const scalar& Pr,
-            const scalar& p,
             const scalar& T,
-            const vector& U,
-            const tensor& pT
+            const vector& U
         );
 
 };

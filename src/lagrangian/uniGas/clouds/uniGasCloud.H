@@ -102,7 +102,7 @@ private:
         //- A variable holding the simulation collision type (binary, relaxation, hybrid)
         word collisionModel_;
 
-        //- A variable holding the simulation relaxation scheme (required for fixing USP heat flux vector and pressure tensor)
+        //- A variable holding the simulation relaxation scheme (required for correct USP heat flux vector and pressure tensor calculation)
         word relaxationCollisionModelName_;
 
         // A boolean vector containing the solution dimensions

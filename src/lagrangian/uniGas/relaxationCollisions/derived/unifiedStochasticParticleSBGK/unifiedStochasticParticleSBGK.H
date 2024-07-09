@@ -26,18 +26,18 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    SBGK
+    unifiedStochasticParticleSBGK
 
 Description
-    Relaxes particles to the local Shakhov distribution
-
+    Relaxes particles to local unified SBGK distribution
+    
     Use in uniGasProperties file.
 
 Usage
     Example of relaxation specification
 
     \verbatim
-    relaxationCollisionModel    SBGK;
+    relaxationCollisionModel    unifiedStochasticParticleSBGK;
     collisionProperties
     {
         Tref                273;
@@ -45,14 +45,14 @@ Usage
         theta               0.5;
     }
     /endverbatim
-
+    
 SourceFiles
-    SBGK.C
+    unifiedStochasticParticleSBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SBGK_H
-#define SBGK_H
+#ifndef unifiedStochasticParticleSBGK_H
+#define unifiedStochasticParticleSBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -68,10 +68,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class SBGK Declaration
+                        class unifiedStochasticParticleSBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class SBGK
+class unifiedStochasticParticleSBGK
 :
     public relaxationCollisionModel
 {
@@ -140,17 +140,18 @@ class SBGK
         volVectorField heatFluxVector_;
         volVectorField heatFluxVectorPrevious_;
         volTensorField pressureTensor_;
-        volTensorField pressureTensorPrevious_;
+        volTensorField shearStressTensor_;
+        volTensorField shearStressTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("SBGK");
+    TypeName("unifiedStochasticParticleSBGK");
 
     //- Construct from componentsonst label& cell
-    SBGK
+    unifiedStochasticParticleSBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -158,7 +159,7 @@ public:
     );
 
     //- Destructor
-    virtual ~SBGK() = default;
+    virtual ~unifiedStochasticParticleSBGK() = default;
 
     // Member Functions
 
@@ -183,10 +184,12 @@ public:
             const label& cell,
             const scalar& m,
             const scalar& Pr,
+            const scalar& rF,
             const scalar& p,
             const scalar& T,
             const vector& U,
-            const vector& q
+            const vector& q,
+            const tensor& s
         );
 
 };

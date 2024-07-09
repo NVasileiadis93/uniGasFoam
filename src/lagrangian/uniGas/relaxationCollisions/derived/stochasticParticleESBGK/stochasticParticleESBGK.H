@@ -26,33 +26,32 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    USBGK
+    stochasticParticleESBGK
 
 Description
-    Relaxes particles to local unified Shakhov distribution
-    
+    Relaxes particles to the local Ellipsoidal-Statistical distribution
+
     Use in uniGasProperties file.
 
 Usage
     Example of relaxation specification
 
     \verbatim
-    relaxationCollisionModel    USBGK;
+    relaxationCollisionModel    stochasticParticleESBGK;
     collisionProperties
     {
         Tref                273;
         macroInterpolation  true;
-        theta               0.5;
     }
     /endverbatim
-    
+
 SourceFiles
-    USBGK.C
+    stochasticParticleESBGK.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef USBGK_H
-#define USBGK_H
+#ifndef stochasticParticleESBGK_H
+#define stochasticParticleESBGK_H
 
 #include "relaxationCollisionModel.H"
 #include "vector.H"
@@ -68,10 +67,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        class USBGK Declaration
+                        class stochasticParticleESBGK Declaration
 \*---------------------------------------------------------------------------*/
 
-class USBGK
+class stochasticParticleESBGK
 :
     public relaxationCollisionModel
 {
@@ -79,16 +78,13 @@ class USBGK
     
         const dictionary propertiesDict_;
         const scalar Tref_;
-        const scalar theta_;
         const bool macroInterpolation_;
+
         label infoCounter_;
         labelList typeIds_;
         scalar shufflePasses_;
-        scalar maxProbResetValue_;
 
         boolField performRelaxation_;
-        boolField maxProbReset_;
-        scalarField maxProb_;
         scalarField rhoNMean_;
         scalarField rhoMMean_;
         scalarField linearKEMean_;
@@ -109,14 +105,6 @@ class USBGK
         scalarField mccu_;
         scalarField mccv_;
         scalarField mccw_;
-        scalarField eRotu_;
-        scalarField eRotv_;
-        scalarField eRotw_;
-        scalarField eRot_;
-        scalarField eVibu_;
-        scalarField eVibv_;
-        scalarField eVibw_;
-        scalarField eVib_;
         scalarField rhoNMeanInt_;
         scalarField molsElec_;
         List<scalarField> nParcels_;
@@ -137,21 +125,17 @@ class USBGK
         volScalarField electronicT_;
         volScalarField overallT_;
         volVectorField UMean_;
-        volVectorField heatFluxVector_;
-        volVectorField heatFluxVectorPrevious_;
         volTensorField pressureTensor_;
-        volTensorField shearStressTensor_;
-        volTensorField shearStressTensorPrevious_;
 
     // Private Member Functions
 
 public:
 
     //- Runtime type information
-    TypeName("USBGK");
+    TypeName("stochasticParticleESBGK");
 
     //- Construct from componentsonst label& cell
-    USBGK
+    stochasticParticleESBGK
     (
         const dictionary& dict,
         const polyMesh& mesh,
@@ -159,7 +143,7 @@ public:
     );
 
     //- Destructor
-    virtual ~USBGK() = default;
+    virtual ~stochasticParticleESBGK() = default;
 
     // Member Functions
 
@@ -181,15 +165,12 @@ public:
         //- Sample linear velocity from CE distribution
         vector samplePostRelaxationVelocity
         (   
-            const label& cell,
             const scalar& m,
             const scalar& Pr,
-            const scalar& rF,
             const scalar& p,
             const scalar& T,
             const vector& U,
-            const vector& q,
-            const tensor& s
+            const tensor& pT
         );
 
 };

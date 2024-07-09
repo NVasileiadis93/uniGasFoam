@@ -35,14 +35,13 @@ solution
 nEquivalentParticles            5.85E+11;
 chemicalReactions				false;
 chargedParticles                false;
-adsorption                      false;
 
 // Cell Weighting Properties
 // ~~~~~~~~~~~~~~~~~~
 cellWeightedSimulation      	true;
 cellWeightedProperties
 {
-    minParticlesPerSubCell	20;
+    minParticlesPerSubCell	    20;
     particlesPerSubCell         20;
 }
 
@@ -70,7 +69,7 @@ adaptiveProperties
 // Collision Models
 // ~~~~~~~~~~~~~~~~~~~~~~
 collisionModel              hybrid; //binary, relaxation, hybrid
-relaxationCollisionModel    USBGK;
+relaxationCollisionModel    unifiedStochasticParticleSBGK;
 binaryCollisionPartnerModel noTimeCounter;
 binaryCollisionModel        variableHardSphere;
 collisionProperties

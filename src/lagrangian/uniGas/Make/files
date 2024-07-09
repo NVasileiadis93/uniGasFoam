@@ -39,10 +39,10 @@ binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
 
 /* RELAXATIONS COLLISIONS */
 relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
-relaxationCollisions/derived/BGK/BGK.C
-relaxationCollisions/derived/ESBGK/ESBGK.C
-relaxationCollisions/derived/SBGK/SBGK.C
-relaxationCollisions/derived/USBGK/USBGK.C
+relaxationCollisions/derived/stochasticParticleBGK/stochasticParticleBGK.C
+relaxationCollisions/derived/stochasticParticleESBGK/stochasticParticleESBGK.C
+relaxationCollisions/derived/stochasticParticleSBGK/stochasticParticleSBGK.C
+relaxationCollisions/derived/unifiedStochasticParticleSBGK/unifiedStochasticParticleSBGK.C
 
 
 /* REACTIONS */

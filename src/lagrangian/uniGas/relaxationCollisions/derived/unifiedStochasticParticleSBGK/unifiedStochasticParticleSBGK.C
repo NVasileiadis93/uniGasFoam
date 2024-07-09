@@ -27,22 +27,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "ESBGK.H"
+#include "unifiedStochasticParticleSBGK.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-defineTypeNameAndDebug(ESBGK, 0);
+defineTypeNameAndDebug(unifiedStochasticParticleSBGK, 0);
 
-addToRunTimeSelectionTable(relaxationCollisionModel, ESBGK, dictionary);
+addToRunTimeSelectionTable(relaxationCollisionModel, unifiedStochasticParticleSBGK, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::ESBGK::ESBGK
+Foam::unifiedStochasticParticleSBGK::unifiedStochasticParticleSBGK
 (
     const dictionary& dict,
     const polyMesh& mesh,
@@ -52,10 +52,14 @@ Foam::ESBGK::ESBGK
     relaxationCollisionModel(dict, mesh, cloud),
     propertiesDict_(dict.subDict("collisionProperties")),
     Tref_(propertiesDict_.get<scalar>("Tref")),
+    theta_(propertiesDict_.getOrDefault<scalar>("theta", 1.0)),
     macroInterpolation_(propertiesDict_.getOrDefault<bool>("macroInterpolation", false)),
     infoCounter_(0),
     shufflePasses_(5),
+    maxProbResetValue_(0.999),
     performRelaxation_(mesh_.nCells(), true),
+    maxProbReset_(mesh_.nCells(), true),
+    maxProb_(mesh_.nCells(), 1.0),
     rhoNMean_(mesh_.nCells(), 0.0),
     rhoMMean_(mesh_.nCells(), 0.0),
     linearKEMean_(mesh_.nCells(), 0.0),
@@ -76,6 +80,14 @@ Foam::ESBGK::ESBGK
     mccu_(mesh_.nCells(), 0.0),
     mccv_(mesh_.nCells(), 0.0),
     mccw_(mesh_.nCells(), 0.0),
+    eRotu_(mesh_.nCells(), 0.0),
+    eRotv_(mesh_.nCells(), 0.0),
+    eRotw_(mesh_.nCells(), 0.0),
+    eRot_(mesh_.nCells(), 0.0),
+    eVibu_(mesh_.nCells(), 0.0),
+    eVibv_(mesh_.nCells(), 0.0),
+    eVibw_(mesh_.nCells(), 0.0),
+    eVib_(mesh_.nCells(), 0.0),
     rhoNMeanInt_(mesh_.nCells(), 0.0),
     molsElec_(mesh_.nCells(), 0.0),
     nParcels_(),
@@ -225,11 +237,67 @@ Foam::ESBGK::ESBGK
         dimensionedVector(dimVelocity, vector::zero),
         zeroGradientFvPatchScalarField::typeName
     ),
+    heatFluxVector_
+    (
+        IOobject
+        (
+            "heatFluxVector",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimMass*pow(dimTime,-3), Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    heatFluxVectorPrevious_
+    (
+        IOobject
+        (
+            "heatFluxVectorPrevious",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedVector(dimMass*pow(dimTime,-3), Zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
     pressureTensor_
     (
         IOobject
         (
             "pressureTensor",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedTensor(dimPressure, tensor::zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    shearStressTensor_
+    (
+        IOobject
+        (
+            "shearStressTensor",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedTensor(dimPressure, tensor::zero),
+        zeroGradientFvPatchScalarField::typeName
+    ),
+    shearStressTensorPrevious_
+    (
+        IOobject
+        (
+            "shearStressTensorPrevious",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -309,7 +377,7 @@ Foam::ESBGK::ESBGK
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::ESBGK::calculateProperties()
+void Foam::unifiedStochasticParticleSBGK::calculateProperties()
 {
 
     auto& cm = cloud_.cellPropMeasurements();
@@ -338,6 +406,15 @@ void Foam::ESBGK::calculateProperties()
         mccu_ += cm.mccu()[iD];
         mccv_ += cm.mccv()[iD];
         mccw_ += cm.mccw()[iD];
+
+        eRotu_ += cm.eRotu()[iD];
+        eRotv_ += cm.eRotv()[iD];
+        eRotw_ += cm.eRotw()[iD];
+        eRot_ += cm.eRot()[iD];
+        eVibu_ += cm.eVibu()[iD];
+        eVibv_ += cm.eVibv()[iD];
+        eVibw_ += cm.eVibw()[iD];
+        eVib_ += cm.eVib()[iD];
 
         rhoNMeanInt_ += cm.rhoNMeanInt()[iD];
         molsElec_ += cm.molsElec()[iD];
@@ -431,12 +508,55 @@ void Foam::ESBGK::calculateProperties()
                 *UMean_[cell].z()*UMean_[cell].z())
             );
 
+            // Shear stress tensor
+            scalar scalarPressure = (pressureTensor_[cell].xx() + pressureTensor_[cell].yy() + pressureTensor_[cell].zz())/3.0;
+
+            shearStressTensor_[cell] = pressureTensor_[cell];
+            shearStressTensor_[cell].xx() -= scalarPressure;
+            shearStressTensor_[cell].yy() -= scalarPressure;
+            shearStressTensor_[cell].zz() -= scalarPressure;
+
+            // Heat flux vector
+            heatFluxVector_[cell].x() = rhoN_[cell]*
+            (
+                0.5*(mccu_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].x() + (eRotu_[cell]+eVibu_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].x()
+            ) -
+                pressureTensor_[cell].xx()*UMean_[cell].x() -
+                pressureTensor_[cell].xy()*UMean_[cell].y() -
+                pressureTensor_[cell].xz()*UMean_[cell].z();
+
+            heatFluxVector_[cell].y() = rhoN_[cell]*
+            (
+                0.5*(mccv_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].y() + (eRotv_[cell]+eVibv_[cell])/(rhoNMean_[cell])-
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].y()
+            ) -
+                pressureTensor_[cell].yx()*UMean_[cell].x() -
+                pressureTensor_[cell].yy()*UMean_[cell].y() -
+                pressureTensor_[cell].yz()*UMean_[cell].z();
+
+            heatFluxVector_[cell].z() = rhoN_[cell]*
+            (
+                0.5*(mccw_[cell]/(rhoNMean_[cell])) -
+                0.5*(mcc_[cell]/(rhoNMean_[cell]))*
+                UMean_[cell].z() + (eRotw_[cell]+eVibw_[cell])/(rhoNMean_[cell]) -
+                ((eRot_[cell]+eVib_[cell])/(rhoNMean_[cell]))*UMean_[cell].z()
+            ) -
+                pressureTensor_[cell].zx()*UMean_[cell].x() -
+                pressureTensor_[cell].zy()*UMean_[cell].y() -
+                pressureTensor_[cell].zz()*UMean_[cell].z();
+
             // Scale macroscopic properties
-            if (rhoNMean_[cell] > 1.0)
+            if (rhoNMean_[cell] > 2.0)
             {
                 p_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*p_[cell];
                 translationalT_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*translationalT_[cell];
-                pressureTensor_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*pressureTensor_[cell];
+                heatFluxVector_[cell] = sqr(rhoNMean_[cell])/(rhoNMean_[cell]-1.0)/(rhoNMean_[cell]-2.0)*heatFluxVector_[cell];
+                shearStressTensor_[cell] = rhoNMean_[cell]/(rhoNMean_[cell]-1.0)*shearStressTensor_[cell];
             }
             else
             {
@@ -451,7 +571,9 @@ void Foam::ESBGK::calculateProperties()
             p_[cell] = 0.0;
             translationalT_[cell] = 0.0;
             UMean_[cell] = vector::zero;
+            heatFluxVector_[cell] = vector::zero;
             pressureTensor_[cell] = tensor::zero;
+            shearStressTensor_[cell] = tensor::zero;
         }
 
         // Rotational temperature
@@ -463,7 +585,7 @@ void Foam::ESBGK::calculateProperties()
         {
             rotationalT_[cell] = 0.0;
         }
-
+ 
         // Vibrational temperature
         scalar vibT = 0.0;
         scalar totalvDof = 0.0;
@@ -552,10 +674,12 @@ void Foam::ESBGK::calculateProperties()
 
         forAll(nParcels_, iD)
         {
+            const auto& constProp = cloud_.constProps(typeIds_[iD]);
+            
             const scalarList& electronicEnergies =
-                cloud_.constProps(typeIds_[iD]).electronicEnergyList();
+                constProp.electronicEnergyList();
             const labelList& degeneracies =
-                cloud_.constProps(typeIds_[iD]).degeneracyList();
+                constProp.degeneracyList();
 
             if
             (
@@ -576,14 +700,12 @@ void Foam::ESBGK::calculateProperties()
                         degeneracies[0]))
                     );
 
-
                 scalar fraction = nParcels_[iD][cell]/molsElec_[cell];
 
                 if (elecTID > VSMALL)
                 {
                     elecT += fraction*elecTID;
                 }
-
 
                 scalar eDof =
                     (
@@ -634,13 +756,13 @@ void Foam::ESBGK::calculateProperties()
                     
                 viscosity += nParcels_[iD][cell]*speciesViscRef*pow(translationalT_[cell]/Tref_,omega);
 
-                Prandtl_[cell] += nParcels_[iD][cell]*(5+rotDoF)/(7.5+rotDoF);
+                Prandtl_[cell] += nParcels_[iD][cell]*(5.0+rotDoF)/(7.5+rotDoF);
 
             }
             viscosity /= rhoNMean_[cell];
             Prandtl_[cell] /= rhoNMean_[cell]; 
 
-            relaxFreq_[cell] = Prandtl_[cell]*p_[cell]/viscosity;
+            relaxFreq_[cell] = p_[cell]/viscosity;
         }
         else
         {
@@ -649,6 +771,17 @@ void Foam::ESBGK::calculateProperties()
             relaxFreq_[cell] = 0.0;
         }
 
+    }
+
+    // time-average and scale heat flux vector and pressure/shear-stress tensor
+    const scalar& deltaT = cloud_.mesh().time().deltaTValue();
+
+    forAll(mesh_.cells(), cell)
+    {
+        heatFluxVector_[cell] = theta_*heatFluxVector_[cell]/(1.0+0.5*Prandtl_[cell]*relaxFreq_[cell]*deltaT) + (1.0-theta_)*heatFluxVectorPrevious_[cell];
+        shearStressTensor_[cell] = theta_*shearStressTensor_[cell]/(1.0+0.5*relaxFreq_[cell]*deltaT) + (1.0-theta_)*shearStressTensorPrevious_[cell];
+        heatFluxVectorPrevious_[cell] = heatFluxVector_[cell];
+        shearStressTensorPrevious_[cell] = shearStressTensor_[cell];
     }
 
     //Correct boundary conditions
@@ -662,11 +795,13 @@ void Foam::ESBGK::calculateProperties()
     electronicT_.correctBoundaryConditions();
     overallT_.correctBoundaryConditions();
     UMean_.correctBoundaryConditions();
+    heatFluxVector_.correctBoundaryConditions();
     pressureTensor_.correctBoundaryConditions();
+    shearStressTensor_.correctBoundaryConditions();
 
 }
 
-void Foam::ESBGK::resetProperties()
+void Foam::unifiedStochasticParticleSBGK::resetProperties()
 {
 
     forAll(mesh_.cells(), cell)
@@ -694,6 +829,15 @@ void Foam::ESBGK::resetProperties()
         mccv_[cell] = 0.0;
         mccw_[cell] = 0.0;
 
+        eRotu_[cell] = 0.0;
+        eRotv_[cell] = 0.0;
+        eRotw_[cell] = 0.0;
+        eRot_[cell] = 0.0;
+        eVibu_[cell] = 0.0;
+        eVibv_[cell] = 0.0;
+        eVibw_[cell] = 0.0;
+        eVib_[cell] = 0.0;
+
         rhoNMeanInt_[cell] = 0.0;
         molsElec_[cell] = 0.0;
 
@@ -714,13 +858,19 @@ void Foam::ESBGK::resetProperties()
         
         }
 
+        if (maxProbReset_[cell])
+        { 
+            maxProb_[cell] *= maxProbResetValue_; 
+        }
+        maxProbReset_[cell] = true;
+
         performRelaxation_[cell] = true;
 
     }
 
 }
 
-void Foam::ESBGK::relax()
+void Foam::unifiedStochasticParticleSBGK::relax()
 {
 
     const scalar& deltaT = cloud_.mesh().time().deltaTValue();
@@ -733,22 +883,25 @@ void Foam::ESBGK::relax()
     // Calculate required macroscopic properties
     calculateProperties();
 
-
     // Create macroscopic quantities interpolations
     autoPtr <Foam::interpolation<scalar>> PrandtlInterp;
+    autoPtr <Foam::interpolation<scalar>> relaxFreqInterp;
     autoPtr <Foam::interpolation<scalar>> pInterp;
     autoPtr <Foam::interpolation<scalar>> translationalTInterp;
     autoPtr <Foam::interpolation<vector>> UMeanInterp;
-    autoPtr <Foam::interpolation<tensor>> pressureTensorInterp;
+    autoPtr <Foam::interpolation<vector>> heatFluxVectorInterp;
+    autoPtr <Foam::interpolation<tensor>> shearStressTensorInterp;
 
     if (macroInterpolation_)
     {
         dictionary interpolationDict = mesh_.schemesDict().subDict("interpolationSchemes");
         PrandtlInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, Prandtl_);
+        relaxFreqInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, relaxFreq_);
         pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
         translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
         UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
-        pressureTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, pressureTensor_);
+        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, heatFluxVector_);
+        shearStressTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, shearStressTensor_);
     }
 
     forAll(cellOccupancy, cell)
@@ -784,24 +937,30 @@ void Foam::ESBGK::relax()
                 {
                     parcel.U() = samplePostRelaxationVelocity
                             (
+                                cell,
                                 mass,
                                 PrandtlInterp().interpolate(position, cell),
+                                relaxFreqInterp().interpolate(position, cell),
                                 pInterp().interpolate(position, cell),
                                 translationalTInterp().interpolate(position, cell),
                                 UMeanInterp().interpolate(position, cell),
-                                pressureTensorInterp().interpolate(position, cell)
+                                heatFluxVectorInterp().interpolate(position, cell),
+                                shearStressTensorInterp().interpolate(position, cell)
                             );
                 }
                 else
                 {
                     parcel.U() = samplePostRelaxationVelocity
                             (
+                                cell,
                                 mass,
                                 Prandtl_[cell],
+                                relaxFreq_[cell],
                                 p_[cell],
                                 translationalT_[cell],
                                 UMean_[cell],
-                                pressureTensor_[cell]
+                                heatFluxVector_[cell],
+                                shearStressTensor_[cell]
                             );                    
                 }
 
@@ -837,7 +996,7 @@ void Foam::ESBGK::relax()
 
 }
 
-void Foam::ESBGK::conserveMomentumAndEnergy
+void Foam::unifiedStochasticParticleSBGK::conserveMomentumAndEnergy
 (
     const label& cell
 )
@@ -888,29 +1047,59 @@ void Foam::ESBGK::conserveMomentumAndEnergy
 
 }
 
-Foam::vector Foam::ESBGK::samplePostRelaxationVelocity
+Foam::vector Foam::unifiedStochasticParticleSBGK::samplePostRelaxationVelocity
 (   
+    const label& cell,
     const scalar& m,
     const scalar& Pr,
+    const scalar& rF,
     const scalar& p,
     const scalar& T,
     const vector& U,
-    const tensor& pT
+    const vector& q,
+    const tensor& s
 )
 {
 
-    scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
 
-    vector v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
-    
-    tensor S = I-0.5*(1-Pr)/Pr*(pT/p-I);
-    
-    return U + u0*(S & v);
+    scalar u0(cloud_.maxwellianMostProbableSpeed(T,m));
+    scalar tau = 0.5*rF*cloud_.mesh().time().deltaTValue();
+    scalar coeffQ = 2.0*(1.0-Pr*tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+    scalar coeffS = (1.0-tau*(1.0+2.0/(exp(2.0*tau)-1.0)));
+
+    vector v;
+    scalar prob;
+    scalar vSq;
+    scalar vTr;
+    while(true)
+    {
+
+        v = cloud_.rndGen().GaussNormal<vector>()/sqrt(2.0);
+        
+        vSq = sqr(v.x())+sqr(v.y())+sqr(v.z());
+        vTr = vSq/3.0;
+        prob = 1.0+coeffQ/(p*u0)*(q.x()*v.x()+q.y()*v.y()+q.z()*v.z())*(vSq/2.5-1.0)
+               +coeffS/p*(s.xx()*(v.x()*v.x()-vTr)+s.yy()*(v.y()*v.y()-vTr)+s.zz()*(v.z()*v.z()-vTr)+2.0*s.xy()*v.x()*v.y()+2.0*s.xz()*v.x()*v.z()+2.0*s.yz()*v.y()*v.z());
+
+        if (prob > maxProb_[cell] && prob < 10.0)
+        {
+            maxProb_[cell] = prob;
+            maxProbReset_[cell] = false;
+            break;
+        }
+        if (cloud_.rndGen().sample01<scalar>() < prob/maxProb_[cell])
+        {
+            break;
+        }
+
+    }
+
+    return U+u0*v;
 
 }
 
 const Foam::dictionary&
-Foam::ESBGK::propertiesDict() const
+Foam::unifiedStochasticParticleSBGK::propertiesDict() const
 {
     return propertiesDict_;
 }
