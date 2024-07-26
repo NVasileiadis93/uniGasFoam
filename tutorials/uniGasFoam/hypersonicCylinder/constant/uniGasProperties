@@ -79,10 +79,6 @@ collisionProperties
     theta                   0.1;
 }
 
-// Chemical Reactions Model
-//~~~~~~~~~~~~~~~~~~~~~~~~~
-//ChemicalReactionModel          QuantumKineticModel;
-
 // Molecular species
 // ~~~~~~~~~~~~~~~~~
 typeIdList  (Ar);

@@ -20,8 +20,9 @@ configurations
     configuration
     {
     
-        type        uniGasMeshFill;
-		numberDensities{Ar	        4.24700E+20;}
+        type                        uniGasZoneFill;
+        zone                        uniGasZone;
+		numberDensities             {Ar 4.24700E+20;};
         translationalTemperature    200;
 	    rotationalTemperature		200;
 		vibrationalTemperature		200;

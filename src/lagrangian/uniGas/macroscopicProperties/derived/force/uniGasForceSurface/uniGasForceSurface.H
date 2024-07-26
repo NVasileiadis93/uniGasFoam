@@ -53,8 +53,7 @@ Usage
          {
             field                       Ar;
          	typeIds                     (Ar);
-            faceZone                    sliceFaceZone;
-            fluxDirection               (1 0 0);
+            patch                       sphere;
             averagingAcrossManyRuns     true;
          }
      } 

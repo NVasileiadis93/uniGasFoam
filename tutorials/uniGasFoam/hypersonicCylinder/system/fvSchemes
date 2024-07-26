@@ -22,7 +22,7 @@ ddtSchemes
 
 gradSchemes
 {
-    default         leastSquares;
+    default         none;
 }
 
 divSchemes
@@ -40,10 +40,10 @@ interpolationSchemes
     default         	linear;
     Prandtl         	cellPoint;
     relaxFreq       	cellPoint;
-    p              	cellPoint;
+    p              	    cellPoint;
     translationalT  	cellPoint;
     UMean               cellPoint;
-    heatFluxVector	cellPoint;
+    heatFluxVector	    cellPoint;
     shearStressTensor   cellPoint;
 }
 

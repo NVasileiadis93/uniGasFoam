@@ -35,7 +35,6 @@ solution
 nEquivalentParticles            5.85E+11;
 chemicalReactions				false;
 chargedParticles                false;
-adsorption                      false;
 
 // Cell Weighting Properties
 // ~~~~~~~~~~~~~~~~~~
@@ -81,10 +80,6 @@ collisionProperties
     macroInterpolation      false;
     theta                   1e-3;
 }
-
-// Chemical Reactions Model
-//~~~~~~~~~~~~~~~~~~~~~~~~~
-//ChemicalReactionModel          QuantumKineticModel;
 
 // Molecular species
 // ~~~~~~~~~~~~~~~~~

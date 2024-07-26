@@ -29,7 +29,7 @@ endTime         4e-3;
 
 deltaT          1e-7;
 
-writeControl    adjustable;
+writeControl    adjustableRunTime;
 
 writeInterval   2.5e-5;
 
@@ -48,7 +48,5 @@ timePrecision   6;
 runTimeModifiable yes;
 
 adjustTimeStep  no;
-
-
 
 // ************************************************************************* //

@@ -28,8 +28,8 @@ Class
     Foam::uniGasMassFlowRateInletPatch
 
 Description
-    This class provides functions to implement an a known mass flow rate for 
-    low speed outflow boundaries. The local mean flow velocity, temperature, and
+    This class provides functions to implement a known mass flow rate for 
+    low speed inflow boundaries. The local mean flow velocity, temperature, and
     density are used to determine the number of molecules entering the
     computational domain and their corresponding velocities at every sample
     average step.

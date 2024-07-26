@@ -29,7 +29,28 @@ Class
     Foam::uniGasReflectiveParticleMembranePatch
 
 Description
-    RPM technique Li et al.
+    This class provides functions to implement a cyclic reflective membrane.
+
+    Use in the boundariesDict file.
+
+Usage
+    Example of the boundary condition specification:
+    
+    \verbatim
+    generalBoundaryProperties
+    {
+        patch       membrane;
+    }
+
+    boundaryModel   uniGasReflectiveParticleMembranePatch;
+
+    uniGasReflectiveParticleMembranePatchProperties
+    {
+        reflectionProbability       0.5;
+        temperature                 300;
+        velocity                    (0 0 0);
+    }
+    \endverbatim
 
 SourceFiles
     uniGasReflectiveParticleMembranePatch.C

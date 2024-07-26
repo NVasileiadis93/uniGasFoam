@@ -40,6 +40,7 @@ Usage
     configuration
     {
         type                        uniGasZoneFill;
+        zone                        uniGasZone;
         numberDensities{Ar          4.24700E+20;};
 		translationalTemperature    200;
 		rotationalTemperature       0;
