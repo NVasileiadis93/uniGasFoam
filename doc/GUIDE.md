@@ -29,7 +29,7 @@ A list of the required and optional dictionaries along with their description ar
 
 It is noted that all numerical parameters required are always given in SI units.
 
-# uniGasProperties dictionary
+# uniGasProperties
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -183,7 +183,7 @@ Referring to the example above, lines 1-16 are the standard OpenFOAM dictionary 
 </p>
 </details>
 
-# blockMeshDict dictionary
+# blockMeshDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -315,7 +315,7 @@ More detailed information about each entry and use can be found in https://www.o
 </p>
 </details>
 
-# controlDict dictionary
+# controlDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -401,7 +401,7 @@ More information about each entry can be found in https://www.openfoam.com/docum
 </p>
 </details>
 
-# fvSolution dictionary
+# fvSolution
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -436,7 +436,7 @@ solvers
 </p>
 </details>
 
-# fvSchemes dictionary
+# fvSchemes
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -511,7 +511,7 @@ From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is us
 </p>
 </details>
 
-# fvOptions dictionary
+# fvOptions
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -544,7 +544,7 @@ FoamFile
 </p>
 </details>
 
-# uniGasInitialiseDict dictionary
+# uniGasInitialiseDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -665,7 +665,7 @@ The initial gas properties are given in separate dictionaries located in the ini
 </p>
 </details>
 
-# boundariesDict dictionary
+# boundariesDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -1270,7 +1270,7 @@ The standard boundary conditions that are currently available in uniGasFoam are:
 </p>
 </details>
 
-# fieldPropertiesDict dictionary
+# fieldPropertiesDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -1470,7 +1470,7 @@ field
 </p>
 </details>
 
-# hybridDecompositionDict dictionary
+# hybridDecompositionDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
@@ -1525,7 +1525,7 @@ localKnudsenProperties
 </p>
 </details>
 
-# decomposeParDict dictionary
+# decomposeParDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
