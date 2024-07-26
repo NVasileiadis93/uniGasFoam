@@ -30,6 +30,11 @@ A list of the required and optional dictionaries along with their description ar
 It is noted that all numerical parameters required are always given in SI units.
 
 # uniGasProperties dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the uniGasProperties dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -175,7 +180,15 @@ Referring to the example above, lines 1-16 are the standard OpenFOAM dictionary 
 **typeIdList**: list of gas species.\
 **moleculeProperties**: sub-dictionary containing the properties of all the gas species defined in typeIdList.
 
+</p>
+</details>
+
 # blockMeshDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the blockMeshDict dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -299,8 +312,15 @@ mergePatchPairs
 **mergePatchPairs**: list of patches to be merged.
 	
 More detailed information about each entry and use can be found in https://www.openfoam.com/documentation/user-guide/4-mesh-generation-and-conversion/4.3-mesh-generation-with-the-blockmesh-utility.
+</p>
+</details>
 
 # controlDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the controlDict dictionary is given here:
 
 ```
@@ -378,7 +398,15 @@ adjustTimeStep  no;
 
 More information about each entry can be found in https://www.openfoam.com/documentation/user-guide/6-solving/6.1-time-and-data-inputoutput-control.
 
+</p>
+</details>
+
 # fvSolution dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 The fvSolution dictionary is not used by uniGasFoam so it should be left empty as shown below:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -405,7 +433,15 @@ solvers
 // ************************************************************************* //
 ```
 
+</p>
+</details>
+
 # fvSchemes dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the fvSchemes dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -472,7 +508,15 @@ fluxRequired
 
 From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is used by uniGasFoam. The default linear scheme is used in Laplacian smoothing implemented to reduce the statistical noise of macroscopic quantities, such as gas density, temperature and velocity used in adaptive schemes and domain decomposition modules. The cellPoint scheme is used to reconstruct macroscopic fields, such as gas Prandtl number, relaxation frequency, pressure, temperature etc to increase the spatial accuracy of SP and USP schemes. The macroscopic field reconstruction is only implemented if macroInterpolation is enabled in the uniGasProperties dictionary.
 
+</p>
+</details>
+
 # fvOptions dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 The fvOptions dictionary is not used by uniGasFoam so it should be left empty as shown below:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -497,7 +541,15 @@ FoamFile
 // ************************************************************************* //
 ```
 
+</p>
+</details>
+
 # uniGasInitialiseDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the uniGasInitialiseDict dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -610,7 +662,15 @@ The initial gas properties are given in separate dictionaries located in the ini
 * **elecT**: initial electronic temperature for each mesh cell.
 * **U**: initial velocity vector for each mesh cell.
 
+</p>
+</details>
+
 # boundariesDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the boundariesDict dictionary is given here:
 
 ```
@@ -1207,7 +1267,15 @@ The standard boundary conditions that are currently available in uniGasFoam are:
 * **symmetryPlane**:  symmetry boundary condition for planar patches. Same as pure specular reflection.
 * **empty**:  empty boundary condition for reduced dimensions cases, i.e. 1-D and 2-D geometries. This condition is applied to patches whose normal is aligned to geometric directions that do not constitute solution directions.
 
+</p>
+</details>
+
 # fieldPropertiesDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the fieldPropertiesDict dictionary is given here:
 
 ```
@@ -1399,7 +1467,15 @@ field
 **patch**: name of patch for force calculation.\
 **averagingAcrossManyRuns**: boolean for storing average macroscopic fields when simulation is stopped. Needed for resuming the simulation without resetting macroscopic fields.
 
+</p>
+</details>
+
 # hybridDecompositionDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the hybridDecompositionDict dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -1446,7 +1522,15 @@ localKnudsenProperties
 **theta**: time-averaging coefficient.\
 **smoothingPasses**: number of passes for smoothing domain decomposition.
 
+</p>
+</details>
+
 # decomposeParDict dictionary
+
+<details>
+<summary>Click to expand/collapse details</summary>
+<p>
+
 An example of the decomposeParDict dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
@@ -1475,3 +1559,5 @@ method              scotch;
 
 uniGasFoam uses the standard parallel domain decomposition implemented in OpenFOAM. More detailed information about each entry and its use can be found in https://www.openfoam.com/documentation/user-guide/4-mesh-generation-and-conversion/4.3-mesh-generation-with-the-blockmesh-utility.
 
+</p>
+</details>
