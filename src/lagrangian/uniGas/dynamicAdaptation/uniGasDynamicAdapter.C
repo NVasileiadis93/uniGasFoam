@@ -343,7 +343,7 @@ void uniGasDynamicAdapter::calculateTimeStep()
     scalar instMaxTimeStepMCTRatio = 0e0;
     forAll(mesh_.cells(), cell)
     {
-        if (cloud_.cellCollModel(cell) == cloud_.binCollModel() && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
+        if (cloud_.relaxationCollisionModelName() != "unifiedStochasticParticleSBGK" && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
         { 
             instMaxTimeStepMCTRatio = timeStepMCTRatio_[cell];
         }
@@ -383,16 +383,6 @@ void uniGasDynamicAdapter::calculateTimeStep()
         reduce(deltaT, minOp<scalar>());
     }
     time_.setDeltaT(deltaT);
-
-    //Delete for release
-    label nUniGasParticles = cloud_.size();
-    reduce(nUniGasParticles, sumOp<label>());
-    if (Pstream::myProcNo() == 0 )
-    {
-        std::ofstream outfile;
-        outfile.open("timeStepHistory.log", std::ios_base::app);
-        outfile << mesh_.time().timeName() << " " << nUniGasParticles << " " << deltaT << "\n";
-    }
 
 }  
 
