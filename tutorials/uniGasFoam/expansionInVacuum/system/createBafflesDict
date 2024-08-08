@@ -1,7 +1,7 @@
-/*--------------------------------*- C++ -*----------------------------------*\
+/*/*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -10,18 +10,17 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      topoSetDict;
+    location    "system";
+    object      createBafflesDict;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 internalFacesOnly false;
 
 baffles
 {
-    slit  // group name
+    slit
     {
-        //- Use predefined faceZone to select faces and orientation.
         type        faceZone;  
         zoneName    sepWallFaceZone;
 
@@ -29,13 +28,13 @@ baffles
         {
             master
             {
-                name        vessel;    // patch name
-                type        wall;      // patch type
+                name        vessel;
+                type        wall;
             }
             slave
             {
-                name        vessel;  // patch name
-                type        wall;      // patch type
+                name        vessel;
+                type        wall;
             }
         }
     }

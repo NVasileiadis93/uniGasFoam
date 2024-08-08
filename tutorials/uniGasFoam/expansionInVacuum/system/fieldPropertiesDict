@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -19,44 +19,44 @@ FoamFile
 uniGasFields
 (	 
 
-     field
-     {
-         fieldModel          	uniGasVolFields;
+    field
+    {
+        fieldModel          	uniGasVolFields;
  
-         timeProperties
-         {
+        timeProperties
+        {
             sampleInterval              1;
          	resetAtOutput               on;
-         }
+        }
  
-         uniGasVolFieldsProperties
-         {
+        uniGasVolFieldsProperties
+        {
             field	                    Ar;
             typeIds                     (Ar);
             measureMeanFreePath         true;
             Tref                        273;
             measureErrors				true;
-         }
-     }
+        }
+    }
 
-     field
-     {
-         fieldModel             uniGasMassFluxSurface;
+    field
+    {
+        fieldModel             uniGasMassFluxSurface;
 
-         timeProperties
-         {
+        timeProperties
+        {
             sampleInterval              1;
-                resetAtOutput               on;
-         }
+            resetAtOutput               on;
+        }
 
-         uniGasMassFluxSurfaceProperties
-         {
+        uniGasMassFluxSurfaceProperties
+        {
             field                           Ar;
             typeIds                     (Ar);
             faceZone                    orificeFaceZone;
             fluxDirection               (1 0 0);
-	 }
-     }
+	    }
+    }
 
 
 );

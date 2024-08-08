@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -19,16 +19,13 @@ configurations
 (
     configuration
     {
-    
-        type                        uniGasZoneFill;
-        zone                        uniGasZone;
+        type                        uniGasMeshFill;
 		numberDensities             {Ar 4.24700E+20;};
         translationalTemperature    200;
-	    rotationalTemperature		200;
-		vibrationalTemperature		200;
-        electronicTemperature       200;
+	    rotationalTemperature		0;
+		vibrationalTemperature		0;
+        electronicTemperature       0;
         velocity 			        (2634.7 0 0);
-
     }
 );
 

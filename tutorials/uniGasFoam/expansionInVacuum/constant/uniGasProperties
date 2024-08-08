@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -70,7 +70,7 @@ adaptiveProperties
 
 // Collision Models
 // ~~~~~~~~~~~~~~~~~~~~~~
-collisionModel              hybrid; //binary, relaxation, hybrid
+collisionModel              hybrid;
 relaxationCollisionModel    unifiedStochasticParticleSBGK;
 binaryCollisionPartnerModel noTimeCounter;
 binaryCollisionModel        variableHardSphere;

@@ -1,9 +1,0 @@
-Set up tutorial cases
-
-Add maxCollProbability in adaptive time-stepping
-
-Correct boundarycoditions collisionModel()
-
-Check previous dsmcFoam cases
-
-Check what's up with totalvDofBF_ and overall temperature
