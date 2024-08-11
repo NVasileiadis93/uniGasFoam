@@ -7,7 +7,7 @@ Detailed instructions for installing and building uniGasFoam can be found in *do
 The source files for the libraries are located in *src/lagrangian* and the executable file for running the solver can be found in *application/solvers/discreteMethods/uniGasFoam*. In addition, tutorial cases can be found in the *tutorials/uniGasFoam* directory.
 
 # Copyright
-uniGasFoam is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See *doc/LICENSE.md* or http://www.gnu.org/licenses/, for a description of the GNU General Public License terms under which you can copy the files.
+uniGasFoam is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See *doc/LICENSE* or http://www.gnu.org/licenses/, for a description of the GNU General Public License terms under which you can copy the files.
 
 # Further information
 For bug reporting, code development and any further questions, feel free to reach me at [Nikos Vasieliadis](mailto:nikovasi93@gmail.com).
