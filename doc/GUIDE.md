@@ -1,6 +1,16 @@
 # About uniGasFoam usage
 Using uniGasFoam will be relatively straightforward for users who are already familiar with OpenFOAM solvers. The uniGasFoam solver is based on the well-established dsmcFoam+ solver and thus, share a lot of similarities.
 
+# Running uniGasFoam
+The tutorial cases found in the *tutorials/uniGasFoam* directory are a great starting point to run and test uniGasFoam.
+
+To run uniGasFoam as a background process and output the case progress to a log file, execute:
+* uniGasFoam > log &
+
+Like any other OpenFOAM solver, uniGasFoam can be run in parallel by decomposing the flow domain. To decompose the case and run uniGasFoam in parallel in the background and output the case progress to a log file, execute in sequence:
+* decomposePar
+* uniGasFoam -n [nprocs] -parallel > log &
+
 # Case file structure
 The uniGasFoam solver follows the typical file structure of any OpenFOAM application. The base directory (referred to as *[case]*) contains all the directories and files required to run a uniGasFoam simulation. Under this directory, two additional directories named *system* and *constant* are needed.
 
