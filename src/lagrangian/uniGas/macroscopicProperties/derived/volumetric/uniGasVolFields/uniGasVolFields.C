@@ -703,6 +703,7 @@ void Foam::uniGasVolFields::calculateWallUnitVectors()
 
 void Foam::uniGasVolFields::createField()
 {
+    
     Info << "Initialising uniGasVolFields field" << endl;
 
     forAll(vibrationalETotal_, i)
@@ -741,10 +742,14 @@ void Foam::uniGasVolFields::calculateField()
 
             forAll(cm.rhoNMean(), i)
             {
-                const label iD = typeIds_.find(i);
 
-                if (iD != -1)
+                const label locId = typeIds_.find(i);
+                
+                if (locId != -1)
                 {
+                    
+                    const label iD = typeIds_[locId];
+
                     rhoNMean_ += deltaT*cm.rhoNMean()[iD];
                     rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
                     rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
@@ -759,17 +764,20 @@ void Foam::uniGasVolFields::calculateField()
             forAll(cm.rhoNMean(), i)
             {
 
-                const label iD = typeIds_.find(i);
+                const label locId = typeIds_.find(i);
 
-                if (iD != -1)
+                if (locId != -1)
                 {
+
+                    const label iD = typeIds_[locId];
+
                     rhoNMean_ += deltaT*cm.rhoNMean()[iD];
                     rhoMMean_ += deltaT*cm.rhoMMean()[iD];
                     linearKEMean_ += deltaT*cm.linearKEMean()[iD];
                     momentumMean_ += deltaT*cm.momentumMean()[iD];
                     rotationalEMean_ += deltaT*cm.rotationalEMean()[iD];
                     rotationalDofMean_ += deltaT*cm.rotationalDofMean()[iD];
-                    electronicETotal_[iD] += deltaT*cm.electronicETotal()[iD];
+                    electronicETotal_[locId] += deltaT*cm.electronicETotal()[iD];
                     rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
                     rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
                     momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
@@ -778,16 +786,16 @@ void Foam::uniGasVolFields::calculateField()
                     rhoNMeanInt_ += deltaT*cm.rhoNMeanInt()[iD];
                     molsElec_ += deltaT*cm.molsElec()[iD];
 
-                    nParcels_[iD] += deltaT*cm.nParcels()[iD];
-                    nParcelsXnParticle_[iD] += deltaT*cm.nParcelsXnParticle()[iD];
-                    mccSpecies_[iD] += deltaT*cm.mccSpecies()[iD];
+                    nParcels_[locId] += deltaT*cm.nParcels()[iD];
+                    nParcelsXnParticle_[locId] += deltaT*cm.nParcelsXnParticle()[iD];
+                    mccSpecies_[locId] += deltaT*cm.mccSpecies()[iD];
 
-                    nGroundElectronicLevel_[iD] += deltaT*cm.nGroundElectronicLevel()[iD];
-                    nFirstElectronicLevel_[iD] += deltaT*cm.nFirstElectronicLevel()[iD];
+                    nGroundElectronicLevel_[locId] += deltaT*cm.nGroundElectronicLevel()[iD];
+                    nFirstElectronicLevel_[locId] += deltaT*cm.nFirstElectronicLevel()[iD];
 
-                    forAll(vibrationalETotal_[iD], v)
+                    forAll(vibrationalETotal_[locId], v)
                     {
-                        vibrationalETotal_[iD][v] += deltaT*cm.vibrationalETotal()[iD][v];
+                        vibrationalETotal_[locId][v] += deltaT*cm.vibrationalETotal()[iD][v];
                     }
                 }
 
@@ -800,29 +808,32 @@ void Foam::uniGasVolFields::calculateField()
 
         forAll(bm.rhoNBF(), i)
         {
-            const label iD = typeIds_.find(i);
 
-            if (iD != -1)
+            const label locId = typeIds_.find(i);
+
+            if (locId != -1)
             {
+
+                const label iD = typeIds_[locId];
 
                 forAll(bm.rhoNBF()[i], j)
                 {
                     forAll(bm.rhoNBF()[i][j], k)
                     {
-                        rhoNBF_[j][k] += deltaT*bm.rhoNBF()[i][j][k];
-                        rhoMBF_[j][k] += deltaT*bm.rhoMBF()[i][j][k];
-                        linearKEBF_[j][k] += deltaT*bm.linearKEBF()[i][j][k];
-                        momentumBF_[j][k] += deltaT*bm.momentumBF()[i][j][k];
-                        rotationalEBF_[j][k] += deltaT*bm.rotationalEBF()[i][j][k];
-                        rotationalDofBF_[j][k] += deltaT*bm.rotationalDofBF()[i][j][k];
-                        qBF_[j][k] += deltaT*bm.qBF()[i][j][k];
-                        fDBF_[j][k] += deltaT*bm.fDBF()[i][j][k];
-                        speciesRhoNBF_[iD][j][k] += deltaT*bm.rhoNBF()[i][j][k];
-                        vibrationalEBF_[iD][j][k] += deltaT*bm.vibrationalEBF()[i][j][k];
-                        electronicEBF_[iD][j][k] += deltaT*bm.electronicEBF()[i][j][k];
-                        mccSpeciesBF_[iD][j][k] += deltaT*bm.mccSpeciesBF()[i][j][k];
-                        speciesRhoNIntBF_[j][k] += deltaT*bm.rhoNIntBF()[i][j][k];
-                        speciesRhoNElecBF_[j][k] += deltaT*bm.rhoNElecBF()[i][j][k];
+                        rhoNBF_[j][k] += deltaT*bm.rhoNBF()[iD][j][k];
+                        rhoMBF_[j][k] += deltaT*bm.rhoMBF()[iD][j][k];
+                        linearKEBF_[j][k] += deltaT*bm.linearKEBF()[iD][j][k];
+                        momentumBF_[j][k] += deltaT*bm.momentumBF()[iD][j][k];
+                        rotationalEBF_[j][k] += deltaT*bm.rotationalEBF()[iD][j][k];
+                        rotationalDofBF_[j][k] += deltaT*bm.rotationalDofBF()[iD][j][k];
+                        qBF_[j][k] += deltaT*bm.qBF()[iD][j][k];
+                        fDBF_[j][k] += deltaT*bm.fDBF()[iD][j][k];
+                        speciesRhoNBF_[locId][j][k] += deltaT*bm.rhoNBF()[iD][j][k];
+                        vibrationalEBF_[locId][j][k] += deltaT*bm.vibrationalEBF()[iD][j][k];
+                        electronicEBF_[locId][j][k] += deltaT*bm.electronicEBF()[iD][j][k];
+                        mccSpeciesBF_[locId][j][k] += deltaT*bm.mccSpeciesBF()[iD][j][k];
+                        speciesRhoNIntBF_[j][k] += deltaT*bm.rhoNIntBF()[iD][j][k];
+                        speciesRhoNElecBF_[j][k] += deltaT*bm.rhoNElecBF()[iD][j][k];
                     }
                 }
 
@@ -1082,13 +1093,12 @@ void Foam::uniGasVolFields::calculateField()
 
                 forAll(nParcels_, iD)
                 {
-                    label typeId = typeIds_[iD];
 
                     if (rhoNMean_[cell] > VSMALL)
                     {
-                        molecularMass += cloud_.constProps(typeId).mass()*(nParcels_[iD][cell]/rhoNMean_[cell]);
-                        Cp += (5.0 + cloud_.constProps(typeId).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
-                        Cv += (3.0 + cloud_.constProps(typeId).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        molecularMass += cloud_.constProps(typeIds_[iD]).mass()*(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        Cp += (5.0 + cloud_.constProps(typeIds_[iD]).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
+                        Cv += (3.0 + cloud_.constProps(typeIds_[iD]).rotationalDoF())*(nParcels_[iD][cell]/rhoNMean_[cell]);
                     }
                 }
 
@@ -1521,28 +1531,12 @@ void Foam::uniGasVolFields::updateProperties(const dictionary& dict)
     propsDict_.readIfPresent("Tref", Tref_);
 
     propsDict_.readIfPresent("measureErrors", measureErrors_);
-    if (measureErrors_)
-    {
-        Info<< "measureErrors initiated." << endl;
-    }
 
     propsDict_.readIfPresent("densityOnly", densityOnly_);
-    if (densityOnly_)
-    {
-        Info<< nl << "densityOnly initiated." << nl << endl;
-    }
 
     propsDict_.readIfPresent("measureMeanFreePath", measureMeanFreePath_);
-    if (measureMeanFreePath_)
-    {
-        Info << "measureMeanFreePath initiated." << endl;
-    }
 
     propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);
-    if (averagingAcrossManyRuns_)
-    {
-        Info << "averagingAcrossManyRuns initiated." << endl;
-    }
 
 }
 // ************************************************************************* //

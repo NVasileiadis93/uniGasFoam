@@ -55,7 +55,7 @@ Foam::uniGasForceSurface::uniGasForceSurface
     patchName_(propsDict_.get<word>("patch")),
     averagingAcrossManyRuns_(propsDict_.getOrDefault<bool>("averagingAcrossManyRuns",false)),
     sampleCounter_(0),
-    patchId(-1),
+    patchId_(-1),
     timeAvCounter_(0.0),
     timeIndex_(0),
     force_(vector::zero),
@@ -71,17 +71,15 @@ Foam::uniGasForceSurface::uniGasForceSurface
     }
 
     // Find patchId
-    forAll(mesh_.boundary(), patchI)
+    patchId_ = mesh_.boundaryMesh().findPatchID(patchName_);
+
+    if (patchId_ == -1)
     {
-
-        const word& patchName = mesh_.boundary()[patchI].name();
-
-        if (patchName_ == patchName)
-        {
-            patchId = patchI;
-        }
+        FatalErrorInFunction
+            << "Cannot find patch: " << patchName_ << nl << "in: "
+            << mesh_.time().system()/"fieldPropertiesDict"
+            << exit(FatalError);
     }
-
 
 }
 
@@ -138,7 +136,11 @@ void Foam::uniGasForceSurface::writeOut()
 
 
 void Foam::uniGasForceSurface::createField()
-{}
+{
+
+    Info << "Initialising uniGasForceSurface field" << endl;
+
+}
 
 
 void Foam::uniGasForceSurface::calculateField()
@@ -159,18 +161,21 @@ void Foam::uniGasForceSurface::calculateField()
         forAll(bm.rhoNBF(), i)
         {
 
-            const label iD = typeIds_.find(i);
+            const label locId = typeIds_.find(i);
 
-            if (iD != -1)
+            if (locId != -1)
             {
+
+                const label iD = typeIds_[locId];
+
                 forAll(bm.rhoNBF()[i], j)
                 {
-                    if( j == patchId)
+                    if( j == patchId_)
                     {
                         forAll(bm.rhoNBF()[i][j], k)
                         {
                             const label& face = mesh_.boundary()[j].start() + k;
-                            force_ += bm.fDBF()[i][j][k]*mag(mesh_.faceAreas()[face])*deltaT;
+                            force_ += bm.fDBF()[iD][j][k]*mag(mesh_.faceAreas()[face])*deltaT;
                         }
                     }
                 }
@@ -190,7 +195,7 @@ void Foam::uniGasForceSurface::calculateField()
             reduce(force_, sumOp<vector>());
         }
 
-        if (patchId != -1)
+        if (patchId_ != -1)
         {
             forcePatch_[timeIndex_] = force_/timeAvCounter_;
         }
@@ -249,11 +254,6 @@ void Foam::uniGasForceSurface::updateProperties(const dictionary& dict)
     uniGasField::updateProperties(dict);
 
     propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);
-
-    if (averagingAcrossManyRuns_)
-    {
-        Info << "averagingAcrossManyRuns initiated." << endl;
-    }
 
 }
 // ************************************************************************* //

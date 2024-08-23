@@ -248,7 +248,11 @@ void Foam::uniGasMassFluxSurface::writeOut()
 
 
 void Foam::uniGasMassFluxSurface::createField()
-{}
+{
+
+    Info << "Initialising uniGasMassFluxSurface field" << endl;
+
+}
 
 
 void Foam::uniGasMassFluxSurface::calculateField()
@@ -279,16 +283,20 @@ const scalar& deltaT = mesh_.time().deltaTValue();
 
             vector nF = mesh_.faceAreas()[faceI]/mag(mesh_.faceAreas()[faceI]);
 
-            forAll(molIdFlux, id)
+            forAll(molIdFlux, i)
             {
-                if (typeIds_.find(id) != -1)
-                {
 
+                const label locId = typeIds_.find(i);
+
+                    if (locId != -1)
+                    {
+
+                    const label iD = typeIds_[locId];
                     const scalar& nParticle = cloud_.nParticle();
 
-                    molFlux += (molIdFlux[id][faceI]*nParticle*nF) & fluxDirection_;
-                    massFlux += (massIdFlux[id][faceI]*nParticle*nF) & fluxDirection_;
-                    momentumFlux += (momentumIdFlux[id][faceI]*nParticle) & fluxDirection_;
+                    molFlux += (molIdFlux[iD][faceI]*nParticle*nF) & fluxDirection_;
+                    massFlux += (massIdFlux[iD][faceI]*nParticle*nF) & fluxDirection_;
+                    momentumFlux += (momentumIdFlux[iD][faceI]*nParticle) & fluxDirection_;
 
                 }
             }

@@ -100,7 +100,7 @@ class uniGasForceSurface
 
         label sampleCounter_;
         
-        label patchId;
+        label patchId_;
 
         scalar timeAvCounter_;
 
