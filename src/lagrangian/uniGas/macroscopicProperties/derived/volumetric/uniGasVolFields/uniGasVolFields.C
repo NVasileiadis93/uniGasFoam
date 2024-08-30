@@ -743,16 +743,14 @@ void Foam::uniGasVolFields::calculateField()
             forAll(cm.rhoNMean(), i)
             {
 
-                const label locId = typeIds_.find(i);
+                const label iD = typeIds_.find(i);
                 
-                if (locId != -1)
+                if (iD != -1)
                 {
-                    
-                    const label iD = typeIds_[locId];
 
-                    rhoNMean_ += deltaT*cm.rhoNMean()[iD];
-                    rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
-                    rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
+                    rhoNMean_ += deltaT*cm.rhoNMean()[i];
+                    rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[i];
+                    rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[i];
                 }
 
             }
@@ -764,38 +762,36 @@ void Foam::uniGasVolFields::calculateField()
             forAll(cm.rhoNMean(), i)
             {
 
-                const label locId = typeIds_.find(i);
+                const label iD = typeIds_.find(i);
 
-                if (locId != -1)
+                if (iD != -1)
                 {
 
-                    const label iD = typeIds_[locId];
+                    rhoNMean_ += deltaT*cm.rhoNMean()[i];
+                    rhoMMean_ += deltaT*cm.rhoMMean()[i];
+                    linearKEMean_ += deltaT*cm.linearKEMean()[i];
+                    momentumMean_ += deltaT*cm.momentumMean()[i];
+                    rotationalEMean_ += deltaT*cm.rotationalEMean()[i];
+                    rotationalDofMean_ += deltaT*cm.rotationalDofMean()[i];
+                    electronicETotal_[iD] += deltaT*cm.electronicETotal()[i];
+                    rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[i];
+                    rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[i];
+                    momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[i];
+                    linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[i];
 
-                    rhoNMean_ += deltaT*cm.rhoNMean()[iD];
-                    rhoMMean_ += deltaT*cm.rhoMMean()[iD];
-                    linearKEMean_ += deltaT*cm.linearKEMean()[iD];
-                    momentumMean_ += deltaT*cm.momentumMean()[iD];
-                    rotationalEMean_ += deltaT*cm.rotationalEMean()[iD];
-                    rotationalDofMean_ += deltaT*cm.rotationalDofMean()[iD];
-                    electronicETotal_[locId] += deltaT*cm.electronicETotal()[iD];
-                    rhoNMeanXnParticle_ += deltaT*cm.rhoNMeanXnParticle()[iD];
-                    rhoMMeanXnParticle_ += deltaT*cm.rhoMMeanXnParticle()[iD];
-                    momentumMeanXnParticle_ += deltaT*cm.momentumMeanXnParticle()[iD];
-                    linearKEMeanXnParticle_ += deltaT*cm.linearKEMeanXnParticle()[iD];
+                    rhoNMeanInt_ += deltaT*cm.rhoNMeanInt()[i];
+                    molsElec_ += deltaT*cm.molsElec()[i];
 
-                    rhoNMeanInt_ += deltaT*cm.rhoNMeanInt()[iD];
-                    molsElec_ += deltaT*cm.molsElec()[iD];
+                    nParcels_[iD] += deltaT*cm.nParcels()[i];
+                    nParcelsXnParticle_[iD] += deltaT*cm.nParcelsXnParticle()[i];
+                    mccSpecies_[iD] += deltaT*cm.mccSpecies()[i];
 
-                    nParcels_[locId] += deltaT*cm.nParcels()[iD];
-                    nParcelsXnParticle_[locId] += deltaT*cm.nParcelsXnParticle()[iD];
-                    mccSpecies_[locId] += deltaT*cm.mccSpecies()[iD];
+                    nGroundElectronicLevel_[iD] += deltaT*cm.nGroundElectronicLevel()[i];
+                    nFirstElectronicLevel_[iD] += deltaT*cm.nFirstElectronicLevel()[i];
 
-                    nGroundElectronicLevel_[locId] += deltaT*cm.nGroundElectronicLevel()[iD];
-                    nFirstElectronicLevel_[locId] += deltaT*cm.nFirstElectronicLevel()[iD];
-
-                    forAll(vibrationalETotal_[locId], v)
+                    forAll(vibrationalETotal_[iD], v)
                     {
-                        vibrationalETotal_[locId][v] += deltaT*cm.vibrationalETotal()[iD][v];
+                        vibrationalETotal_[iD][v] += deltaT*cm.vibrationalETotal()[i][v];
                     }
                 }
 
@@ -809,31 +805,29 @@ void Foam::uniGasVolFields::calculateField()
         forAll(bm.rhoNBF(), i)
         {
 
-            const label locId = typeIds_.find(i);
+            const label iD = typeIds_.find(i);
 
-            if (locId != -1)
+            if (iD != -1)
             {
-
-                const label iD = typeIds_[locId];
 
                 forAll(bm.rhoNBF()[i], j)
                 {
                     forAll(bm.rhoNBF()[i][j], k)
                     {
-                        rhoNBF_[j][k] += deltaT*bm.rhoNBF()[iD][j][k];
-                        rhoMBF_[j][k] += deltaT*bm.rhoMBF()[iD][j][k];
-                        linearKEBF_[j][k] += deltaT*bm.linearKEBF()[iD][j][k];
-                        momentumBF_[j][k] += deltaT*bm.momentumBF()[iD][j][k];
-                        rotationalEBF_[j][k] += deltaT*bm.rotationalEBF()[iD][j][k];
-                        rotationalDofBF_[j][k] += deltaT*bm.rotationalDofBF()[iD][j][k];
-                        qBF_[j][k] += deltaT*bm.qBF()[iD][j][k];
-                        fDBF_[j][k] += deltaT*bm.fDBF()[iD][j][k];
-                        speciesRhoNBF_[locId][j][k] += deltaT*bm.rhoNBF()[iD][j][k];
-                        vibrationalEBF_[locId][j][k] += deltaT*bm.vibrationalEBF()[iD][j][k];
-                        electronicEBF_[locId][j][k] += deltaT*bm.electronicEBF()[iD][j][k];
-                        mccSpeciesBF_[locId][j][k] += deltaT*bm.mccSpeciesBF()[iD][j][k];
-                        speciesRhoNIntBF_[j][k] += deltaT*bm.rhoNIntBF()[iD][j][k];
-                        speciesRhoNElecBF_[j][k] += deltaT*bm.rhoNElecBF()[iD][j][k];
+                        rhoNBF_[j][k] += deltaT*bm.rhoNBF()[i][j][k];
+                        rhoMBF_[j][k] += deltaT*bm.rhoMBF()[i][j][k];
+                        linearKEBF_[j][k] += deltaT*bm.linearKEBF()[i][j][k];
+                        momentumBF_[j][k] += deltaT*bm.momentumBF()[i][j][k];
+                        rotationalEBF_[j][k] += deltaT*bm.rotationalEBF()[i][j][k];
+                        rotationalDofBF_[j][k] += deltaT*bm.rotationalDofBF()[i][j][k];
+                        qBF_[j][k] += deltaT*bm.qBF()[i][j][k];
+                        fDBF_[j][k] += deltaT*bm.fDBF()[i][j][k];
+                        speciesRhoNBF_[iD][j][k] += deltaT*bm.rhoNBF()[i][j][k];
+                        vibrationalEBF_[iD][j][k] += deltaT*bm.vibrationalEBF()[i][j][k];
+                        electronicEBF_[iD][j][k] += deltaT*bm.electronicEBF()[i][j][k];
+                        mccSpeciesBF_[iD][j][k] += deltaT*bm.mccSpeciesBF()[i][j][k];
+                        speciesRhoNIntBF_[j][k] += deltaT*bm.rhoNIntBF()[i][j][k];
+                        speciesRhoNElecBF_[j][k] += deltaT*bm.rhoNElecBF()[i][j][k];
                     }
                 }
 

@@ -286,17 +286,16 @@ const scalar& deltaT = mesh_.time().deltaTValue();
             forAll(molIdFlux, i)
             {
 
-                const label locId = typeIds_.find(i);
+                const label iD = typeIds_.find(i);
 
-                    if (locId != -1)
-                    {
+                if (iD != -1)
+                {
 
-                    const label iD = typeIds_[locId];
                     const scalar& nParticle = cloud_.nParticle();
 
-                    molFlux += (molIdFlux[iD][faceI]*nParticle*nF) & fluxDirection_;
-                    massFlux += (massIdFlux[iD][faceI]*nParticle*nF) & fluxDirection_;
-                    momentumFlux += (momentumIdFlux[iD][faceI]*nParticle) & fluxDirection_;
+                    molFlux += (molIdFlux[i][faceI]*nParticle*nF) & fluxDirection_;
+                    massFlux += (massIdFlux[i][faceI]*nParticle*nF) & fluxDirection_;
+                    momentumFlux += (momentumIdFlux[i][faceI]*nParticle) & fluxDirection_;
 
                 }
             }

@@ -161,12 +161,10 @@ void Foam::uniGasForceSurface::calculateField()
         forAll(bm.rhoNBF(), i)
         {
 
-            const label locId = typeIds_.find(i);
+            const label iD = typeIds_.find(i);
 
-            if (locId != -1)
+            if (iD != -1)
             {
-
-                const label iD = typeIds_[locId];
 
                 forAll(bm.rhoNBF()[i], j)
                 {
@@ -175,7 +173,7 @@ void Foam::uniGasForceSurface::calculateField()
                         forAll(bm.rhoNBF()[i][j], k)
                         {
                             const label& face = mesh_.boundary()[j].start() + k;
-                            force_ += bm.fDBF()[iD][j][k]*mag(mesh_.faceAreas()[face])*deltaT;
+                            force_ += bm.fDBF()[i][j][k]*mag(mesh_.faceAreas()[face])*deltaT;
                         }
                     }
                 }
