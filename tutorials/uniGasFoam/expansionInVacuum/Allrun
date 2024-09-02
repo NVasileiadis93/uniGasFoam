@@ -7,7 +7,7 @@ cd ${0%/*} || exit 1    # run from this directory
 runApplication blockMesh
 runApplication topoSet
 runApplication createBaffles -overwrite
-scp -r ./0.orig ./0
+scp -r ./orig.0 ./0
 runApplication `getApplication` &
 
 echo "The simulation is now running, its progress can be viewed by 
