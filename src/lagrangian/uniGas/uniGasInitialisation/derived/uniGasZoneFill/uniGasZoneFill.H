@@ -25,15 +25,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uniGasMeshFieldFill
+    uniGasZoneFill
 
 Description
-    This class provides functions to initialise particles.
+    This class provides functions to initialise particles based
+    on uniform macroscopic properties.
 
-    Use in the uniGasInitialiseDict file.
-
-    FIELD VERSION: require initialNumberDensity_Ar, initialTransT, initialRotT, 
-    initialVibT, initialElecT and initialU fields to be defined in your time directory.
+    Use in the uniGasInitialisationDict file.
 
 Usage
     Example of the particle initialization specification:
@@ -41,22 +39,27 @@ Usage
     \verbatim
     configuration
     {
-        type            uniGasMeshFieldFill;
-        typeIdList      (Ar);
+        type                        uniGasZoneFill;
+        zone                        uniGasZone;
+        numberDensities{Ar          4.24700E+20;};
+		translationalTemperature    200;
+		rotationalTemperature       0;
+		vibrationalTemperature      0;
+        electronicTemperature       0;
+		velocity		            (2634.7 0 0);
     }
     \endverbatim
 
 SourceFiles
-    uniGasMeshFieldFill.C
+    uniGasZoneFill.C
+
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniGasMeshFieldFill_H
-#define uniGasMeshFieldFill_H
+#ifndef uniGasZoneFill_H
+#define uniGasZoneFill_H
 
-#include "uniGasAllConfigurations.H"
-#include "vector.H"
-#include "polyMesh.H"
+#include "uniGasConfiguration.H"
 #include "uniGasCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -64,28 +67,28 @@ SourceFiles
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
-                        Class uniGasMeshFieldFill Declaration
+                        Class uniGasZoneFill Declaration
 \*---------------------------------------------------------------------------*/
 
-class uniGasMeshFieldFill
+class uniGasZoneFill
 :
     public uniGasConfiguration
 {
 public:
 
     //- Runtime type information
-    TypeName("uniGasMeshFieldFill");
+    TypeName("uniGasZoneFill");
 
     //- Construct from components
-    uniGasMeshFieldFill(uniGasCloud& cloud, const dictionary& dict);
+    uniGasZoneFill(uniGasCloud& cloud, const dictionary& dict);
 
     //- Destructor
-    virtual ~uniGasMeshFieldFill() = default;
+    virtual ~uniGasZoneFill() = default;
 
 
     // Member Functions
+
         virtual void setInitialConfiguration();
-        
 };
 
 

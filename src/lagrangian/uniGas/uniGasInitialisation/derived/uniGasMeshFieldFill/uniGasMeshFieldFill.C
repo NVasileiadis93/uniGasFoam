@@ -127,7 +127,7 @@ void Foam::uniGasMeshFieldFill::setInitialConfiguration()
     );
 
     // Read in the type ids
-    List<word> molecules = uniGasInitialiseDict_.lookup("typeIdList");
+    List<word> molecules = uniGasInitialisationDict_.lookup("typeIdList");
 
     //- List of inlet densities (one entry for each species)
     List<autoPtr<volScalarField>> initialNumberDensityPtr_;

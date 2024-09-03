@@ -25,70 +25,91 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    uniGasZoneFill
+    Foam::uniGasConfiguration
 
 Description
-    This class provides functions to initialise particles based
-    on uniform macroscopic properties.
-
-    Use in the uniGasInitialiseDict file.
-
-Usage
-    Example of the particle initialization specification:
-    
-    \verbatim
-    configuration
-    {
-        type                        uniGasZoneFill;
-        zone                        uniGasZone;
-        numberDensities{Ar          4.24700E+20;};
-		translationalTemperature    200;
-		rotationalTemperature       0;
-		vibrationalTemperature      0;
-        electronicTemperature       0;
-		velocity		            (2634.7 0 0);
-    }
-    \endverbatim
+    Abstract class for initialising particles.
 
 SourceFiles
-    uniGasZoneFill.C
-
+    uniGasConfiguration.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniGasZoneFill_H
-#define uniGasZoneFill_H
+#ifndef uniGasConfiguration_H
+#define uniGasConfiguration_H
 
-#include "uniGasConfiguration.H"
-#include "uniGasCloud.H"
+#include "Random.H"
+#include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+class fvMesh;
+
+class uniGasCloud;
+
 /*---------------------------------------------------------------------------*\
-                        Class uniGasZoneFill Declaration
+                      Class uniGasConfiguration Declaration
 \*---------------------------------------------------------------------------*/
 
-class uniGasZoneFill
-:
-    public uniGasConfiguration
+class uniGasConfiguration
 {
+protected:
+
+    // Protected data
+
+        const fvMesh& mesh_;
+
+        uniGasCloud& cloud_;
+
+        const dictionary& uniGasInitialisationDict_;
+
+        Random& rndGen_;
+
+        label nParcelsAdded_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("uniGasZoneFill");
+    TypeName("uniGasConfiguration");
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        uniGasConfiguration,
+        dictionary,
+        (
+            uniGasCloud& cloud,
+            const dictionary& dict
+        ),
+        (cloud, dict)
+    );
 
     //- Construct from components
-    uniGasZoneFill(uniGasCloud& cloud, const dictionary& dict);
+    uniGasConfiguration(uniGasCloud& cloud, const dictionary& dict);
+
+
+    //- Selectors
+    static autoPtr<uniGasConfiguration> New
+    (
+        uniGasCloud& cloud,
+        const dictionary& dict
+    );
+
 
     //- Destructor
-    virtual ~uniGasZoneFill() = default;
+    virtual ~uniGasConfiguration() = default;
 
 
     // Member Functions
 
-        virtual void setInitialConfiguration();
+        virtual void setInitialConfiguration() = 0;
+
+        virtual label nParcelsAdded() const;
 };
 
 

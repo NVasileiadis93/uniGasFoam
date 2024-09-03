@@ -60,28 +60,28 @@ void Foam::uniGasZoneFill::setInitialConfiguration()
 
     const scalar translationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("translationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("translationalTemperature")
     );
 
     const scalar rotationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("rotationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("rotationalTemperature")
     );
 
     const scalar vibrationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("vibrationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("vibrationalTemperature")
     );
 
     const scalar electronicTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("electronicTemperature")
+        uniGasInitialisationDict_.get<scalar>("electronicTemperature")
     );
 
-    const vector velocity(uniGasInitialiseDict_.get<vector>("velocity"));
+    const vector velocity(uniGasInitialisationDict_.get<vector>("velocity"));
 
     const dictionary& numberDensitiesDict =
-        uniGasInitialiseDict_.subDict("numberDensities");
+        uniGasInitialisationDict_.subDict("numberDensities");
 
     List<word> molecules(numberDensitiesDict.toc());
 
@@ -95,14 +95,14 @@ void Foam::uniGasZoneFill::setInitialConfiguration()
     }
 
     const cellZoneMesh& cellZones = mesh_.cellZones();
-    const word zoneName(uniGasInitialiseDict_.get<word>("zone"));
+    const word zoneName(uniGasInitialisationDict_.get<word>("zone"));
     const label zoneId = cellZones.findZoneID(zoneName);
 
     if (zoneId == -1)
     {
         FatalErrorInFunction
             << "Cannot find region: " << zoneName << nl << "in: "
-            << mesh_.time().system()/"uniGasInitialiseDict"
+            << mesh_.time().system()/"uniGasInitialisationDict"
             << exit(FatalError);
     }
 

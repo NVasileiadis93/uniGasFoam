@@ -398,7 +398,7 @@ Foam::scalar Foam::uniGasCloud::PSIm
 Foam::uniGasCloud::uniGasCloud
 (
     const word& cloudName,
-    const IOdictionary& uniGasInitialiseDict,
+    const IOdictionary& uniGasInitialisationDict,
     Time& t,
     fvMesh& mesh
 )
@@ -756,7 +756,7 @@ Foam::uniGasCloud::uniGasCloud
             reduce(initialParcels, sumOp<label>());
         }
 
-        uniGasAllConfigurations conf(uniGasInitialiseDict, *this);
+        uniGasAllConfigurations conf(uniGasInitialisationDict, *this);
         conf.setInitialConfig();
 
         label finalParcels = this->size();

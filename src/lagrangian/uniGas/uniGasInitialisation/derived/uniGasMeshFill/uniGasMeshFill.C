@@ -61,27 +61,27 @@ void Foam::uniGasMeshFill::setInitialConfiguration()
 
     const scalar translationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("translationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("translationalTemperature")
     );
 
     const scalar rotationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("rotationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("rotationalTemperature")
     );
 
     const scalar vibrationalTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("vibrationalTemperature")
+        uniGasInitialisationDict_.get<scalar>("vibrationalTemperature")
     );
 
     const scalar electronicTemperature
     (
-        uniGasInitialiseDict_.get<scalar>("electronicTemperature")
+        uniGasInitialisationDict_.get<scalar>("electronicTemperature")
     );
 
-    const vector velocity(uniGasInitialiseDict_.get<vector>("velocity"));
+    const vector velocity(uniGasInitialisationDict_.get<vector>("velocity"));
 
-    const dictionary& numberDensitiesDict = uniGasInitialiseDict_.subDict("numberDensities");
+    const dictionary& numberDensitiesDict = uniGasInitialisationDict_.subDict("numberDensities");
 
     List<word> molecules(numberDensitiesDict.toc());
 

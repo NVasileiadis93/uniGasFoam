@@ -14,12 +14,13 @@ dynamicAdaptation/uniGasDynamicAdapter.C
 hybridDecomposition/basic/uniGasHybridDecomposition.C
 hybridDecomposition/derived/localKnudsen/localKnudsen.C
 
+
 /* INITIALISE */
-initialiseUniGasParcels/basic/uniGasConfiguration/uniGasConfiguration.C
-initialiseUniGasParcels/basic/uniGasAllConfigurations/uniGasAllConfigurations.C
-initialiseUniGasParcels/derived/uniGasMeshFill/uniGasMeshFill.C
-initialiseUniGasParcels/derived/uniGasZoneFill/uniGasZoneFill.C
-initialiseUniGasParcels/derived/uniGasMeshFieldFill/uniGasMeshFieldFill.C
+uniGasInitialisation/basic/uniGasConfiguration/uniGasConfiguration.C
+uniGasInitialisation/basic/uniGasAllConfigurations/uniGasAllConfigurations.C
+uniGasInitialisation/derived/uniGasMeshFill/uniGasMeshFill.C
+uniGasInitialisation/derived/uniGasZoneFill/uniGasZoneFill.C
+uniGasInitialisation/derived/uniGasMeshFieldFill/uniGasMeshFieldFill.C
 
 
 /* BINARY COLLISIONS */

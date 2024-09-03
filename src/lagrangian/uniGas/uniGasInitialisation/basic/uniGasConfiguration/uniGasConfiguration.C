@@ -47,7 +47,7 @@ Foam::uniGasConfiguration::uniGasConfiguration
 :
     mesh_(cloud.mesh()),
     cloud_(cloud),
-    uniGasInitialiseDict_(dict),
+    uniGasInitialisationDict_(dict),
     rndGen_(cloud.rndGen()),
     nParcelsAdded_(0)
 {}

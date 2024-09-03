@@ -32,12 +32,12 @@ License
 
 Foam::uniGasAllConfigurations::uniGasAllConfigurations
 (
-    const IOdictionary& uniGasInitialiseDict,
+    const IOdictionary& uniGasInitialisationDict,
     uniGasCloud& cloud
 )
 :
-    uniGasInitialiseDict_(uniGasInitialiseDict),
-    configurationList_(uniGasInitialiseDict_.lookup("configurations")),
+    uniGasInitialisationDict_(uniGasInitialisationDict),
+    configurationList_(uniGasInitialisationDict_.lookup("configurations")),
     ids_(configurationList_.size()),
     configurations_(configurationList_.size())
 {

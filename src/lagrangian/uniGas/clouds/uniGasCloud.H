@@ -293,7 +293,7 @@ public:
         uniGasCloud
         (
             const word& cloudName,
-            const IOdictionary& uniGasInitialiseDict,
+            const IOdictionary& uniGasInitialisationDict,
             Time& t,
             fvMesh& mesh
         );

@@ -25,79 +25,73 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uniGasAllConfigurations
+    Foam::uniGasMeshFieldFill
 
 Description
-    Templated class for initialising particles.
+    This class provides functions to initialise particles.
 
-Source Files
-    uniGasAllConfigurationsI.H
-    uniGasAllConfigurations.C
+    Use in the uniGasInitialisationDict file.
+
+    FIELD VERSION: require initialNumberDensity_Ar, initialTransT, initialRotT, 
+    initialVibT, initialElecT and initialU fields to be defined in your time directory.
+
+Usage
+    Example of the particle initialization specification:
+    
+    \verbatim
+    configuration
+    {
+        type            uniGasMeshFieldFill;
+        typeIdList      (Ar);
+    }
+    \endverbatim
+
+SourceFiles
+    uniGasMeshFieldFill.C
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniGasAllConfigurations_H
-#define uniGasAllConfigurations_H
+#ifndef uniGasMeshFieldFill_H
+#define uniGasMeshFieldFill_H
 
-#include "List.H"
-#include "IOdictionary.H"
-#include "autoPtr.H"
+#include "uniGasAllConfigurations.H"
+#include "vector.H"
 #include "polyMesh.H"
-
-#include "uniGasConfiguration.H"
+#include "uniGasCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
 /*---------------------------------------------------------------------------*\
-                    Class uniGasAllConfigurations Declaration
+                        Class uniGasMeshFieldFill Declaration
 \*---------------------------------------------------------------------------*/
 
-class uniGasAllConfigurations
+class uniGasMeshFieldFill
+:
+    public uniGasConfiguration
 {
-    // Private data
-
-        //- The entire dictionary (containing multiple subDictionaries)
-        const IOdictionary& uniGasInitialiseDict_;
-
-        PtrList<entry> configurationList_;
-        List<label> ids_;
-        List<autoPtr<uniGasConfiguration>> configurations_;
-
-
 public:
 
-    // Constructors
+    //- Runtime type information
+    TypeName("uniGasMeshFieldFill");
 
-        //- Null Constructor
-        uniGasAllConfigurations
-        (
-            const IOdictionary& uniGasInitialiseDict,
-            uniGasCloud& cloud
-        );
+    //- Construct from components
+    uniGasMeshFieldFill(uniGasCloud& cloud, const dictionary& dict);
+
+    //- Destructor
+    virtual ~uniGasMeshFieldFill() = default;
 
 
     // Member Functions
-
-        //- initial configuration
-        void setInitialConfig();
-
-        // Access
-
-            inline List<autoPtr<uniGasConfiguration>>& configurations();
-            inline const List<autoPtr<uniGasConfiguration>>&
-                configurations() const;
+        virtual void setInitialConfiguration();
+        
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "uniGasAllConfigurationsI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

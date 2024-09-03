@@ -25,97 +25,79 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uniGasConfiguration
+    Foam::uniGasAllConfigurations
 
 Description
-    Abstract class for initialising particles.
+    Templated class for initialising particles.
 
-SourceFiles
-    uniGasConfiguration.C
-
+Source Files
+    uniGasAllConfigurationsI.H
+    uniGasAllConfigurations.C
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniGasConfiguration_H
-#define uniGasConfiguration_H
+#ifndef uniGasAllConfigurations_H
+#define uniGasAllConfigurations_H
 
-#include "Random.H"
-#include "runTimeSelectionTables.H"
+#include "List.H"
+#include "IOdictionary.H"
+#include "autoPtr.H"
+#include "polyMesh.H"
+
+#include "uniGasConfiguration.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class fvMesh;
-
-class uniGasCloud;
-
 /*---------------------------------------------------------------------------*\
-                      Class uniGasConfiguration Declaration
+                    Class uniGasAllConfigurations Declaration
 \*---------------------------------------------------------------------------*/
 
-class uniGasConfiguration
+class uniGasAllConfigurations
 {
-protected:
+    // Private data
 
-    // Protected data
+        //- The entire dictionary (containing multiple subDictionaries)
+        const IOdictionary& uniGasInitialisationDict_;
 
-        const fvMesh& mesh_;
-
-        uniGasCloud& cloud_;
-
-        const dictionary& uniGasInitialiseDict_;
-
-        Random& rndGen_;
-
-        label nParcelsAdded_;
+        PtrList<entry> configurationList_;
+        List<label> ids_;
+        List<autoPtr<uniGasConfiguration>> configurations_;
 
 
 public:
 
-    //- Runtime type information
-    TypeName("uniGasConfiguration");
+    // Constructors
 
-    //- Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        uniGasConfiguration,
-        dictionary,
+        //- Null Constructor
+        uniGasAllConfigurations
         (
-            uniGasCloud& cloud,
-            const dictionary& dict
-        ),
-        (cloud, dict)
-    );
-
-    //- Construct from components
-    uniGasConfiguration(uniGasCloud& cloud, const dictionary& dict);
-
-
-    //- Selectors
-    static autoPtr<uniGasConfiguration> New
-    (
-        uniGasCloud& cloud,
-        const dictionary& dict
-    );
-
-
-    //- Destructor
-    virtual ~uniGasConfiguration() = default;
+            const IOdictionary& uniGasInitialisationDict,
+            uniGasCloud& cloud
+        );
 
 
     // Member Functions
 
-        virtual void setInitialConfiguration() = 0;
+        //- initial configuration
+        void setInitialConfig();
 
-        virtual label nParcelsAdded() const;
+        // Access
+
+            inline List<autoPtr<uniGasConfiguration>>& configurations();
+            inline const List<autoPtr<uniGasConfiguration>>&
+                configurations() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "uniGasAllConfigurationsI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

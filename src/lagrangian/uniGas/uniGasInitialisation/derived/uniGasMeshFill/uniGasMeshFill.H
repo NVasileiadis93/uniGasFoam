@@ -31,7 +31,7 @@ Description
     This class provides functions to initialise particles based
     on uniform macroscopic properties.
 
-    Use in the uniGasInitialiseDict file.
+    Use in the uniGasInitialisationDict file.
 
 Usage
     Example of the particle initialization specification:

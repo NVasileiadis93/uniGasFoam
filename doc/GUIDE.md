@@ -30,7 +30,7 @@ A list of the required and optional dictionaries along with their description ar
 * **fvSolution**: numerical solution properties, not used but must exist.
 * **fvSchemes**: numerical schemes and associated parameters.
 * **fvOptions**: solver options, not used but must exist.
-* **uniGasInitialiseDict**: particle initialisation method and parameters.
+* **uniGasInitialisationDict**: particle initialisation method and parameters.
 * **boundariesDict**: boundary conditions and associated parameters.
 * **fieldPropertiesDict**: desired outputs.
 * **chemReactDict**: chemical reaction data.
@@ -554,13 +554,13 @@ FoamFile
 </p>
 </details>
 
-# uniGasInitialiseDict
+# uniGasInitialisationDict
 
 <details>
 <summary>Click to expand/collapse details</summary>
 <p>
 
-An example of the uniGasInitialiseDict dictionary is given here:
+An example of the uniGasInitialisationDict dictionary is given here:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -575,7 +575,7 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      uniGasInitialiseDict;
+    object      uniGasInitialisationDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
