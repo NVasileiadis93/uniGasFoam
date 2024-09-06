@@ -38,7 +38,7 @@ do
 done
 
 mkdir -p $sendingDir/run
-cp -r $currentDir/tutorials/uniGasFoam $sendingDir/run/MNF-2306-tutorials
+cp -r $currentDir/tutorials/uniGasFoam $sendingDir/run/tutorials
 
 # compile libraries
 cd $sendingDir/src/lagrangian/
