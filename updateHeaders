@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd ./src && ./updateSrcHeaders && cd ..
+cd ./applications && ./updateApplicationHeaders && cd ..
+cd ./tutorials && ./updateTutorialHeaders && cd ..

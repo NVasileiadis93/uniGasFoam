@@ -1,0 +1,46 @@
+#!/bin/bash
+
+cd "${0%/*}" || exit  # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions  # Tutorial run functions
+#------------------------------------------------------------------------------
+
+# Find the original dsmcCloud.C file and get its header
+headerFile=$(find $FOAM_SRC -name "DSMCCloud.C" | head -1)
+#find the line number at end of licence statement
+lineNumber="$(grep -n 'along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.' $headerFile | cut -f1 -d ':')"
+header=$(head -$(($lineNumber+1)) "$headerFile")
+echo "$lineNumber"
+echo "Renaming headers to:"
+echo "$header"
+
+# Recursively find all files in subdirectories and process them
+find . -type f -name "*.C" -o -name "*.H" | while read -r file; do
+    echo "Processing file: $file"
+    #find the line number at end of licence statement
+    lineNumber2="$(grep -wn 'Boston, MA 02110-1301 USA' $file | cut -f1 -d ':')"
+    echo $lineNumber2
+              
+    if [[ $lineNumber2 -gt 0 ]]
+    then 
+        # Remove the first lineNumber2 lines and prepend the new header
+        tail -n +$(($lineNumber2+1)) "$file" > "${file}_Temp"
+        echo "$header" | cat - "${file}_Temp" > temp && mv temp "${file}_Temp"
+        mv "${file}_Temp" "$file"
+    fi    
+done
+
+# Recursively find all files in subdirectories and process them
+find . -type f -name "*.C" -o -name "*.H" | while read -r file; do
+    echo "Processing file: $file"
+    #find the line number at end of licence statement
+    lineNumber2="$(grep -wn 'along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.' $file | cut -f1 -d ':')"
+    echo $lineNumber2
+              
+    if [[ $lineNumber2 -gt 0 ]]
+    then 
+        # Remove the first lineNumber2 lines and prepend the new header
+        tail -n +$(($lineNumber2+1)) "$file" > "${file}_Temp"
+        echo "$header" | cat - "${file}_Temp" > temp && mv temp "${file}_Temp"
+        mv "${file}_Temp" "$file"
+    fi    
+done
