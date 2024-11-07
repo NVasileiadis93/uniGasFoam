@@ -128,7 +128,7 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
@@ -142,7 +142,7 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimless, Zero),
