@@ -66,6 +66,7 @@ class uniGasFaceTracker
         List<scalarField> parcelIdFlux_;
         List<scalarField> massIdFlux_;
         List<vectorField> momentumIdFlux_;
+        List<scalarField> energyIdFlux_;
 
 public:
 
@@ -106,6 +107,8 @@ public:
             inline const List<scalarField>& massIdFlux() const;
 
             inline const List<vectorField>& momentumIdFlux() const;
+
+            inline const List<scalarField>& energyIdFlux() const;
             
 };
 

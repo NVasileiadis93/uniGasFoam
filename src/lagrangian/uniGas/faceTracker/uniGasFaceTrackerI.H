@@ -48,6 +48,11 @@ inline const List<vectorField>& uniGasFaceTracker::momentumIdFlux() const
     return momentumIdFlux_;
 }
 
+inline const List<scalarField>& uniGasFaceTracker::energyIdFlux() const
+{
+    return energyIdFlux_;
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

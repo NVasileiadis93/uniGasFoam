@@ -113,17 +113,16 @@ class uniGasMassFluxSurface
 
         scalar momentumZone_;
 
+        scalar energyZone_;
+
         scalar timeAvCounter_;
 
         label timeIndex_;
 
         scalarField molFluxZone_;
         scalarField massFluxZone_;
-        scalarField massFlowZone_;
-        scalarField momentumFlowZone_;
-
-        
-
+        scalarField momentumFluxZone_;
+        scalarField energyFluxZone_;
 
     // Private Member Functions
 

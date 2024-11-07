@@ -59,13 +59,15 @@ uniGasFaceTracker::uniGasFaceTracker
     cloud_(cloud),
     parcelIdFlux_(cloud_.typeIdList().size()),
     massIdFlux_(cloud_.typeIdList().size()),
-    momentumIdFlux_(cloud_.typeIdList().size())
+    momentumIdFlux_(cloud_.typeIdList().size()),
+    energyIdFlux_(cloud_.typeIdList().size())
 {
     forAll(parcelIdFlux_, i)
     {
         parcelIdFlux_[i].setSize(mesh_.nFaces(), 0.0);
         massIdFlux_[i].setSize(mesh_.nFaces(), 0.0);
         momentumIdFlux_[i].setSize(mesh_.nFaces(), vector::zero);
+        energyIdFlux_[i].setSize(mesh_.nFaces(), 0.0);
     }
 }
 
@@ -80,6 +82,7 @@ void uniGasFaceTracker::clean()
         parcelIdFlux_[i] = scalar(0.0);
         massIdFlux_[i] = scalar(0.0);
         momentumIdFlux_[i] = vector::zero;
+        energyIdFlux_[i] = scalar(0.0);
     }
 }
 
@@ -96,6 +99,7 @@ void uniGasFaceTracker::updateFields
     const scalar& RWF = cloud_.axiRWF(p.position());
     const scalar& mass = constProp.mass();
     const vector& U = p.U();        
+    const scalar& e = mass*(U & U) + p.ERot();
 
     // check which patch was hit
     const label patchId = mesh_.boundaryMesh().whichPatch(crossedFace);
@@ -118,12 +122,15 @@ void uniGasFaceTracker::updateFields
             parcelIdFlux_[typeId][coupledFace] += CWF*RWF;
             massIdFlux_[typeId][coupledFace] += mass*CWF*RWF;
             momentumIdFlux_[typeId][coupledFace] += mass*U*CWF*RWF;
+            energyIdFlux_[typeId][coupledFace] += e*CWF*RWF;
+            
         }
         else  // boundary non-cyclic faces
         {
             parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
             massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
             momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;
+            energyIdFlux_[typeId][crossedFace] += sgn*e*CWF*RWF;
         }
     }
     else // internal face
@@ -131,6 +138,7 @@ void uniGasFaceTracker::updateFields
         parcelIdFlux_[typeId][crossedFace] += sgn*CWF*RWF;
         massIdFlux_[typeId][crossedFace] += sgn*mass*CWF*RWF;
         momentumIdFlux_[typeId][crossedFace] += mass*U*CWF*RWF;
+        energyIdFlux_[typeId][crossedFace] += sgn*e*CWF*RWF;
     }
 
 }

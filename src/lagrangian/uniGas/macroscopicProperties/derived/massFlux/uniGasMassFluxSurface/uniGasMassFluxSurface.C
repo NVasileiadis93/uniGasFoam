@@ -61,12 +61,13 @@ Foam::uniGasMassFluxSurface::uniGasMassFluxSurface
     molsZone_(0.0),
     massZone_(0.0),
     momentumZone_(0.0),
+    energyZone_(0.0),
     timeAvCounter_(0.0),
     timeIndex_(0),
     molFluxZone_(1, 0.0),
     massFluxZone_(1, 0.0),
-    massFlowZone_(1, 0.0),
-    momentumFlowZone_(1, 0.0)
+    momentumFluxZone_(1, 0.0),
+    energyFluxZone_(1, 0.0)
 {
 
     // Read stored data from dictionary
@@ -207,11 +208,12 @@ void Foam::uniGasMassFluxSurface::readIn()
         )
     );
 
+    dict.readIfPresent("timeAvCounter", timeAvCounter_);
     dict.readIfPresent("molsZone", molsZone_);
     dict.readIfPresent("massZone", massZone_);
     dict.readIfPresent("momentumZone", momentumZone_);
-    dict.readIfPresent("timeAvCounter", timeAvCounter_);
-
+    dict.readIfPresent("energyZone", energyZone_);
+    
 }
 
 
@@ -233,10 +235,11 @@ void Foam::uniGasMassFluxSurface::writeOut()
             )
         );
 
+        dict.add("timeAvCounter", timeAvCounter_);
         dict.add("molsZone", molsZone_);
         dict.add("massZone", massZone_);
         dict.add("momentumZone", momentumZone_);
-        dict.add("timeAvCounter", timeAvCounter_);
+        dict.add("energyZone", energyZone_);
 
         dict.regIOobject::writeObject
         (
@@ -270,10 +273,12 @@ const scalar& deltaT = mesh_.time().deltaTValue();
         const List<scalarField>& molIdFlux = cloud_.tracker().parcelIdFlux();
         const List<scalarField>& massIdFlux = cloud_.tracker().massIdFlux();
         const List<vectorField>& momentumIdFlux = cloud_.tracker().momentumIdFlux();
+        const List<scalarField>& energyIdFlux = cloud_.tracker().energyIdFlux();
 
         scalar molFlux = 0.0;
         scalar massFlux = 0.0;
         scalar momentumFlux = 0.0;
+        scalar energyFlux = 0.0;
 
         const faceZoneMesh& faceZones = mesh_.faceZones();
         const labelList& faces = faceZones[regionId_];
@@ -296,7 +301,7 @@ const scalar& deltaT = mesh_.time().deltaTValue();
                     molFlux += (molIdFlux[i][faceI]*nParticle*nF) & fluxDirection_;
                     massFlux += (massIdFlux[i][faceI]*nParticle*nF) & fluxDirection_;
                     momentumFlux += (momentumIdFlux[i][faceI]*nParticle) & fluxDirection_;
-
+                    energyFlux += (energyIdFlux[i][faceI]*nParticle*nF) & fluxDirection_;
                 }
             }
 
@@ -305,6 +310,7 @@ const scalar& deltaT = mesh_.time().deltaTValue();
         molsZone_ += molFlux;
         massZone_ += massFlux;
         momentumZone_ += momentumFlux;
+        energyZone_ += energyFlux;
 
         sampleCounter_ = 0;
     }
@@ -318,27 +324,29 @@ const scalar& deltaT = mesh_.time().deltaTValue();
         scalar molsZone = molsZone_;
         scalar massZone = massZone_;
         scalar momentumZone = momentumZone_;
+        scalar energyZone = energyZone_;
 
         if (Pstream::parRun())
         {
             reduce(molsZone, sumOp<scalar>());
             reduce(massZone, sumOp<scalar>());
             reduce(momentumZone, sumOp<scalar>());
+            reduce(energyZone, sumOp<scalar>());
         }
 
         if (zoneSurfaceArea_ > 0.0)
         {
             molFluxZone_[timeIndex_] = molsZone/(timeAvCounter_*zoneSurfaceArea_);
             massFluxZone_[timeIndex_] = massZone/(timeAvCounter_*zoneSurfaceArea_);
-            massFlowZone_[timeIndex_] = massZone/timeAvCounter_;
-            momentumFlowZone_[timeIndex_] = momentumZone/timeAvCounter_;
+            momentumFluxZone_[timeIndex_] = momentumZone/(timeAvCounter_*zoneSurfaceArea_);
+            energyFluxZone_[timeIndex_] = energyZone/(timeAvCounter_*zoneSurfaceArea_);
         }
         else
         {
             molFluxZone_[timeIndex_] = 0.0;
             massFluxZone_[timeIndex_] = 0.0;
-            massFlowZone_[timeIndex_] = 0.0;
-            momentumFlowZone_[timeIndex_] = 0.0;
+            momentumFluxZone_[timeIndex_] = 0.0;
+            energyFluxZone_[timeIndex_] = 0.0;
         }
 
         if (resetFieldsAtOutput_ && mesh_.time().value() < resetFieldsAtOutputUntilTime_+0.5*deltaT)
@@ -347,6 +355,7 @@ const scalar& deltaT = mesh_.time().deltaTValue();
             molsZone_ = 0.0;
             massZone_ = 0.0;
             momentumZone_ = 0.0;
+            energyZone_ = 0.0;
         }
 
         if (averagingAcrossManyRuns_)
@@ -395,18 +404,18 @@ void Foam::uniGasMassFluxSurface::writeField()
             writeTimeData
             (
                 casePath_,
-                "massFlowRate_" + faceZoneName_ + "_"+fieldName_ + ".log",
+                "momentumFlux_" + faceZoneName_ + "_"+fieldName_ + ".log",
                 timeField,
-                massFlowZone_,
+                momentumFluxZone_,
                 true
             );
 
             writeTimeData
             (
                 casePath_,
-                "thrust_" + faceZoneName_ + "_"+fieldName_ + ".log",
+                "energyFlux_" + faceZoneName_ + "_"+fieldName_ + ".log",
                 timeField,
-                momentumFlowZone_,
+                energyFluxZone_,
                 true
             );
 
