@@ -115,13 +115,8 @@ inline Foam::scalar Foam::uniGasCloud::maxRWF() const
 
 inline Foam::scalar Foam::uniGasCloud::axiRWF(const point& p) const
 {
-    if (axisymmetric_)
-    {
-        scalar radius = sqrt(p.y()*p.y() + p.z()*p.z());
-        return 1.0 + (maxRWF_-1.0)*radius/radialExtent_;
-    }
-
-    return 1.0;
+    scalar radius = sqrt(p.y()*p.y() + p.z()*p.z());
+    return 1.0 + (maxRWF_-1.0)*radius/radialExtent_;
 }
 
 inline bool Foam::uniGasCloud::axisymmetric() const
@@ -154,19 +149,11 @@ inline Foam::volScalarField& Foam::uniGasCloud::cellCollModelId()
     return cellCollisionModelId_;
 }
 
-
-inline Foam::scalarField& Foam::uniGasCloud::collisionSelectionRemainder()
-{
-    return collisionSelectionRemainder_;
-}
-
-
 inline const Foam::List<Foam::uniGasParcel::constantProperties>&
 Foam::uniGasCloud::constProps() const
 {
     return constProps_;
 }
-
 
 inline const Foam::uniGasParcel::constantProperties& Foam::uniGasCloud::constProps
 (
@@ -184,24 +171,20 @@ inline const Foam::uniGasParcel::constantProperties& Foam::uniGasCloud::constPro
     return constProps_[typeId];
 }
 
-
 inline Foam::Random& Foam::uniGasCloud::rndGen()
 {
     return rndGen_;
 }
-
 
 inline const Foam::uniGasDynamicAdapter& Foam::uniGasCloud::dynamicAdapter() const
 {
     return dynamicAdapter_;
 }
 
-
 inline Foam::uniGasDynamicAdapter& Foam::uniGasCloud::dynamicAdapter()
 {
     return dynamicAdapter_;
 }
-
 
 inline const Foam::uniGasFieldProperties& Foam::uniGasCloud::fields() const
 {
@@ -218,96 +201,80 @@ inline const  Foam::uniGasBoundaries& Foam::uniGasCloud::boundaries() const
     return  boundaries_;
 }
 
-
 inline  Foam::uniGasBoundaries& Foam::uniGasCloud::boundaries()
 {
     return  boundaries_;
 }
-
 
 inline const Foam::uniGasFaceTracker& Foam::uniGasCloud::tracker() const
 {
     return trackingInfo_;
 }
 
-
 inline Foam::uniGasFaceTracker& Foam::uniGasCloud::tracker()
 {
     return trackingInfo_;
 }
-
 
 inline const Foam::dsmcCollisionModel& Foam::uniGasCloud::dsmcCollision() const
 {
     return dsmcCollisionModel_;
 }
 
-
 inline Foam::dsmcCollisionModel& Foam::uniGasCloud::dsmcCollision()
 {
     return dsmcCollisionModel_();
 }
-
 
 inline const Foam::bgkCollisionModel& Foam::uniGasCloud::bgkCollision() const
 {
     return bgkCollisionModel_;
 }
 
-
 inline Foam::bgkCollisionModel& Foam::uniGasCloud::bgkCollision()
 {
     return bgkCollisionModel_();
 }
-
 
 inline const Foam::uniGasHybridDecomposition& Foam::uniGasCloud::hybridDecomposition() const
 {
     return hybridDecompositionModel_;
 }
 
-
 inline Foam::uniGasHybridDecomposition& Foam::uniGasCloud::hybridDecomposition()
 {
     return hybridDecompositionModel_();
 }
-
 
 inline const Foam::uniGasReactions& Foam::uniGasCloud::reactions() const
 {
     return reactions_;
 }
 
-
 inline Foam::uniGasReactions& Foam::uniGasCloud::reactions()
 {
     return reactions_;
 }
-
 
 inline const Foam::boundaryMeasurements& Foam::uniGasCloud::boundaryFluxMeasurements() const
 {
     return boundaryMeas_;
 }
 
-
 inline Foam::boundaryMeasurements& Foam::uniGasCloud::boundaryFluxMeasurements()
 {
     return boundaryMeas_;
 }
-
 
 inline const Foam::cellMeasurements& Foam::uniGasCloud::cellPropMeasurements() const
 {
     return cellMeas_;
 }
 
-
 inline Foam::cellMeasurements& Foam::uniGasCloud::cellPropMeasurements()
 {
     return cellMeas_;
 }
-
 
 inline Foam::scalarList Foam::uniGasCloud::infoMeasurements() const
 {
@@ -351,7 +318,6 @@ inline Foam::scalarList Foam::uniGasCloud::infoMeasurements() const
     return infoMeasurements;
 }
 
-
 inline Foam::scalar Foam::uniGasCloud::maxwellianAverageSpeed
 (
     const scalar temperature,
@@ -360,7 +326,6 @@ inline Foam::scalar Foam::uniGasCloud::maxwellianAverageSpeed
 {
     return 2.0*sqrt(2.0*physicoChemical::k.value()*temperature/(pi*mass));
 }
-
 
 inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianAverageSpeed
 (
@@ -371,7 +336,6 @@ inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianAverageSpeed
     return 2.0*sqrt(2.0*physicoChemical::k.value()*temperature/(pi*mass));
 }
 
-
 inline Foam::scalar Foam::uniGasCloud::maxwellianRMSSpeed
 (
     const scalar temperature,
@@ -380,7 +344,6 @@ inline Foam::scalar Foam::uniGasCloud::maxwellianRMSSpeed
 {
     return sqrt(3.0*physicoChemical::k.value()*temperature/mass);
 }
-
 
 inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianRMSSpeed
 (
@@ -391,7 +354,6 @@ inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianRMSSpeed
     return sqrt(3.0*physicoChemical::k.value()*temperature/mass);
 }
 
-
 inline Foam::scalar Foam::uniGasCloud::maxwellianMostProbableSpeed
 (
     const scalar temperature,
@@ -401,7 +363,6 @@ inline Foam::scalar Foam::uniGasCloud::maxwellianMostProbableSpeed
     return sqrt(2.0*physicoChemical::k.value()*temperature/mass);
 }
 
-
 inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianMostProbableSpeed
 (
     const scalarField& temperature,
@@ -410,7 +371,6 @@ inline Foam::tmp<Foam::scalarField> Foam::uniGasCloud::maxwellianMostProbableSpe
 {
     return sqrt(2.0*physicoChemical::k.value()*temperature/mass);
 }
-
 
 inline void Foam::uniGasCloud::clear()
 {

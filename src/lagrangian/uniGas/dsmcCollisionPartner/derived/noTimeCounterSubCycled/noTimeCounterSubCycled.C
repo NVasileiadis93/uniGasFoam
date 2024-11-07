@@ -187,15 +187,14 @@ void noTimeCounterSubCycled::collide()
 
                     RWF /= nMols;
 
-                    selectedPairs =
-                        cloud_.collisionSelectionRemainder()[cell]
-                      + 0.5*nC*(nC - 1)*cloud_.nParticle()*CWF*RWF*sigmaTcRMax
-                       *(deltaT/nSubCycles_)/cellVolume;
+                    selectedPairs = 0.5*nC*(nC - 1)*cloud_.nParticle()*CWF*RWF*sigmaTcRMax*(deltaT/nSubCycles_)/cellVolume;
 
                     label nCandidates(selectedPairs);
 
-                    cloud_.collisionSelectionRemainder()[cell] =
-                        selectedPairs - nCandidates;
+                    if (cloud_.rndGen().sample01<scalar>() < (selectedPairs-nCandidates))
+                    {
+                        nCandidates++;
+                    }
 
                     collisionCandidates += nCandidates;
 

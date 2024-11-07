@@ -486,7 +486,6 @@ Foam::uniGasCloud::uniGasCloud
         dimensionedScalar(dimensionSet(0, 0, 0, 0, 0), Zero),
         zeroGradientFvPatchScalarField::typeName
     ),
-    collisionSelectionRemainder_(mesh_.nCells(), 0),
     constProps_(),
     rndGen_(label(clock::getTime()) + 7183*Pstream::myProcNo()),
     //rndGen_(1.0),
@@ -774,13 +773,6 @@ Foam::uniGasCloud::uniGasCloud
     reactions_.initialConfiguration();
 
     buildCellOccupancy();
-
-    // Initialise the collision selection remainder to a random value between 0
-    // and 1.
-    forAll(collisionSelectionRemainder_, i)
-    {
-        collisionSelectionRemainder_[i] = rndGen_.sample01<scalar>();
-    }
 
     cellMeas_.createFields();
     fields_.createFields();

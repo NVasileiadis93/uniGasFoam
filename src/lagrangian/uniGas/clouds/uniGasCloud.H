@@ -200,9 +200,6 @@ private:
         // A field containing the collision model for each cell 0:dsmc 1:bgk
         volScalarField cellCollisionModelId_;
 
-        //- A field holding the remainder from the previous collision selections
-        scalarField collisionSelectionRemainder_;
-
         //- Parcel constant properties - one for each type
         List<uniGasParcel::constantProperties> constProps_;
 
@@ -379,10 +376,6 @@ public:
         //- Return the cellCollisionModel field.  non - const access to allow
         //- updating through decomposer class.
         inline volScalarField& cellCollModelId();
-
-        //- Return the collision selection remainder field.  non - const
-        //- access to allow updating.
-        inline scalarField& collisionSelectionRemainder();
 
         //- Return all of the constant properties
         inline const List<uniGasParcel::constantProperties>& constProps() const;
