@@ -343,7 +343,7 @@ void uniGasDynamicAdapter::calculateTimeStep()
     scalar instMaxTimeStepMCTRatio = 0e0;
     forAll(mesh_.cells(), cell)
     {
-        if (cloud_.relaxationCollisionModelName() != "unifiedStochasticParticleSBGK" && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
+        if (cloud_.bgkCollisionModelName() != "unifiedStochasticParticleSBGK" && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
         { 
             instMaxTimeStepMCTRatio = timeStepMCTRatio_[cell];
         }
@@ -395,7 +395,7 @@ vector uniGasDynamicAdapter::calculateSubCellLevels
 
     vector subCellLevels;
 
-    if (cloud_.cellCollModel(cell) == cloud_.binCollModel())
+    if (cloud_.cellCollModelId()[cell] == cloud_.dsmcCollModelId())
     { 
         forAll(cloud_.solutionDimensions(), dim)
         {

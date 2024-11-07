@@ -71,13 +71,13 @@ adaptiveProperties
 // Collision Models
 // ~~~~~~~~~~~~~~~~~~~~~~
 collisionModel              hybrid;
-relaxationCollisionModel    unifiedStochasticParticleSBGK;
-binaryCollisionPartnerModel noTimeCounter;
-binaryCollisionModel        variableHardSphere;
+bgkCollisionModel           unifiedStochasticParticleSBGK;
+dsmcCollisionPartnerModel   noTimeCounter;
+dsmcCollisionModel          variableHardSphere;
 collisionProperties
 {
     Tref                    273;
-    macroInterpolation      false;
+    macroInterpolation      true;
     theta                   1e-3;
 }
 

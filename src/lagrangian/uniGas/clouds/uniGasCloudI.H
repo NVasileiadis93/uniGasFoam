@@ -33,19 +33,19 @@ using namespace Foam::constant::mathematical;
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline Foam::label Foam::uniGasCloud::binCollModel() const
+inline Foam::label Foam::uniGasCloud::dsmcCollModelId() const
 {
-    return binCollModel_;
+    return dsmcCollModelId_;
 }
 
-inline Foam::label Foam::uniGasCloud::relCollModel() const
+inline Foam::label Foam::uniGasCloud::bgkCollModelId() const
 {
-    return relCollModel_;
+    return bgkCollModelId_;
 }
 
-inline Foam::word Foam::uniGasCloud::relaxationCollisionModelName() const
+inline Foam::word Foam::uniGasCloud::bgkCollisionModelName() const
 {
-    return relaxationCollisionModelName_;
+    return bgkCollisionModelName_;
 }
 
 inline Foam::boolVector Foam::uniGasCloud::solutionDimensions() const
@@ -103,11 +103,6 @@ inline Foam::scalar Foam::uniGasCloud::cellWF(const label& cell) const
     return cellWeightFactor_[cell];
 }
 
-inline Foam::label Foam::uniGasCloud::cellCollModel(const label& cell) const
-{
-    return label(cellCollisionModel_[cell]);
-}
-
 inline Foam::scalar Foam::uniGasCloud::radialExtent() const
 {
     return radialExtent_;
@@ -154,9 +149,9 @@ inline Foam::volScalarField& Foam::uniGasCloud::sigmaTcRMax()
     return sigmaTcRMax_;
 }
 
-inline Foam::volScalarField& Foam::uniGasCloud::cellCollModel()
+inline Foam::volScalarField& Foam::uniGasCloud::cellCollModelId()
 {
-    return cellCollisionModel_;
+    return cellCollisionModelId_;
 }
 
 
@@ -242,27 +237,27 @@ inline Foam::uniGasFaceTracker& Foam::uniGasCloud::tracker()
 }
 
 
-inline const Foam::binaryCollisionModel& Foam::uniGasCloud::binaryCollision() const
+inline const Foam::dsmcCollisionModel& Foam::uniGasCloud::dsmcCollision() const
 {
-    return binaryCollisionModel_;
+    return dsmcCollisionModel_;
 }
 
 
-inline Foam::binaryCollisionModel& Foam::uniGasCloud::binaryCollision()
+inline Foam::dsmcCollisionModel& Foam::uniGasCloud::dsmcCollision()
 {
-    return binaryCollisionModel_();
+    return dsmcCollisionModel_();
 }
 
 
-inline const Foam::relaxationCollisionModel& Foam::uniGasCloud::relaxationCollision() const
+inline const Foam::bgkCollisionModel& Foam::uniGasCloud::bgkCollision() const
 {
-    return relaxationCollisionModel_;
+    return bgkCollisionModel_;
 }
 
 
-inline Foam::relaxationCollisionModel& Foam::uniGasCloud::relaxationCollision()
+inline Foam::bgkCollisionModel& Foam::uniGasCloud::bgkCollision()
 {
-    return relaxationCollisionModel_();
+    return bgkCollisionModel_();
 }
 
 

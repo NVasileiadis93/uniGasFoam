@@ -421,11 +421,11 @@ void Foam::localKnudsen::decompose()
         {
             if (KnGLL_[cell] > breakdownMax_)
             {
-                cloud_.cellCollModel()[cell] = cloud_.binCollModel();
+                cloud_.cellCollModelId()[cell] = cloud_.dsmcCollModelId();
             }
             else
             {
-                cloud_.cellCollModel()[cell] = cloud_.relCollModel();
+                cloud_.cellCollModelId()[cell] = cloud_.bgkCollModelId();
             }
         }
 
@@ -438,18 +438,18 @@ void Foam::localKnudsen::decompose()
         for (label pass=1; pass<=refinementPasses_; pass++)
         {
 
-            //Refine binary collision cells
+            //Refine dsmc collision cells
             forAll(mesh_.cells(), cellI)
             {
 
-                if (cloud_.cellCollModel()[cellI] == cloud_.binCollModel())
+                if (cloud_.cellCollModelId()[cellI] == cloud_.dsmcCollModelId())
                 {
                     adjacentBinCollCells = 0;
                     adjacentRelCollCells = 0;
 
                     forAll(mesh_.cellCells()[cellI], cellJ)
                     {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
+                        if (cloud_.cellCollModelId()[mesh_.cellCells()[cellI][cellJ]] == cloud_.dsmcCollModelId())
                         {
                             adjacentBinCollCells++;
                         }
@@ -461,7 +461,7 @@ void Foam::localKnudsen::decompose()
 
                     if (adjacentBinCollCells == 0 || (adjacentBinCollCells == 1 && adjacentRelCollCells > 1))
                     {
-                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        cloud_.cellCollModelId()[cellI] = cloud_.bgkCollModelId();
                         continue;
                     }
 
@@ -475,7 +475,7 @@ void Foam::localKnudsen::decompose()
                     neighborBinCollCells = 0;
                     forAll(neighborCells_, cellJ)
                     {
-                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.binCollModel())
+                        if (cloud_.cellCollModelId()[neighborCells_[cellJ]] == cloud_.dsmcCollModelId())
                         {
                             neighborBinCollCells++;
                         }
@@ -483,18 +483,18 @@ void Foam::localKnudsen::decompose()
 
                     if (neighborBinCollCells < maxNeighborFraction_*neighborCells_.size())
                     {
-                        cloud_.cellCollModel()[cellI] = cloud_.relCollModel();
+                        cloud_.cellCollModelId()[cellI] = cloud_.bgkCollModelId();
                         continue;
                     }
 
                 }
             }
 
-            //Refine relaxation collision cells
+            //Refine bgk collision cells
             forAll(mesh_.cells(), cellI)
             {
 
-                if (cloud_.cellCollModel()[cellI] == cloud_.relCollModel())
+                if (cloud_.cellCollModelId()[cellI] == cloud_.bgkCollModelId())
                 {
                 
                     adjacentBinCollCells=0;
@@ -502,7 +502,7 @@ void Foam::localKnudsen::decompose()
 
                     forAll(mesh_.cellCells()[cellI], cellJ)
                     {
-                        if (cloud_.cellCollModel()[mesh_.cellCells()[cellI][cellJ]] == cloud_.binCollModel())
+                        if (cloud_.cellCollModelId()[mesh_.cellCells()[cellI][cellJ]] == cloud_.dsmcCollModelId())
                         {
                             adjacentBinCollCells++;
                         }
@@ -514,7 +514,7 @@ void Foam::localKnudsen::decompose()
 
                     if (adjacentRelCollCells == 0 || (adjacentRelCollCells == 1 && adjacentBinCollCells > 1))
                     {
-                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        cloud_.cellCollModelId()[cellI] = cloud_.dsmcCollModelId();
                         continue; 
                     }
 
@@ -528,7 +528,7 @@ void Foam::localKnudsen::decompose()
                     neighborRelCollCells = 0;
                     forAll(neighborCells_, cellJ)
                     {                    
-                        if (cloud_.cellCollModel()[neighborCells_[cellJ]] == cloud_.relCollModel())
+                        if (cloud_.cellCollModelId()[neighborCells_[cellJ]] == cloud_.bgkCollModelId())
                         {
                             neighborRelCollCells++;
                         }
@@ -536,7 +536,7 @@ void Foam::localKnudsen::decompose()
 
                     if (neighborRelCollCells < maxNeighborFraction_*neighborCells_.size())
                     {
-                        cloud_.cellCollModel()[cellI] = cloud_.binCollModel();
+                        cloud_.cellCollModelId()[cellI] = cloud_.dsmcCollModelId();
                         continue;
                     }
 
@@ -545,7 +545,7 @@ void Foam::localKnudsen::decompose()
         }
         
         // correct boundary conditions
-        cloud_.cellCollModel().correctBoundaryConditions();
+        cloud_.cellCollModelId().correctBoundaryConditions();
 
         // reset
         timeSteps_ = 0;

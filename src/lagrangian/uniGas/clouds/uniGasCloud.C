@@ -235,18 +235,16 @@ void Foam::uniGasCloud::adaptation()
 
 void Foam::uniGasCloud::collisions()
 {
-    if (collisionModel_ == binaryCollModel_ || collisionModel_ == hybridCollModel_)
+    if (collisionModel_ == dsmcCollModel_ || collisionModel_ == hybridCollModel_)
     {
-        binaryCollisionPartnerModel_->collide();
+        dsmcCollisionPartnerModel_->collide();
     }
-}
 
-void Foam::uniGasCloud::relaxations()
-{
-    if (collisionModel_ == relaxationCollModel_ || collisionModel_ == hybridCollModel_)
+    if (collisionModel_ == bgkCollModel_ || collisionModel_ == hybridCollModel_)
     {
-        relaxationCollisionModel_->relax();
+        bgkCollisionModel_->collide();
     }
+
 }
 
 void Foam::uniGasCloud::decomposition()
@@ -404,13 +402,13 @@ Foam::uniGasCloud::uniGasCloud
 )
 :
     CloudWithModels<uniGasParcel>(mesh, cloudName, false),
-    binCollModel_(1),
-    relCollModel_(0),
-    binaryCollModel_("binary"),
-    relaxationCollModel_("relaxation"),
+    dsmcCollModelId_(1),
+    bgkCollModelId_(0),
+    dsmcCollModel_("dsmc"),
+    bgkCollModel_("bgk"),
     hybridCollModel_("hybrid"),
     collisionModel_(),
-    relaxationCollisionModelName_(),
+    bgkCollisionModelName_(),
     solutionDimensions_(),
     typeIdList_(particleProperties_.lookup("typeIdList")),
     nParticle_(particleProperties_.get<scalar>("nEquivalentParticles")),
@@ -474,11 +472,11 @@ Foam::uniGasCloud::uniGasCloud
         dimensionedVector(dimensionSet(0, 0, 0, 0, 0), vector::one),
         zeroGradientFvPatchScalarField::typeName
     ),
-    cellCollisionModel_
+    cellCollisionModelId_
     (
         IOobject
         (
-            this->name() + "CollisionModel",
+            this->name() + "CollisionModelId",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -497,9 +495,9 @@ Foam::uniGasCloud::uniGasCloud
     fields_(t, mesh_, *this),
     boundaries_(t, mesh_, *this),
     trackingInfo_(mesh_, *this, true),
-    binaryCollisionModel_(),
-    binaryCollisionPartnerModel_(),
-    relaxationCollisionModel_(),
+    dsmcCollisionModel_(),
+    dsmcCollisionPartnerModel_(),
+    bgkCollisionModel_(),
     hybridDecompositionModel_(),
     reactions_(t, mesh_, *this),
     boundaryMeas_(mesh_, *this, true),
@@ -641,11 +639,11 @@ Foam::uniGasCloud::uniGasCloud
         sigmaTcRMax_ = fetchSigmaTcRMax;
 
         // Read cell collision model
-        volScalarField fetchCollisionModel
+        volScalarField fetchCollisionModelId
         (
             IOobject
             (
-                this->name() + "CollisionModel",
+                this->name() + "CollisionModelId",
                 mesh_.time().timeName(),
                 mesh_,
                 IOobject::MUST_READ,
@@ -653,32 +651,32 @@ Foam::uniGasCloud::uniGasCloud
             ),
             mesh_
         );
-        cellCollisionModel_ = fetchCollisionModel;
+        cellCollisionModelId_ = fetchCollisionModelId;
 
-        // Select collision model: binary, relaxation, hybrid
+        // Select collision model: dsmc, bgk, hybrid
         collisionModel_ = particleProperties_.get<word>("collisionModel");
 
-        if (collisionModel_ == binaryCollModel_)
+        if (collisionModel_ == dsmcCollModel_)
         {
-            Info << "Simulation collision model is: binary" << nl << endl;
-            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
-            binaryCollisionPartnerModel_->initialConfiguration();    
+            Info << "Simulation collision model is: dsmc" << nl << endl;
+            dsmcCollisionModel_ = dsmcCollisionModel::New(particleProperties_,*this);
+            dsmcCollisionPartnerModel_ = dsmcCollisionPartner::New(particleProperties_, mesh_, *this);
+            dsmcCollisionPartnerModel_->initialConfiguration();    
         }
-        else if (collisionModel_ == relaxationCollModel_)
+        else if (collisionModel_ == bgkCollModel_)
         {
-            Info << "Simulation collision model is: relaxation" << nl << endl;
-            relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
-            relaxationCollisionModel_ =relaxationCollisionModel::New(particleProperties_, mesh_, *this);   
+            Info << "Simulation collision model is: bgk" << nl << endl;
+            bgkCollisionModelName_ = particleProperties_.getOrDefault<word>("bgkCollisionModel","");
+            bgkCollisionModel_ =bgkCollisionModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
             Info << "Simulation collision model is: hybrid" << nl << endl;
-            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
-            binaryCollisionPartnerModel_->initialConfiguration();
-            relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
-            relaxationCollisionModel_ =relaxationCollisionModel::New(particleProperties_, mesh_, *this);
+            dsmcCollisionModel_ = dsmcCollisionModel::New(particleProperties_,*this);
+            dsmcCollisionPartnerModel_ = dsmcCollisionPartner::New(particleProperties_, mesh_, *this);
+            dsmcCollisionPartnerModel_->initialConfiguration();
+            bgkCollisionModelName_ = particleProperties_.getOrDefault<word>("bgkCollisionModel","");
+            bgkCollisionModel_ =bgkCollisionModel::New(particleProperties_, mesh_, *this);
             hybridDecompositionModel_ = uniGasHybridDecomposition::New(mesh_.time(), mesh_, *this);
         }
         else
@@ -686,7 +684,7 @@ Foam::uniGasCloud::uniGasCloud
             FatalErrorInFunction
                 << "Unknown collisionModel type " << collisionModel_ << endl << endl
                 << "Valid collisionModel types :" << endl
-                << "3(" << collisionModel_ << " " << relaxationCollModel_ << " " << hybridCollModel_ << ")"
+                << "3(" << collisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
                 << exit(FatalError);        
         }
 
@@ -707,36 +705,36 @@ Foam::uniGasCloud::uniGasCloud
     else
     {
 
-        // Select collision model: binary, relaxation, hybrid
+        // Select collision model: dsmc, bgk, hybrid
         collisionModel_ = particleProperties_.get<word>("collisionModel");
 
-        if (collisionModel_ == binaryCollModel_)
+        if (collisionModel_ == dsmcCollModel_)
         {
-            Info << "Simulation collision model is: binary" << nl << endl;
-            cellCollisionModel_ = binCollModel_;
-            cellCollisionModel_.correctBoundaryConditions();
-            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
-            binaryCollisionPartnerModel_ -> initialConfiguration();    
+            Info << "Simulation collision model is: dsmc" << nl << endl;
+            cellCollisionModelId_ = dsmcCollModelId_;
+            cellCollisionModelId_.correctBoundaryConditions();
+            dsmcCollisionModel_ = dsmcCollisionModel::New(particleProperties_,*this);
+            dsmcCollisionPartnerModel_ = dsmcCollisionPartner::New(particleProperties_, mesh_, *this);
+            dsmcCollisionPartnerModel_ -> initialConfiguration();    
         }
-        else if (collisionModel_ == relaxationCollModel_)
+        else if (collisionModel_ == bgkCollModel_)
         {
-            Info << "Simulation collision model is: relaxation" << nl << endl;
-            relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
-            cellCollisionModel_ = relCollModel_;
-            cellCollisionModel_.correctBoundaryConditions();
-            relaxationCollisionModel_ = relaxationCollisionModel::New(particleProperties_, mesh_, *this);   
+            Info << "Simulation collision model is: bgk" << nl << endl;
+            bgkCollisionModelName_ = particleProperties_.getOrDefault<word>("bgkCollisionModel","");
+            cellCollisionModelId_ = bgkCollModelId_;
+            cellCollisionModelId_.correctBoundaryConditions();
+            bgkCollisionModel_ = bgkCollisionModel::New(particleProperties_, mesh_, *this);   
         }
         else if (collisionModel_ == hybridCollModel_)
         {
             Info << "Simulation collision model is: hybrid" << nl << endl;
-            relaxationCollisionModelName_ = particleProperties_.getOrDefault<word>("relaxationCollisionModel","");
-            cellCollisionModel_ = relCollModel_;
-            cellCollisionModel_.correctBoundaryConditions();
-            binaryCollisionModel_ = binaryCollisionModel::New(particleProperties_,*this);
-            binaryCollisionPartnerModel_ = binaryCollisionPartner::New(particleProperties_, mesh_, *this);
-            binaryCollisionPartnerModel_ -> initialConfiguration();
-            relaxationCollisionModel_ = relaxationCollisionModel::New(particleProperties_, mesh_, *this);  
+            bgkCollisionModelName_ = particleProperties_.getOrDefault<word>("bgkCollisionModel","");
+            cellCollisionModelId_ = bgkCollModelId_;
+            cellCollisionModelId_.correctBoundaryConditions();
+            dsmcCollisionModel_ = dsmcCollisionModel::New(particleProperties_,*this);
+            dsmcCollisionPartnerModel_ = dsmcCollisionPartner::New(particleProperties_, mesh_, *this);
+            dsmcCollisionPartnerModel_ -> initialConfiguration();
+            bgkCollisionModel_ = bgkCollisionModel::New(particleProperties_, mesh_, *this);  
             hybridDecompositionModel_ = uniGasHybridDecomposition::New(mesh_.time(), mesh_, *this);
         }
         else
@@ -744,7 +742,7 @@ Foam::uniGasCloud::uniGasCloud
             FatalErrorInFunction
                 << "Unknown collisionModel type " << collisionModel_ << endl << endl
                 << "Valid collisionModel types :" << endl
-                << "3(" << collisionModel_ << " " << relaxationCollModel_ << " " << hybridCollModel_ << ")"
+                << "3(" << collisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
                 << exit(FatalError);         
         }
 
@@ -856,9 +854,8 @@ void Foam::uniGasCloud::evolve()
     cellMeas_.calculateFields();
     fields_.calculateFields();
     
-    // Calculate new velocities via stochastic collisions, stochastic relaxations or hybrid collision/relaxations
+    // Calculate new velocities via dsmc, bgk or hybrid dsmc-bgk collisions
     collisions();
-    relaxations();
 
     // Update cell occupancy (reactions may have changed it)
     buildCellOccupancy();

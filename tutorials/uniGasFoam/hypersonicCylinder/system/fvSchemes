@@ -39,7 +39,7 @@ interpolationSchemes
 {
     default         	linear;
     Prandtl         	cellPoint;
-    relaxFreq       	cellPoint;
+    collFreq       	    cellPoint;
     p              	    cellPoint;
     translationalT  	cellPoint;
     UMean               cellPoint;

@@ -49,8 +49,8 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "scalarIOField.H"
-#include "binaryCollisionModel.H"
-#include "relaxationCollisionModel.H"
+#include "dsmcCollisionModel.H"
+#include "bgkCollisionModel.H"
 
 #include "uniGasBoundaries.H"
 #include "uniGasAllConfigurations.H"
@@ -61,7 +61,7 @@ SourceFiles
 #include "uniGasHybridDecomposition.H"
 
 #include "uniGasReactions.H"
-#include "binaryCollisionPartner.H"
+#include "dsmcCollisionPartner.H"
 #include "boundaryMeasurements.H"
 #include "cellMeasurements.H"
 
@@ -88,22 +88,22 @@ private:
 
     // Private data
 
-        //- Variables for identifying different binary/collision collision models
-        const label binCollModel_;
+        //- Variables for identifying different dsmc-bgk collision models
+        const label dsmcCollModelId_;
 
-        const label relCollModel_;
+        const label bgkCollModelId_;
 
-        const word binaryCollModel_;
+        const word dsmcCollModel_;
         
-        const word relaxationCollModel_;
+        const word bgkCollModel_;
         
         const word hybridCollModel_;
 
-        //- A variable holding the simulation collision type (binary, relaxation, hybrid)
+        //- A variable holding the simulation collision type (dsmc, bgk, hybrid)
         word collisionModel_;
 
-        //- A variable holding the simulation relaxation scheme (required for correct USP heat flux vector and pressure tensor calculation)
-        word relaxationCollisionModelName_;
+        //- A variable holding the simulation bgk scheme (required for correct USP heat flux vector and pressure tensor calculation)
+        word bgkCollisionModelName_;
 
         // A boolean vector containing the solution dimensions
         boolVector solutionDimensions_;
@@ -197,8 +197,8 @@ private:
         // A field containing the number of subCells in each directions
         volVectorField subCellLevels_;
 
-        // A field containing the collision model for each cell 0:stochasticCollision 1:stochasticRelaxation
-        volScalarField cellCollisionModel_;
+        // A field containing the collision model for each cell 0:dsmc 1:bgk
+        volScalarField cellCollisionModelId_;
 
         //- A field holding the remainder from the previous collision selections
         scalarField collisionSelectionRemainder_;
@@ -227,14 +227,14 @@ private:
 
         // References to the cloud sub - models
 
-            //- Binary collision model
-            autoPtr<binaryCollisionModel> binaryCollisionModel_;
+            //- dsmc collision model
+            autoPtr<dsmcCollisionModel> dsmcCollisionModel_;
 
             //- Collision selection routine model
-            autoPtr<binaryCollisionPartner> binaryCollisionPartnerModel_;
+            autoPtr<dsmcCollisionPartner> dsmcCollisionPartnerModel_;
 
             //- Collision selection routine model
-            autoPtr<relaxationCollisionModel> relaxationCollisionModel_;
+            autoPtr<bgkCollisionModel> bgkCollisionModel_;
 
             //- Hybrid decomposer
             autoPtr<uniGasHybridDecomposition> hybridDecompositionModel_;
@@ -271,9 +271,6 @@ private:
         //- Calculate collisions between molecules
         void collisions();
 
-        //- Relax particles
-        void relaxations();
-
         //- Decompose domain in hybrid simulation
         void decomposition();
 
@@ -304,14 +301,14 @@ public:
 
     // Member Functions
 
-        //- Return binary collision model ID
-        inline label binCollModel() const;
+        //- Return dsmc collision model ID
+        inline label dsmcCollModelId() const;
 
-        //- Return relaxation collision model ID
-        inline label relCollModel() const;
+        //- Return bgk collision model ID
+        inline label bgkCollModelId() const;
 
-        //- Return relaxation collision model name
-        inline word relaxationCollisionModelName() const;
+        //- Return bgk collision model name
+        inline word bgkCollisionModelName() const;
 
         //- Return the particle IDs corresponding to the particle names read
         //- from the input dictionary
@@ -351,9 +348,6 @@ public:
         //- Return the cell weighting factor
         inline scalar cellWF(const label& cell) const;
 
-        //- Return the cellCollisionModel field
-        inline label cellCollModel(const label& cell) const;
-
         //- Return the radius of the domain for axisymmetric cases
         inline scalar radialExtent() const;
 
@@ -384,7 +378,7 @@ public:
 
         //- Return the cellCollisionModel field.  non - const access to allow
         //- updating through decomposer class.
-        inline volScalarField& cellCollModel();
+        inline volScalarField& cellCollModelId();
 
         //- Return the collision selection remainder field.  non - const
         //- access to allow updating.
@@ -539,13 +533,13 @@ public:
         inline const uniGasFaceTracker& tracker() const;
         inline uniGasFaceTracker& tracker();
 
-        //- Return reference to binary binary collision model
-        inline const binaryCollisionModel& binaryCollision() const;
-        inline binaryCollisionModel& binaryCollision();
+        //- Return reference to dsmc collision model
+        inline const dsmcCollisionModel& dsmcCollision() const;
+        inline dsmcCollisionModel& dsmcCollision();
 
-        //- Return reference to binary relaxation collision model
-        inline const relaxationCollisionModel& relaxationCollision() const;
-        inline relaxationCollisionModel& relaxationCollision();
+        //- Return reference to bgk collision model
+        inline const bgkCollisionModel& bgkCollision() const;
+        inline bgkCollisionModel& bgkCollision();
 
         //- Return reference to decomposition model
         inline const uniGasHybridDecomposition& hybridDecomposition() const;

@@ -23,27 +23,28 @@ uniGasInitialisation/derived/uniGasZoneFill/uniGasZoneFill.C
 uniGasInitialisation/derived/uniGasMeshFieldFill/uniGasMeshFieldFill.C
 
 
-/* BINARY COLLISIONS */
-binaryCollisions/basic/binaryCollisionModel/binaryCollisionModel.C
-binaryCollisions/derived/noBinaryCollision/noBinaryCollision.C
-binaryCollisions/derived/variableHardSphere/variableHardSphere.C
-binaryCollisions/derived/variableSoftSphere/variableSoftSphere.C
-binaryCollisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
-binaryCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
+/* DSMC COLLISIONS */
+dsmcCollisions/basic/dsmcCollisionModel/dsmcCollisionModel.C
+dsmcCollisions/derived/noDSMCCollision/noDSMCCollision.C
+dsmcCollisions/derived/variableHardSphere/variableHardSphere.C
+dsmcCollisions/derived/variableSoftSphere/variableSoftSphere.C
+dsmcCollisions/derived/LarsenBorgnakkeVariableHardSphere/LarsenBorgnakkeVariableHardSphere.C
+dsmcCollisions/derived/LarsenBorgnakkeVariableSoftSphere/LarsenBorgnakkeVariableSoftSphere.C
 
 
-/* BINARY COLLISION PARTNER SELECTION ROUTINES */
-binaryCollisionPartner/basic/binaryCollisionPartner.C
-binaryCollisionPartner/derived/noTimeCounter/noTimeCounter.C
-binaryCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
+/* DSMC COLLISION PARTNER SELECTION ROUTINES */
+dsmcCollisionPartner/basic/dsmcCollisionPartner.C
+dsmcCollisionPartner/derived/noTimeCounter/noTimeCounter.C
+dsmcCollisionPartner/derived/noTimeCounterSubCycled/noTimeCounterSubCycled.C
 
 
-/* RELAXATIONS COLLISIONS */
-relaxationCollisions/basic/relaxationCollisionModel/relaxationCollisionModel.C
-relaxationCollisions/derived/stochasticParticleBGK/stochasticParticleBGK.C
-relaxationCollisions/derived/stochasticParticleESBGK/stochasticParticleESBGK.C
-relaxationCollisions/derived/stochasticParticleSBGK/stochasticParticleSBGK.C
-relaxationCollisions/derived/unifiedStochasticParticleSBGK/unifiedStochasticParticleSBGK.C
+/* BGK COLLISIONS */
+bgkCollisions/basic/bgkCollisionModel/bgkCollisionModel.C
+bgkCollisions/derived/noBGKCollision/noBGKCollision.C
+bgkCollisions/derived/stochasticParticleBGK/stochasticParticleBGK.C
+bgkCollisions/derived/stochasticParticleESBGK/stochasticParticleESBGK.C
+bgkCollisions/derived/stochasticParticleSBGK/stochasticParticleSBGK.C
+bgkCollisions/derived/unifiedStochasticParticleSBGK/unifiedStochasticParticleSBGK.C
 
 
 /* REACTIONS */

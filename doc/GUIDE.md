@@ -120,9 +120,9 @@ adaptiveProperties
 // Collision Models
 // ~~~~~~~~~~~~~~~~~~~~~~
 collisionModel              hybrid;
-relaxationCollisionModel    unifiedStochasticParticleSBGK;
-binaryCollisionPartnerModel noTimeCounter;
-binaryCollisionModel        variableHardSphere;
+bgkCollisionModel           unifiedStochasticParticleSBGK;
+dsmcCollisionPartnerModel   noTimeCounter;
+dsmcCollisionModel          variableHardSphere;
 collisionProperties
 {
     Tref                    273;
@@ -180,13 +180,13 @@ Referring to the example above, lines 1-16 are the standard OpenFOAM dictionary 
 **maxTimeStepMCTRatio**: maximum time step to local mean collision time ratio (recommended < 0.2).\
 **maxCourantNumber**: maximum Courant number (recommended < 0.5).\
 **maxSubCellSizeMFPRatio**: maximum subcell to local mean free path ratio (recommended <0 .5).\
-**collisionModel**: collision model for pure DSMC (binary), pure SP/USP (relaxation) and hybrid SP/USP (hybrid) gas flow simulation.\
-**relaxationCollisionModel**: SP/USP relaxation model (stochasticParticleBGK, stochasticParticleSBGK, stochasticParticleESBGK, unifiedStochasticParticleSBGK).\
-**binaryCollisionPartnerModel**: DSMC binary collision partner selection (noTimeCounter, noTimeCounterSubCycled).\
-**binaryCollisionModel**: DSMC binary collision model (noBinaryCollision,variableHardSphere, variableSoftSphere, LarsenBorgnakkeVariableSoftSphere).\
+**collisionModel**: collision model for pure DSMC (dsmc), pure SP/USP (bgk) and hybrid SP/USP-DSMC (hybrid) gas flow simulation.\
+**bgkCollisionModel**: SP/USP collision model (noBGKCollision, stochasticParticleBGK, stochasticParticleSBGK, stochasticParticleESBGK, unifiedStochasticParticleSBGK).\
+**dsmcCollisionPartnerModel**: DSMC collision partner selection (noTimeCounter, noTimeCounterSubCycled).\
+**dsmcCollisionModel**: DSMC collision model (noDsmcCollision, variableHardSphere, variableSoftSphere, LarsenBorgnakkeVariableSoftSphere).\
 **Tref**: reference particle diameter reference temperature.\
 **macroInterpolation**: boolean parameter for spatial interpolation of SP/USP macroscopic properties (required definition of interpolation schemes in fvSchems dictionary).\
-**theta**: time-averaging coefficient for stochasticParticleSBGK and unifiedStochasticParticleSBGK relaxation models.\
+**theta**: time-averaging coefficient for stochasticParticleSBGK and unifiedStochasticParticleSBGK collision models.\
 **typeIdList**: list of gas species.\
 **moleculeProperties**: sub-dictionary containing the properties of all the gas species defined in typeIdList.
 
@@ -495,7 +495,7 @@ interpolationSchemes
 {
     default         	linear;
     Prandtl         	cellPoint;
-    relaxFreq       	cellPoint;
+    collFreq        	cellPoint;
     p              	    cellPoint;
     translationalT  	cellPoint;
     UMean               cellPoint;
@@ -516,7 +516,7 @@ fluxRequired
 // ************************************************************************* //
 ```
 
-From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is used by uniGasFoam. The default linear scheme is used in Laplacian smoothing implemented to reduce the statistical noise of macroscopic quantities, such as gas density, temperature and velocity used in adaptive schemes and domain decomposition modules. The cellPoint scheme is used to reconstruct macroscopic fields, such as gas Prandtl number, relaxation frequency, pressure, temperature etc to increase the spatial accuracy of SP and USP schemes. The macroscopic field reconstruction is only implemented if macroInterpolation is enabled in the uniGasProperties dictionary.
+From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is used by uniGasFoam. The default linear scheme is used in Laplacian smoothing implemented to reduce the statistical noise of macroscopic quantities, such as gas density, temperature and velocity used in adaptive schemes and domain decomposition modules. The cellPoint scheme is used to reconstruct macroscopic fields, such as gas Prandtl number, collision frequency, pressure, temperature etc to increase the spatial accuracy of SP and USP schemes. The macroscopic field reconstruction is only implemented if macroInterpolation is enabled in the uniGasProperties dictionary.
 
 </p>
 </details>

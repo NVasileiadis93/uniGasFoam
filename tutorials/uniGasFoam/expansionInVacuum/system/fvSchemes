@@ -37,7 +37,14 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default         linear;
+    default             linear;
+    Prandtl         	cellPoint;
+    collFreq       	    cellPoint;
+    p               	cellPoint;
+    translationalT      cellPoint;
+    UMean		        cellPoint;
+    heatFluxVector      cellPoint;
+    shearStressTensor   cellPoint;
 }
 
 snGradSchemes
