@@ -145,37 +145,8 @@ Foam::uniGasMassFluxSurface::uniGasMassFluxSurface
             zoneSurfaceArea_ += 0.5*mag(mesh_.faceAreas()[faceI]);
         }
 
-        if (Pstream::parRun())
-        {
-            for (int p = 0; p < Pstream::nProcs(); ++p)
-            {
-                if (p != Pstream::myProcNo())
-                {
-                    const int proc = p;
-                    {
-                        OPstream toNeighbour(Pstream::commsTypes::blocking, proc);
-                        toNeighbour << zoneSurfaceArea_;
-                    }
-                }
-            }
+        reduce(zoneSurfaceArea_, sumOp<scalar>());
 
-            // receiving
-            for (int p = 0; p < Pstream::nProcs(); ++p)
-            {
-                if (p != Pstream::myProcNo())
-                {
-                    scalar zoneSurfaceAreaProc;
-
-                    const int proc = p;
-                    {
-                        IPstream fromNeighbour(Pstream::commsTypes::blocking, proc);
-                        fromNeighbour >> zoneSurfaceAreaProc;
-                    }
-
-                    zoneSurfaceArea_ += zoneSurfaceAreaProc;
-                }
-            }
-        }
     }
     else
     {
@@ -185,7 +156,7 @@ Foam::uniGasMassFluxSurface::uniGasMassFluxSurface
         }
     }
 
-    Info << "zoneSurfaceArea_ = " << zoneSurfaceArea_ << endl;
+    Info << faceZoneName_ << " area: " << zoneSurfaceArea_ << endl;
 
 }
 
@@ -430,11 +401,6 @@ void Foam::uniGasMassFluxSurface::updateProperties(const dictionary& dict)
     uniGasField::updateProperties(dict);
 
     propsDict_.readIfPresent("averagingAcrossManyRuns", averagingAcrossManyRuns_);
-
-    if (averagingAcrossManyRuns_)
-    {
-        Info << "averagingAcrossManyRuns initiated." << endl;
-    }
 
 }
 // ************************************************************************* //
