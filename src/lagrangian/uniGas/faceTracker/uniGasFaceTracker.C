@@ -92,14 +92,22 @@ void uniGasFaceTracker::updateFields
     uniGasParcel& p
 )
 {   
-    const label crossedFace = p.face();
-    const label typeId = p.typeId();
-    const uniGasParcel::constantProperties& constProp = cloud_.constProps(typeId);
+    const label& crossedFace = p.face();
+    const label& typeId = p.typeId();
+    const uniGasParcel::constantProperties& constProps = cloud_.constProps(typeId);
     const scalar& CWF = p.CWF();
     const scalar& RWF = cloud_.axiRWF(p.position());
-    const scalar& mass = constProp.mass();
-    const vector& U = p.U();        
-    const scalar& e = mass*(U & U) + p.ERot();
+    const scalar& mass = constProps.mass();
+    const vector& U = p.U();
+    
+    scalar e = 0.5*mass*(U & U) + p.ERot() + constProps.electronicEnergyList()[p.ELevel()];
+    if (constProps.vibrationalDoF() > 0)
+    {
+        forAll(p.vibLevel(), i)
+        {
+            e += p.vibLevel()[i]*constProps.thetaV()[i]*physicoChemical::k.value();
+        }
+    }
 
     // check which patch was hit
     const label patchId = mesh_.boundaryMesh().whichPatch(crossedFace);
