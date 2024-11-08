@@ -418,7 +418,7 @@ Foam::uniGasCloud::uniGasCloud
     maxCellWeightRatio_(0.05),
     maxSmoothingPasses_(500),
     axisymmetric_(particleProperties_.get<Switch>("axisymmetricSimulation")),
-    radialExtent_(0.0),
+    radialExtent_(1.0),
     maxRWF_(1.0),
     nTerminalOutputs_(mesh.time().controlDict().get<label>("nTerminalOutputs")),
     previousTimeDirs_(),
