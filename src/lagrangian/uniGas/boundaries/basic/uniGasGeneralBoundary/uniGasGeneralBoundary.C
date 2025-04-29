@@ -154,7 +154,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-            accumulatedParcelsToInsert_[i][f] +=
+            accumulatedParcelsToInsert_[i][f] =
             (
                 fA*numDen[i]*deltaT*mostProbableSpeed
                *(
@@ -224,7 +224,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-            accumulatedParcelsToInsert_[i][f] +=
+            accumulatedParcelsToInsert_[i][f] =
             (
                 fA*numDen[i]*deltaT*mostProbableSpeed
                *(
@@ -281,7 +281,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-            accumulatedParcelsToInsert_[i][f] +=
+            accumulatedParcelsToInsert_[i][f] =
             (
                 fA*numDen[i][f]*deltaT*mostProbableSpeed
                *(
@@ -352,7 +352,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-            accumulatedParcelsToInsert_[i][f] +=
+            accumulatedParcelsToInsert_[i][f] =
             (
                 fA*numDen[i][f]*deltaT*mostProbableSpeed
                *(
@@ -410,7 +410,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faceI]);
 
-            accumulatedParcelsToInsert_[iD][f] +=
+            accumulatedParcelsToInsert_[iD][f] =
                 molFractions[iD]
                *(
                     fA*numDen*deltaT*mostProbableSpeed
@@ -466,7 +466,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faces_[f]]);
 
-            accumulatedParcelsToInsert_[iD][f] +=
+            accumulatedParcelsToInsert_[iD][f] =
                 molFractions[iD]
                *(
                     fA*numDen[f]*deltaT*mostProbableSpeed
@@ -520,7 +520,7 @@ void Foam::uniGasGeneralBoundary::computeParcelsToInsert
             scalar CWF = cloud_.cellWF(cells_[f]);
             scalar RWF = cloud_.axiRWF(cloud_.mesh().faceCentres()[faces_[f]]);
 
-            accumulatedParcelsToInsert_[iD][f] +=
+            accumulatedParcelsToInsert_[iD][f] =
             (
                 fA*numDen[iD][f]*deltaT*mostProbableSpeed
                *(
@@ -607,8 +607,6 @@ void Foam::uniGasGeneralBoundary::insertParcels
             {
                 ++nParcelsToInsert;
             }
-
-            faceAccumulator -= nParcelsToInsert;
 
             const scalar mass = cloud_.constProps(typeId).mass();
 
@@ -846,8 +844,6 @@ void Foam::uniGasGeneralBoundary::insertParcels
                 ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nParcelsToInsert;
-
             const scalar mass = cloud_.constProps(typeId).mass();
 
             for (label i = 0; i < nParcelsToInsert; ++i)
@@ -1080,8 +1076,6 @@ void Foam::uniGasGeneralBoundary::insertParcels
             {
                 ++nParcelsToInsert;
             }
-
-            faceAccumulator -= nParcelsToInsert;
 
             scalar mass = cloud_.constProps(typeId).mass();
 
@@ -1320,8 +1314,6 @@ void Foam::uniGasGeneralBoundary::insertParcels
                 ++nParcelsToInsert;
             }
 
-            faceAccumulator -= nParcelsToInsert;
-
             scalar mass = cloud_.constProps(typeId).mass();
 
             for (label i = 0; i < nParcelsToInsert; ++i)
@@ -1553,15 +1545,13 @@ void Foam::uniGasGeneralBoundary::insertParcels
 
             // Number of whole particles to insert
             label nParcelsToInsert = max(label(faceAccumulator), 0);
-            
+
             // Add another particle with a probability proportional to the
             // remainder of taking the integer part of faceAccumulator
             if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
                 ++nParcelsToInsert;
             }
-
-            faceAccumulator -= nParcelsToInsert;
 
             const label typeId = typeIds_[iD];
             const scalar pMass = cloud_.constProps(typeId).mass();
@@ -1778,15 +1768,17 @@ void Foam::uniGasGeneralBoundary::insertParcels
             vector t2 = n^t1;
             t2 /= mag(t2);
 
-            label nParcelsToInsert = label(accumulatedParcelsToInsert_[iD][f]);
+            scalar& faceAccumulator = accumulatedParcelsToInsert_[iD][f];
 
-            if ((nParcelsToInsert - accumulatedParcelsToInsert_[iD][f]) > rndGen.sample01<scalar>())
+            // Number of whole particles to insert
+            label nParcelsToInsert = max(label(faceAccumulator), 0);
+
+            // Add another particle with a probability proportional to the
+            // remainder of taking the integer part of faceAccumulator
+            if ((faceAccumulator - nParcelsToInsert) > rndGen.sample01<scalar>())
             {
                 ++nParcelsToInsert;
             }
-
-            // Note: remainder has been set
-            accumulatedParcelsToInsert_[iD][f] -= nParcelsToInsert;
 
             const label typeId = typeIds_[iD];
             const scalar mass = cloud_.constProps(typeId).mass();
