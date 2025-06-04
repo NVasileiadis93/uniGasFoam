@@ -1355,8 +1355,8 @@ void Foam::uniGasCloud::cellWeighting()
         {
 
             const scalar oldCellWeight = p->CWF();
-            p->CWF() = cellWF(p->cell());
-            const scalar newCellWeight = p->CWF();
+            const scalar newCellWeight = cellWF(p->cell());
+            p->CWF() = newCellWeight;
 
             if (oldCellWeight > newCellWeight)
             {
@@ -1427,10 +1427,9 @@ void Foam::uniGasCloud::axisymmetricWeighting()
     {
         for (uniGasParcel* p : cellOccupancy[celli])
         {
-            const point& cC = mesh_.cellCentres()[celli];
-            const scalar oldRadialWeight = p->RWF();
-            const scalar newRadialWeight = axiRWF(cC);
 
+            const scalar oldRadialWeight = p->RWF();
+            const scalar newRadialWeight = axiRWF(p->position());
             p->RWF() = newRadialWeight;
 
             if (oldRadialWeight > newRadialWeight)
@@ -1451,13 +1450,13 @@ void Foam::uniGasCloud::axisymmetricWeighting()
 
                     addNewParcel
                     (
-                        position,
-                        U,
+                        p->position(),
+                        p->U(),
                         p->CWF(),
                         p->RWF(),
                         p->ERot(),
                         p->ELevel(),
-                        celli,
+                        p->cell(),
                         p->typeId(),
                         p->newParcel(),
                         p->vibLevel()
@@ -1476,13 +1475,13 @@ void Foam::uniGasCloud::axisymmetricWeighting()
 
                     addNewParcel
                     (
-                        position,
-                        U,
+                        p->position(),
+                        p->U(),
                         p->CWF(),
                         p->RWF(),
                         p->ERot(),
                         p->ELevel(),
-                        celli,
+                        p->cell(),
                         p->typeId(),
                         p->newParcel(),
                         p->vibLevel()

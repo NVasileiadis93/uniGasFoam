@@ -977,8 +977,8 @@ void Foam::stochasticParticleSBGK::conserveMomentumAndEnergy
 
         const scalar mass = cloud_.constProps(p.typeId()).mass();
         const vector& U = p.U();
-        const scalar& CWF = cloud_.cellWF(p.cell());
-        const scalar& RWF = cloud_.axiRWF(p.position());
+        const scalar& CWF = p.CWF();
+        const scalar& RWF = p.RWF();
 
         linearKEMeanXnParticle += mass*(U & U)*CWF*RWF*nParticle;
         momentumMeanXnParticle += mass*U*CWF*RWF*nParticle;
