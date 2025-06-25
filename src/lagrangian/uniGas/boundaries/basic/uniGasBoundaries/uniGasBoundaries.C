@@ -27,8 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "uniGasBoundaries.H"
-#include "emptyPolyPatch.H"
-
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -421,8 +419,6 @@ void uniGasBoundaries::checkCyclicBoundaryModels(const polyMesh& mesh)
 
 void uniGasBoundaries::checkPatchBoundaryModels(const polyMesh& mesh)
 {
-    // Check that all poly-patches defined within blockMeshDict,
-    // each have one model.
 
     label nPolyPatches = 0;
 
@@ -430,6 +426,27 @@ void uniGasBoundaries::checkPatchBoundaryModels(const polyMesh& mesh)
     {
         const polyPatch& patch = mesh.boundaryMesh()[patchi];
 
+        // Check that all poly-patches types are spelled correctly
+        if (patch.type() == "genericPatch")
+        {
+                FatalIOErrorInFunction(uniGasBoundariesDict_)
+                    << " Wrong type for patch: "
+                    << patch.name()
+                    << abort(FatalIOError);
+        }
+
+        // Check all wedge poly-patches are switched to symmetryPlane poly-patches
+        if (isA<wedgePolyPatch>(patch))
+        {
+                FatalIOErrorInFunction(uniGasBoundariesDict_)
+                    << " Wedge patch type not supported, [name: "
+                    << patch.name()
+                    << "]. For axisymmetric case change patch type to symmetryPlane."
+                    << abort(FatalIOError);
+        }
+
+        // Check that all poly-patches defined within blockMeshDict,
+        // each have one model.
         if (!polyPatch::constraintType(patch.type()))
         {
             ++nPolyPatches;
@@ -469,6 +486,7 @@ void uniGasBoundaries::checkPatchBoundaryModels(const polyMesh& mesh)
             << "models = " << nPatchBoundaryModels_
             << abort(FatalIOError);
     }
+    
 }
 
 

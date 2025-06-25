@@ -46,6 +46,9 @@ SourceFiles
 #include "tensorField.H"
 #include "Time.H"
 #include "Random.H"
+#include "emptyPolyPatch.H"
+#include "wedgePolyPatch.H"
+#include "processorCyclicPolyPatch.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

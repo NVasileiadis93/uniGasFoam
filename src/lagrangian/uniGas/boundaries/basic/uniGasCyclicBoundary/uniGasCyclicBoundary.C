@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "uniGasCyclicBoundary.H"
-#include "processorCyclicPolyPatch.H"
 #include "uniGasBoundaries.H"
 #include "fvMesh.H"
 
