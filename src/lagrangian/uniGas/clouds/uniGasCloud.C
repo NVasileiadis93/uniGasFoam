@@ -683,7 +683,7 @@ Foam::uniGasCloud::uniGasCloud
             FatalErrorInFunction
                 << "Unknown collisionModel type " << collisionModel_ << endl << endl
                 << "Valid collisionModel types :" << endl
-                << "3(" << collisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
+                << "3(" << dsmcCollisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
                 << exit(FatalError);        
         }
 
@@ -741,7 +741,7 @@ Foam::uniGasCloud::uniGasCloud
             FatalErrorInFunction
                 << "Unknown collisionModel type " << collisionModel_ << endl << endl
                 << "Valid collisionModel types :" << endl
-                << "3(" << collisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
+                << "3(" << dsmcCollisionModel_ << " " << bgkCollModel_ << " " << hybridCollModel_ << ")"
                 << exit(FatalError);         
         }
 
