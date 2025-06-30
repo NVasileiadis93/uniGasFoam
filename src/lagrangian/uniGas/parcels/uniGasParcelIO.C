@@ -95,28 +95,28 @@ void Foam::uniGasParcel::readFields(Cloud<uniGasParcel>& c)
 
     particle::readFields(c);
 
-    IOField<vector>U(c.fieldIOobject("U", IOobject::MUST_READ));
+    IOField<vector>U(c.newIOobject("U", IOobject::MUST_READ));
     c.checkFieldIOobject(c, U);
 
-    IOField<scalar>CWF(c.fieldIOobject("cellWeight", IOobject::MUST_READ));
+    IOField<scalar>CWF(c.newIOobject("cellWeight", IOobject::MUST_READ));
     c.checkFieldIOobject(c, CWF);
 
-    IOField<scalar>RWF(c.fieldIOobject("radialWeight", IOobject::MUST_READ));
+    IOField<scalar>RWF(c.newIOobject("radialWeight", IOobject::MUST_READ));
     c.checkFieldIOobject(c, RWF);
 
-    IOField<scalar>ERot(c.fieldIOobject("ERot", IOobject::MUST_READ));
+    IOField<scalar>ERot(c.newIOobject("ERot", IOobject::MUST_READ));
     c.checkFieldIOobject(c, ERot);
 
-    IOField<label> ELevel(c.fieldIOobject("ELevel", IOobject::MUST_READ));
+    IOField<label> ELevel(c.newIOobject("ELevel", IOobject::MUST_READ));
     c.checkFieldIOobject(c, ELevel);
 
-    IOField<label> typeId(c.fieldIOobject("typeId", IOobject::MUST_READ));
+    IOField<label> typeId(c.newIOobject("typeId", IOobject::MUST_READ));
     c.checkFieldIOobject(c, typeId);
 
-    IOField<label> newParcel(c.fieldIOobject("newParcel", IOobject::MUST_READ));
+    IOField<label> newParcel(c.newIOobject("newParcel", IOobject::MUST_READ));
     c.checkFieldIOobject(c, newParcel);
 
-    IOField<labelField> vibLevel(c.fieldIOobject("vibLevel",
+    IOField<labelField> vibLevel(c.newIOobject("vibLevel",
                                                  IOobject::MUST_READ));
     c.checkFieldIOobject(c, vibLevel);
 
@@ -144,14 +144,14 @@ void Foam::uniGasParcel::writeFields(const Cloud<uniGasParcel>& c)
 
     label np = c.size();
 
-    IOField<vector> U(c.fieldIOobject("U", IOobject::NO_READ), np);
-    IOField<scalar> CWF(c.fieldIOobject("cellWeight", IOobject::NO_READ), np);
-    IOField<scalar> RWF(c.fieldIOobject("radialWeight", IOobject::NO_READ), np);
-    IOField<scalar> ERot(c.fieldIOobject("ERot", IOobject::NO_READ), np);
-    IOField<label> ELevel(c.fieldIOobject("ELevel", IOobject::NO_READ), np);
-    IOField<label> typeId(c.fieldIOobject("typeId", IOobject::NO_READ), np);
-    IOField<label> newParcel(c.fieldIOobject("newParcel", IOobject::NO_READ), np);
-    IOField<labelField> vibLevel(c.fieldIOobject("vibLevel", IOobject::NO_READ), np);
+    IOField<vector> U(c.newIOobject("U", IOobject::NO_READ), np);
+    IOField<scalar> CWF(c.newIOobject("cellWeight", IOobject::NO_READ), np);
+    IOField<scalar> RWF(c.newIOobject("radialWeight", IOobject::NO_READ), np);
+    IOField<scalar> ERot(c.newIOobject("ERot", IOobject::NO_READ), np);
+    IOField<label> ELevel(c.newIOobject("ELevel", IOobject::NO_READ), np);
+    IOField<label> typeId(c.newIOobject("typeId", IOobject::NO_READ), np);
+    IOField<label> newParcel(c.newIOobject("newParcel", IOobject::NO_READ), np);
+    IOField<labelField> vibLevel(c.newIOobject("vibLevel", IOobject::NO_READ), np);
 
     label i = 0;
     forAllConstIter(uniGasCloud, c, iter)

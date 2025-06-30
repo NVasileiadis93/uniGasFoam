@@ -324,7 +324,7 @@ bool Foam::atomAtomIonisationSameSpecies::outputResults
 
         numberDensities_[0] = (mols*cloud().nParticle())/volume;
 
-        const scalar& deltaT = mesh_.time().deltaT().value();
+        const scalar& deltaT = mesh_.time().deltaTValue();
 
         if ((numberDensities_[0] > 0.0))
         {

@@ -1019,25 +1019,30 @@ Foam::scalar Foam::uniGasCloud::equipartitionRotationalEnergy
 
 Foam::labelList Foam::uniGasCloud::equipartitionVibrationalEnergyLevel
 (
-    const scalar temperature,
-    const scalar vibrationalDof,
-    const label typeId
+    scalar temperature,
+    scalar vibrationalDof,
+    label typeId
 )
 {
     labelList vibLevel(vibrationalDof, 0);
-
+    
     if (vibrationalDof < SMALL)
     {
         return vibLevel;
     }
     else
-    {
+    {  
         forAll(vibLevel, i)
         {
-            vibLevel[i] =
-               -log(rndGen_.sample01<scalar>())
-               *temperature
-               /constProps(typeId).thetaV()[i];
+
+            scalar rand = -1.0;
+            do
+            {
+                rand = rndGen_.sample01<scalar>();
+            } while (rand < VSMALL);
+
+            vibLevel[i] = -log(rand)*temperature/constProps(typeId).thetaV()[i];
+
         }
     }
 
@@ -1444,10 +1449,6 @@ void Foam::uniGasCloud::axisymmetricWeighting()
 
                     const vector position(p->position());
 
-                    vector U = p->U();
-
-                    //U.z() *= -1.0;
-
                     addNewParcel
                     (
                         p->position(),
@@ -1468,10 +1469,6 @@ void Foam::uniGasCloud::axisymmetricWeighting()
                 if (prob > rndGen_.sample01<scalar>())
                 {
                     const vector position(p->position());
-
-                    vector U = p->U();
-
-                    //U.z() *= -1.0;
 
                     addNewParcel
                     (

@@ -677,7 +677,7 @@ void Foam::uniGasVolFields::calculateWallUnitVectors()
 
         if (isA<wallPolyPatch>(pPatch))
         {
-            const vectorField& fC = pPatch.faceCentres();
+            const vectorField fC = pPatch.faceCentres();
 
             forAll(n_[patchi], facei)
             {

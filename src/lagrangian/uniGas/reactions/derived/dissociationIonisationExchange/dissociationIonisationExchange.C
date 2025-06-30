@@ -1075,7 +1075,7 @@ bool Foam::dissociationIonisationExchange::outputResults
         numberDensities_[0] = (mols[0]*cloud().nParticle())/volume;
         numberDensities_[1] = (mols[1]*cloud().nParticle())/volume;
 
-        const scalar deltaT = mesh_.time().deltaT().value();
+        const scalar deltaT = mesh_.time().deltaTValue();
 
         if ((numberDensities_[0] > 0.0) && (numberDensities_[1] > 0.0))
         {
