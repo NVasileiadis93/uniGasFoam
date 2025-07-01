@@ -493,14 +493,7 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default         	linear;
-    Prandtl         	cellPoint;
-    collFreq        	cellPoint;
-    p              	    cellPoint;
-    translationalT  	cellPoint;
-    UMean               cellPoint;
-    heatFluxVector	    cellPoint;
-    shearStressTensor   cellPoint;
+    default         linear;
 }
 
 snGradSchemes
@@ -516,7 +509,7 @@ fluxRequired
 // ************************************************************************* //
 ```
 
-From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is used by uniGasFoam. The default linear scheme is used in Laplacian smoothing implemented to reduce the statistical noise of macroscopic quantities, such as gas density, temperature and velocity used in adaptive schemes and domain decomposition modules. The cellPoint scheme is used to reconstruct macroscopic fields, such as gas Prandtl number, collision frequency, pressure, temperature etc to increase the spatial accuracy of SP and USP schemes. The macroscopic field reconstruction is only implemented if macroInterpolation is enabled in the uniGasProperties dictionary.
+From the fvSchemes dictionary only the interpolationSchemes sub-dictionary is used by uniGasFoam. The default linear scheme is used in Laplacian smoothing implemented to reduce the statistical noise of macroscopic quantities, such as gas density, temperature and velocity used in adaptive schemes and domain decomposition modules.
 
 </p>
 </details>

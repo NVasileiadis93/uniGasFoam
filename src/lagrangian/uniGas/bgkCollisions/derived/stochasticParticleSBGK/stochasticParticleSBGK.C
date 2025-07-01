@@ -860,12 +860,11 @@ void Foam::stochasticParticleSBGK::collide()
 
     if (macroInterpolation_)
     {
-        dictionary interpolationDict = mesh_.schemesDict().subDict("interpolationSchemes");
-        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, Prandtl_);
-        pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
-        translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
-        UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
-        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, heatFluxVector_);
+        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", Prandtl_);
+        pInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", p_);
+        translationalTInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", translationalT_);
+        UMeanInterp = Foam::interpolationCellPoint<vector>::New("cellPoint", UMean_);
+        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New("cellPoint", heatFluxVector_);
     }
 
     forAll(cellOccupancy, cell)

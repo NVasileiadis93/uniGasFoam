@@ -740,12 +740,11 @@ void Foam::stochasticParticleESBGK::collide()
 
     if (macroInterpolation_)
     {
-        dictionary interpolationDict = mesh_.schemesDict().subDict("interpolationSchemes");
-        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, Prandtl_);
-        pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
-        translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
-        UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
-        pressureTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, pressureTensor_);
+        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", Prandtl_);
+        pInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", p_);
+        translationalTInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", translationalT_);
+        UMeanInterp = Foam::interpolationCellPoint<vector>::New("cellPoint", UMean_);
+        pressureTensorInterp = Foam::interpolationCellPoint<tensor>::New("cellPoint", pressureTensor_);
     }
 
     forAll(cellOccupancy, cell)

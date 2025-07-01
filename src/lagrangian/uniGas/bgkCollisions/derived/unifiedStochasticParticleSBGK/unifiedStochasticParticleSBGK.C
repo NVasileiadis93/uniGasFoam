@@ -892,14 +892,13 @@ void Foam::unifiedStochasticParticleSBGK::collide()
 
     if (macroInterpolation_)
     {
-        dictionary interpolationDict = mesh_.schemesDict().subDict("interpolationSchemes");
-        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, Prandtl_);
-        collFreqInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, collFreq_);
-        pInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, p_);
-        translationalTInterp = Foam::interpolationCellPoint<scalar>::New(interpolationDict, translationalT_);
-        UMeanInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, UMean_);
-        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New(interpolationDict, heatFluxVector_);
-        shearStressTensorInterp = Foam::interpolationCellPoint<tensor>::New(interpolationDict, shearStressTensor_);
+        PrandtlInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", Prandtl_);
+        collFreqInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", collFreq_);
+        pInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", p_);
+        translationalTInterp = Foam::interpolationCellPoint<scalar>::New("cellPoint", translationalT_);
+        UMeanInterp = Foam::interpolationCellPoint<vector>::New("cellPoint", UMean_);
+        heatFluxVectorInterp = Foam::interpolationCellPoint<vector>::New("cellPoint", heatFluxVector_);
+        shearStressTensorInterp = Foam::interpolationCellPoint<tensor>::New("cellPoint", shearStressTensor_);
     }
 
     forAll(cellOccupancy, cell)
