@@ -341,11 +341,15 @@ void uniGasDynamicAdapter::calculateTimeStep()
 
     // Calculate maximum time step to mean collision time ratio
     scalar instMaxTimeStepMCTRatio = 0e0;
-    forAll(mesh_.cells(), cell)
     {
-        if (cloud_.bgkCollisionModelName() != "unifiedStochasticParticleSBGK" && instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
-        { 
-            instMaxTimeStepMCTRatio = timeStepMCTRatio_[cell];
+        forAll(mesh_.cells(), cell)
+        {
+            if (cloud_.bgkCollisionModelName() != "unifiedStochasticParticleSBGK" &&
+                cloud_.cellCollModelId()[cell] != cloud_.bgkCollModelId() &&
+                instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
+            { 
+                instMaxTimeStepMCTRatio = timeStepMCTRatio_[cell];
+            }
         }
     }
 

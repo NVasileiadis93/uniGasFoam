@@ -214,8 +214,8 @@ void Foam::uniGasMassFluxSurface::writeOut()
 
         dict.regIOobject::writeObject
         (
-            IOstreamOption(mesh_.time().writeFormat()),
-            true
+            IOstreamOption::ASCII,
+            dict.time().writeCompression()
         );
     }
 }
