@@ -9,7 +9,7 @@ To run uniGasFoam as a background process and output the case progress to a log 
 
 Like any other OpenFOAM solver, uniGasFoam can be run in parallel by decomposing the flow domain. To decompose the case and run uniGasFoam in parallel in the background and output the case progress to a log file, execute in sequence:
 * decomposePar
-* uniGasFoam -n [nprocs] -parallel > log &
+* mpirun -n [nprocs] uniGasFoam -parallel > log &
 
 # Case file structure
 The uniGasFoam solver follows the typical file structure of any OpenFOAM application. The base directory (referred to as *[case]*) contains all the directories and files required to run a uniGasFoam simulation. Under this directory, two additional directories named *system* and *constant* are needed.
