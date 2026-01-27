@@ -82,8 +82,10 @@ class uniGasDiffuseWallPatch
 
         dictionary propsDict_;
 
+        //- wall temperature
         scalar temperature_;
 
+        //- wall velocity
         vector velocity_;
 
 public:

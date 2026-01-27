@@ -2,6 +2,7 @@
 parcels/uniGasParcel.C
 parcels/uniGasParcelIO.C
 
+
 /* CLOUD */
 clouds/uniGasCloud.C
 
@@ -91,7 +92,7 @@ boundaries/derived/patchBoundaries/uniGasMixedDiffuseSpecularWallPatch/uniGasMix
 boundaries/derived/patchBoundaries/uniGasMixedDiffuseSpecularWallFieldPatch/uniGasMixedDiffuseSpecularWallFieldPatch.C
 boundaries/derived/patchBoundaries/uniGasCLLWallPatch/uniGasCLLWallPatch.C
 boundaries/derived/patchBoundaries/uniGasCLLWallFieldPatch/uniGasCLLWallFieldPatch.C
-
+boundaries/derived/patchBoundaries/uniGasAdsorbingWallPatch/uniGasAdsorbingWallPatch.C
 
 /* GENERAL BOUNDARY MODELS */
 boundaries/derived/generalBoundaries/uniGasFreeStreamInflowPatch/uniGasFreeStreamInflowPatch.C
