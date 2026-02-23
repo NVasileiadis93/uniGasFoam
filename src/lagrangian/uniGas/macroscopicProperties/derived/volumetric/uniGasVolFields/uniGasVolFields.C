@@ -663,7 +663,7 @@ void Foam::uniGasVolFields::writeOut()
         dict.regIOobject::writeObject
         (
             IOstreamOption::ASCII,
-            dict.time().writeCompression()
+            true
         );
     }
 }

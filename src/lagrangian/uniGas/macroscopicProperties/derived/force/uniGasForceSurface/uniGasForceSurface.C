@@ -129,7 +129,7 @@ void Foam::uniGasForceSurface::writeOut()
         dict.regIOobject::writeObject
         (
             IOstreamOption::ASCII,
-            dict.time().writeCompression()
+            true
         );
     }
 }
