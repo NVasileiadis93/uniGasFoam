@@ -23,7 +23,7 @@ mkdir -p $sendingDir
 
 # copy new files --------------------------------------------------------------
 foldersSrc="lagrangian"
-foldersApp="solvers"
+foldersApp="solvers utilities"
 
 for folder in $foldersSrc
 do
@@ -50,3 +50,10 @@ wclean all
 cd $sendingDir/applications/solvers/discreteMethods/uniGasFoam
 wclean
 wmake
+
+#---- utilities ----
+cd $sendingDir/applications/utilities/preProcessing/csvToUniGasFoam
+wclean
+wmake
+
+
