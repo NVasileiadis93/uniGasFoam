@@ -93,6 +93,8 @@ boundaries/derived/patchBoundaries/uniGasMixedDiffuseSpecularWallFieldPatch/uniG
 boundaries/derived/patchBoundaries/uniGasCLLWallPatch/uniGasCLLWallPatch.C
 boundaries/derived/patchBoundaries/uniGasCLLWallFieldPatch/uniGasCLLWallFieldPatch.C
 boundaries/derived/patchBoundaries/uniGasAdsorbingWallPatch/uniGasAdsorbingWallPatch.C
+boundaries/derived/patchBoundaries/uniGasVDMWallPatch/uniGasVDMWallPatch.C
+boundaries/derived/patchBoundaries/uniGasVDMWallFieldPatch/uniGasVDMWallFieldPatch.C
 
 /* GENERAL BOUNDARY MODELS */
 boundaries/derived/generalBoundaries/uniGasFreeStreamInflowPatch/uniGasFreeStreamInflowPatch.C
