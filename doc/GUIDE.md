@@ -180,6 +180,8 @@ Referring to the example above, lines 1-16 are the standard OpenFOAM dictionary 
 **maxTimeStepMCTRatio**: maximum time step to local mean collision time ratio (recommended < 0.2).\
 **maxCourantNumber**: maximum Courant number (recommended < 0.5).\
 **maxSubCellSizeMFPRatio**: maximum subcell to local mean free path ratio (recommended <0 .5).\
+**dsmcCellsTimeStepLimited** (optional, default false): when true, maxTimeStepMCTRatio limits the global time step in every DSMC cell whatever the bgkCollisionModel. With the default, no cell is collision-time limited when bgkCollisionModel is unifiedStochasticParticleSBGK, which is the published behaviour.\
+**maxSubCellLevels** (optional, default 10): maximum number of sub-cells per direction used by the transient adaptive sub-cell algorithm; must be at least 1. The default is the published value.\
 **collisionModel**: collision model for pure DSMC (dsmc), pure SP/USP (bgk) and hybrid SP/USP-DSMC (hybrid) gas flow simulation.\
 **bgkCollisionModel**: SP/USP collision model (noBGKCollision, stochasticParticleBGK, stochasticParticleSBGK, stochasticParticleESBGK, unifiedStochasticParticleSBGK).\
 **dsmcCollisionPartnerModel**: DSMC collision partner selection (noTimeCounter, noTimeCounterSubCycled).\

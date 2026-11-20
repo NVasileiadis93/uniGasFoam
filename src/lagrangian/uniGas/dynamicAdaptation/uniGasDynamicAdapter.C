@@ -50,6 +50,7 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
     timeStepAdaptation_(false),
     subCellAdaptation_(false),
     cellWeightAdaptation_(false),
+    dsmcCellsTimeStepLimited_(false),
     adaptationInterval_(),
     maxTimeStepMCTRatio_(),
     maxCourantNumber_(),
@@ -200,7 +201,19 @@ uniGasDynamicAdapter::uniGasDynamicAdapter
         subCellAdaptation_ = adaptationDict.getOrDefault<bool>("subCellAdaptation",false);
 
         cellWeightAdaptation_ = adaptationDict.getOrDefault<bool>("cellWeightAdaptation",false);
-        
+
+        dsmcCellsTimeStepLimited_ = adaptationDict.getOrDefault<bool>("dsmcCellsTimeStepLimited",false);
+
+        maxSubCellLevels_ = adaptationDict.getOrDefault<label>("maxSubCellLevels",10);
+
+        if (maxSubCellLevels_ < 1)
+        {
+            FatalIOErrorInFunction(adaptationDict)
+                << "maxSubCellLevels must be at least 1, got "
+                << maxSubCellLevels_ << nl
+                << exit(FatalIOError);
+        }
+
         adaptationInterval_ = adaptationDict.getOrDefault<label>("adaptationInterval",20);
 
         smoothingPasses_ = adaptationDict.getOrDefault<label>("smoothingPasses",25);
@@ -344,7 +357,10 @@ void uniGasDynamicAdapter::calculateTimeStep()
     {
         forAll(mesh_.cells(), cell)
         {
-            if (cloud_.bgkCollisionModelName() != "unifiedStochasticParticleSBGK" &&
+            // A DSMC cell is collision-time limited unless the BGK model is
+            // USP and dsmcCellsTimeStepLimited is off (the published default)
+            if ((dsmcCellsTimeStepLimited_ ||
+                 cloud_.bgkCollisionModelName() != "unifiedStochasticParticleSBGK") &&
                 cloud_.cellCollModelId()[cell] != cloud_.bgkCollModelId() &&
                 instMaxTimeStepMCTRatio < timeStepMCTRatio_[cell])
             { 

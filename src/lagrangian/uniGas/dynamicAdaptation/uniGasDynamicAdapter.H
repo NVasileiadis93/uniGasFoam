@@ -75,13 +75,21 @@ class uniGasDynamicAdapter
 
         const label minSubCellLevels_;
 
-        const label maxSubCellLevels_;
+        //- Maximum sub-cells per direction (adaptiveProperties
+        //  maxSubCellLevels, default 10)
+        label maxSubCellLevels_;
 
         bool timeStepAdaptation_;
 
         bool subCellAdaptation_;
 
         bool cellWeightAdaptation_;
+
+        //- Apply maxTimeStepMCTRatio to every DSMC cell whatever the BGK
+        //  model (adaptiveProperties dsmcCellsTimeStepLimited, default false:
+        //  the published behaviour, in which no cell is collision-time limited
+        //  when the BGK model is unifiedStochasticParticleSBGK)
+        bool dsmcCellsTimeStepLimited_;
 
         label adaptationInterval_;
 
