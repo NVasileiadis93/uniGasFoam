@@ -597,6 +597,16 @@ void uniGasDynamicAdapter::adapt()
 
         }
 
+        // The smallest occupied values over the whole domain, as a serial run
+        // finds them. Per processor, one holding no occupied cell kept VGREAT,
+        // and the collision rate of a VGREAT density at a VGREAT temperature
+        // overflows in calculateAdaptationQuantities (SIGFPE)
+        if (Pstream::parRun())
+        {
+            reduce(minRhoN, minOp<scalar>());
+            reduce(minTranslationalT, minOp<scalar>());
+        }
+
 
         // Calculate cell size to mean free path ratio
         forAll(mesh_.cells(), cell)
